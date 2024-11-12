@@ -1,0 +1,283 @@
+#class {control} {open}
+
+#list {zones} {create}
+#var {zone_current} {}
+#var {zone_state} {init}
+#var {need_pawn} {}
+
+task_list {zone_steps} {create} {zone_finish} {zone_recover}
+
+#nop ---------------------------
+#nop DSL to define zones
+#nop ---------------------------
+
+#alias {zone_extend} {
+  task_list {zone_steps} {add} %0
+}
+
+
+#nop -------------------------
+#nop Zone loop control
+#nop -------------------------
+
+#alias {zone_loop} {
+  #var {zone_state} {init};
+  #list {zones} {clear};
+  #list {zones} {add} %0
+}
+
+#alias {zone_loop_start} {
+  #var {zone_state} {start};
+  zone_finish
+}
+
+#alias {zone_loop_stop} {
+  #var {zone_state} {stop};
+  zone_timeout_off
+}
+
+#alias {zone_test} {
+  #var {zone_state} {testing};
+  task_list {zone_steps} {clear};
+  executor {global_tasks} {clear};
+  %1;
+  task_list {zone_steps} {nudge};
+}
+
+task_list {zone_steps} {continue-hook-add} {10_zone_loop_stop_hook} {zone_loop_stop_hook}
+task_list {zone_steps} {continue-hook-add} {20_zone_loop_safety_hook} {zone_loop_safety_hook}
+task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zone_loop_continue_when_hook}
+
+#alias {zone_step_continue} {
+  #var {zone_step_continue_type} {%1};
+
+  #if {"$zone_state" == "testing"} {
+    #unvar {zone_step_continue_type}; %2
+  } {
+    hook {zone_steps[hook]} {exec-each}
+      {#unvar {zone_step_continue_type}; %2}
+      {debug ZONE-STEP-CONTINUE-FAIL --> ??}
+  }
+}
+
+#alias {zone_loop_stop_hook} {
+  #if {"$zone_state" != "start" && "$zone_state" != "testing"} {
+    debug ZONE-LOOP-STOP: hook zone_state=$zone_state    
+  } {
+    %1
+  }
+}
+
+#alias {zone_loop_safety_hook} {
+  #if {"$zone_safety" == "on"} {
+    reset_zone_timeout;
+    #if {"$zone_step_continue_type" != "quick"} {
+      cmd_presence_check {$robot} {$robot_description} {%1} {%2}
+    }
+  } {
+    %1
+  }
+}
+
+#alias {zone_loop_continue_when_hook} {
+  #if {"$tick_state" == "soon"} {
+    tell group 'continue: tick soon, waiting...;
+    hook {on_tick} {once} {zone_loop_continue_when_hook} {%1}
+  } {
+    %1
+  }
+}
+
+#alias {reset_zone_timeout} {  
+  #delay {reset_zone_timeout} {zone_timeout} {60}
+}
+
+#alias {zone_timeout_off} {
+  #undelay {reset_zone_timeout}
+}
+
+#alias {zone_timeout} {
+  #if {"$combat_status" != "idle"} {
+    debug ZONE-TIMEOUT!! combat_status=$combat_status --> reset;
+    reset_zone_timeout  
+  };
+  #elseif {"$zone_safety" == "on" && "$zone_state" == "start"} {
+    debug ZONE-TIMEOUT!!! safety=$zone_safety state=$zone_state --> retry;
+    zone_retry
+  };
+  #else {
+    debug ZONE-TIMEOUT!!! safety=$zone_safety state=$zone_state --> ignore
+  }
+}
+
+
+#nop -------------------------
+#nop Zone step control
+#nop -------------------------
+
+#var {zone_safety} {on}
+
+#alias {zone_recover} {
+  debug ZONE-RECOVER current=$zone_current: %0
+}
+
+#alias {zone_finish} {#show ZONE-FINISH: $zone_current}
+
+#action {ZONE-FINISH} {
+  task_list {zone_steps} {clear};
+  zone_timeout_off;
+
+  #if {"$zone_current" == "zone_interlude"} {
+    #list {zones} {get} {1} {result};
+    #list {zones} {delete} {1};
+    #list {zones} {add} {$result};
+    zone_start {$zones[1]}
+  } {
+    zone_start {zone_interlude}
+  };
+}
+
+#alias {zone_start} {#show ZONE-START: %1}
+
+#action {ZONE-START: %1} {
+  #if {"$zone_state" == "start"} {
+    #var {zone_current} {%1};
+    $zone_current;
+    task_list {zone_steps} {nudge}
+  } {
+    debug ZONE-START: ignore state=$zone_state
+  }
+}
+
+#alias {zone_retry} {
+  executor {global_tasks} {clear};
+  task_list {zone_steps} {clear};
+  zone_start {zone_interlude}
+}
+
+
+#nop --------------------------
+#nop Zone commands
+#nop --------------------------
+
+#alias {def_zone_task0} {#alias {%1} {exec {zone_task} {%2} {%%1} {%%2}}}
+#alias {def_zone_task1} {#alias {%1} {exec {zone_task} {%2 {%%1}} {%%2} {%%3}}}
+#alias {def_zone_task2} {#alias {%1} {exec {zone_task} {%2 {%%1} {%%2}} {%%3} {%%4}}}
+
+
+#nop --------------------------
+#nop General-purpose
+#nop --------------------------
+
+def_zone_task2 {walk_fast} {cmd_walk_fast}
+def_zone_task1 {zone_safety} {cmd_zone_safety}
+def_zone_task1 {sync_command} {cmd_sync_command}
+
+#alias {cmd_zone_safety} {
+  exec_sync_task1 {cmd_zone_safety} {%2} {%3} {
+    debug zone_safety --> %1;
+    #var {zone_safety} {%1}
+  }
+}
+
+#alias {cmd_sync_command} {
+  exec_sync_task1 {cmd_sync_command} {%2} {%3} {
+    debug sync_command --> %1;
+    %1
+  }
+}
+
+#nop --------------------------
+#nop Inn & town
+#nop --------------------------
+
+def_zone_task1 {need_pawn} {cmd_need_pawn}
+def_zone_task0 {group_recall} {cmd_group_recall}
+def_zone_task0 {regen_some} {cmd_regen_some}
+def_zone_task0 {group_repair} {cmd_group_repair}
+def_zone_task0 {capture_score} {cmd_score {#nop}}
+def_zone_task1 {buy_recalls} {cmd_buy_recalls}
+def_zone_task1 {group_pawn} {cmd_group_pawn}
+def_zone_task0 {group_deposit} {cmd_group_deposit}
+
+#alias {cmd_need_pawn} {
+  exec_sync_task1 {cmd_need_pawn} {%2} {%3} {
+    debug need_pawn--> %1;
+    #var {need_pawn} {%1}
+  }
+}
+
+#alias {zone_interlude} {
+  ext_recall_to_inn;
+  ext_visit_town {$need_pawn};
+  zone_extend
+    {need_pawn {}}
+}
+
+#alias {ext_recall_to_inn} {
+  zone_extend
+    {zone_safety off}
+    {group_recall}
+    {regen_some}
+    {group_repair}
+    {zone_safety on}    
+}
+
+#alias {ext_visit_town} {
+  zone_extend
+    {zone_safety off}
+    {walk_fast {$inn_mk} {Market Square}}
+    ;
+  
+  ext_buy_recalls;
+  #if {"%1" != "" } {ext_pawn {%1}};
+  ext_bank;
+
+  zone_extend
+    {zone_safety on}
+}
+
+#alias {ext_buy_recalls} {
+  zone_extend
+    {walk_fast {2w1n} {The Magic Shop}}
+    {buy_recalls 2}
+    {walk_fast {1s2e} {Market Square}}  
+}
+
+#alias {ext_pawn} {
+  zone_extend
+    {walk_fast {$mk_pawn} {Slick Willy's Pawn Shop}}
+    {group_pawn {%1}}
+    {walk_fast {$pawn_mk} {Market Square}}
+}
+
+#alias {ext_bank} {
+  zone_extend
+    {walk_fast {$mk_bank} {Midgaard Bank}}
+    {capture_score}    
+    {group_deposit}
+    {walk_fast {$bank_mk} {Market Square}}
+}
+
+
+#nop --------------------------
+#nop Areas
+#nop --------------------------
+
+def_zone_task1 {set_target} {cmd_group_target}
+def_zone_task0 {group_scrappy} {cmd_group_scrappy}
+def_zone_task0 {group_noscrap} {cmd_group_noscrap}
+def_zone_task1 {open_door} {cmd_open_door}
+def_zone_task1 {teleport_room} {cmd_teleport_room}
+def_zone_task1 {confirm_room} {cmd_look_room}
+def_zone_task1 {confirm_exit} {cmd_check_exit}
+def_zone_task0 {regen_fairy} {cmd_regen_fairy}
+def_zone_task1 {pick} {cmd_pick_lock}
+def_zone_task2 {pawn_all_from_bag} {cmd_pawn_all_from_bag}
+def_zone_task2 {gather_all_into_bag} {cmd_gather_all_into_bag}
+def_zone_task2 {unlock_door} {cmd_unlock_door}
+def_zone_task2 {group_walk} {cmd_group_walk}
+def_zone_task1 {group_teleport_room} {cmd_group_teleport_room}
+
+#class {control} {save}
+#class {control} {close}

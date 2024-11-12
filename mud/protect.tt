@@ -1,0 +1,41 @@
+#class {protect} {open}
+
+#alias {protect} {
+  #class {protect} {open};
+
+  #var {protect_state} {idle};
+
+  #alias {try_rescue} {
+    #if {"$protect_state" == "idle"} {
+      #var {protect_state} {rescue};
+      #delay {try_rescue_delay} {try_rescue_timeout {%%1}} {3};
+      rescue %%1
+    }
+  };
+
+  #alias {protect_reset} {
+    #var {protect_state} {idle}
+  };
+
+  #alias {rescue_success} {protect_reset};
+  #alias {rescue_fail} {protect_reset};
+  #alias {rescue_no_fight} {protect_reset};
+  #alias {try_rescue_timeout} {protect_reset};
+
+  #action {sees The %1, and attacks!} {try_rescue %2};
+  #action {sees %1, and attacks!} {try_rescue %2};
+  #action {The %1 {dodges|screams}} {try_rescue %2};
+  #action {%1 {dodges|screams}} {try_rescue %2};
+  #action {{$fighting_words} the %1} {try_rescue %2};
+  #action {{$fighting_words} %1} {try_rescue %2};  
+  #action {TAKING DAMAGE} {try_rescue %2};
+  #action {Banzai! To the rescue...} {rescue_success};
+  #action {You fail the rescue.} {rescue_fail};
+  #action {But nobody is fighting %%1?} {rescue_no_fight};
+
+  #class {protect} {save};
+  #class {protect} {close}
+}
+
+#class {protect} {save}
+#class {protect} {close}

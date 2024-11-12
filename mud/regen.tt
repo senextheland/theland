@@ -1,0 +1,124 @@
+#class {regen} {open}
+
+#alias {cmd_regen} {
+  #class {cmd_regen} {open};
+
+  #var {regen_mana_threshold} {%1};
+  #var {regen_move_threshold} {%2};
+  #alias {on_regen_done} {regen_off; %3};
+  #alias {on_regen_fail} {regen_off; %4};
+  #var {regen_state} {off};
+
+  #function {is_regen_done} {
+   #math {result} {$mana >= ($max_mana - $regen_mana_threshold) && $health >= ($max_refresh - $regen_move_threshold)}
+  };
+
+  #alias {regen_mana_hook} {
+    debug REGEN MANA UP: mana=$mana goal=$regen_mana_threshold max=$score_max_mana;
+    #if {@is_regen_done{} == 1} {
+      maybe_regen_done
+    }  
+  };
+
+  #alias {regen_move_hook} {
+    debug REGEN MOVE UP: move=$movement goal=$regen_move_threshold max=$score_max_movement;
+    #if {@is_regen_done{} == 1} {
+      maybe_regen_done
+    }  
+  };
+
+  #alias {maybe_regen_done} {
+    #undelay {maybe_regen_done_delay};
+    #delay {maybe_regen_done} {when_regen_done {on_regen_done}} {0.1}
+  };
+
+  #alias {regen_off} {
+    hook {on_mana_up} {remove} {cmd_regen};
+    hook {on_movement_up} {remove} {cmd_regen};
+    #if {"$regen_state" == "on"} {unregen};
+    #class {cmd_regen} {kill}
+  };
+
+  hook {on_mana_up} {add} {cmd_regen} {regen_mana_hook};
+  hook {on_movement_up} {add} {cmd_regen} {regen_move_hook};
+
+  #class {cmd_regen} {save};
+  #class {cmd_regen} {close};
+
+  debug REGEN CHECK mana=$mana max=$score_max_mana;
+  #if {@is_regen_done{} == 1} {
+    debug REGEN --> skip;
+    on_regen_done
+  } {
+    debug REGEN --> start;
+    #var {regen_state} {on};
+    regen
+  }
+}
+
+#alias {cmd_regen_fairy_until} {
+  #class {cmd_regen_fairy} {open};
+
+  #var {regen_mana_threshold} {%1};
+  #var {regen_move_threshold} {%2};
+  #alias {regen_fairy_done} {regen_fairy_end; %3};
+  #alias {regen_fairy_fail} {regen_fairy_end; %4};
+
+  #alias {regen_fairy_end} {
+    hook {on_mana_up} {remove} {regen_fairy_mana_up};
+    #class {cmd_regen_fairy} {kill}
+  };
+
+  #alias {regen_fairy_mana_up} {
+    debug REGEN-FAIRY MANA UP: mana=$mana max=$score_max_mana threshold=$regen_mana_threshold;
+    #if {$mana > ($score_max_mana - $regen_mana_threshold)} {
+      debug REGEN-FAIRY-DONE;
+      regen_fairy_done
+    } {
+      debug REGEN-FAIRY-MAYBE-BUY;
+      trampiline {cmd_regen_fairy_until} {maybe_buy_mana}
+    }
+  };
+
+  #alias {maybe_buy_mana} {
+    cmd_score {
+      #if {$score_gold_coins >= 300000} {
+        debug REGEN-FAIRY: has 300k;
+	buy 10
+      } {
+        debug REGEN-FAIRY: not enough coins;
+	on_regen_fairy_done
+      }      
+    }
+  };
+
+  hook {on_mana_up} {add} {regen_fairy_mana_up} {regen_fairy_mana_up};
+  
+  #class {cmd_regen_fairy} {save};
+  #class {cmd_regen_fairy} {close};
+
+  cmd_score {
+    #if {$movement < ($score_max_movement - $regen_move_threshold)} {
+      debug REGEN-FAIRY: buy move;
+      buy 9
+    } {
+      debug REGEN-FAIRY: skip move
+    };
+    regen_fairy_mana_up
+  }
+}
+
+#alias {cmd_regen_max} {  
+  cmd_regen {50} {0} {%1} {%2}
+}
+
+#alias {cmd_regen_some} {
+  cmd_regen {150} {150} {%1} {%2}
+}
+
+#alias {cmd_regen_fairy} {
+  cmd_regen_fairy_until {150} {150} {%1} {%2}
+}
+
+#class {regen} {save}
+#class {regen} {close}

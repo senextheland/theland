@@ -1,0 +1,294 @@
+#var {me} {senex}
+#session $me theland.notroot.com 5000
+#split 0 0
+#config {speedwalk} {on}
+#log {append} {$me.log}
+
+#ticker {fidget} {emote glances around.} {120}
+
+#alias {get_ready} {
+  #read {mud/logging.tt};
+  #read {mud/task.tt};
+  #read {mud/exec.tt};
+  #read {mud/hook.tt};
+  #read {mud/commands.tt};
+  #read {mud/tick.tt};
+  #read {mud/cast.tt};
+  #read {mud/eq-repair.tt};
+  #read {mud/robot.tt};
+  #read {mud/fight.tt};
+  #read {mud/protect.tt};
+  #read {mud/assist.tt};
+  #read {mud/walk.tt};
+  #read {mud/pawn.tt};
+  #read {mud/regen.tt};
+  #read {mud/recover.tt};
+  #read {mud/kill.tt};
+  #read {mud/fish.tt};
+  #read {mud/dagger.tt}; 
+  #read {mud/leader.tt};
+  #read {mud/control.tt};
+  #read {mud/zones.tt};
+  #read {mud/spellup.tt};
+
+  cmd_score {
+    #read {mud/prompt.tt};
+    #read {mud/health.tt};
+
+    #var {health_low} {400}    
+  };
+
+  set_robot {silk} {Silk};
+  protect {$robot_description} {$robot};
+  reset_weapon_state
+}
+
+#alias {reload} {
+  #read {mud/adapter.tt};
+  #read {senex-test.tt};
+  get_ready
+}
+
+#alias {begin_loop} {
+  zone_loop
+    {zone_tridac_walk}
+    {zone_hyrule_walk}    
+    {zone_tridac_walk}
+    {zone_x2_walk}
+    {zone_tridac_walk}
+    {zone_tzen}
+    {zone_bryad_walk}
+  ;
+  zone_loop_start
+}
+
+
+#nop --------------------------
+#nop adapter.tt
+#nop --------------------------
+
+#alias {cmd_heal_me} {
+  cmd_layhands {$me} {%1} {%2}
+}
+
+#var regen_bag {xanth-bag}
+#alias {regen} {
+  get fey case; rem mane; wear fey;
+  rest;
+  get stars-cloak $regen_bag; rem mane; wear stars-cloak neck;
+  get purple-cape $regen_bag; rem lionskin-suit; wear purple-cape;
+  get mithril-helmet $regen_bag; rem ucardi-visor; wear mithril-helmet;
+  get all.locust-skin $regen_bag; rem ucardi-plates; wear skin legs;
+  get sapphire-ring $regen_bag; get spectral-band $regen_bag;
+  rem holiday-ring; rem feather-ring;
+  wear sapphire-ring; wear spectral-band
+}
+ 
+#alias {unregen} {
+  rem sapphire-ring; rem spectral-band;
+  wear holiday-ring; wear feather-ring;
+  put sapphire-ring $regen_bag; put spectral-band $regen_bag;  
+  stand;
+  rem mithril-helmet; wear ucardi-visor; put mithril-helmet $regen_bag;
+  rem fey; put fey case; wear mane;
+  rem stars-cloak; put stars-cloak $regen_bag; wear mane;  
+  rem purple-cape; wear lionskin-suit; put purple-cape $regen_bag;
+  rem locust-skin; put all.locust-skin $regen_bag; wear ucardi-plates
+}
+
+
+#var {weapon_noscrap} {achilles-spear}
+#var {weapon_align_evil} {fury}
+#var {weapon_align_good} {fury}
+#var {weapon_life_protect} {claw}
+#var {current_weapon} {}
+
+#var {mode_align} {}
+#var {mode_scrap} {}
+#var {mode_life_protect} {}
+
+#alias {reset_weapon_state} {
+  #var {mode_align} {evil};
+  #var {mode_scrap} {on};
+  #var {mode_life_protect} {off};
+  #var {current_weapon} {$weapon_align_evil};
+
+  get $weapon_align_evil case; 
+  rem $weapon_noscrap; put $weapon_noscrap case;
+  rem $weapon_align_good; put $weapon_noscrap case;
+  rem $weapon_life_protect; put $weapon_life_protect case;
+  
+  wield $current_weapon
+}
+
+#alias {cmd_reset_weapon_state} {
+  exec_task {cmd_reset_weapon_state} {reset_weapon_state} {%1} {%2} {
+    #action {You wield Clangeddin's Fury.} {task_cmd_reset_weapon_state_done};
+    #action {You do not seem to have the} {task_cmd_reset_weapon_state_faill};
+    #action {You are already wielding something.} {task_cmd_reset_weapon_state_fail}
+  }
+}
+
+#alias {choose_best_weapon} {
+  #local {last_weapon} {$current_weapon};
+
+  #if {"$mode_scrap" == "off"} {
+    #var {current_weapon} {$weapon_noscrap}
+  }; #elseif {"$mode_life_protect" == "on"} {
+    #var {current_weapon} {$weapon_life_protect}
+  }; #elseif {"$mode_align" == "evil"} {
+    #var {current_weapon} {$weapon_align_evil}
+  }; #else {
+    #var {current_weapon} {$weapon_align_good}
+  };
+  
+  #if {"$last_weapon" != "$current_weapon"} {
+    get $current_weapon case;  
+    rem $last_weapon;
+    wield $current_weapon;  
+    put $last_weapon case
+  } {
+    #show ALREADY WIELDING
+  }
+}
+
+#alias {cmd_scrap_off} {
+  #var {mode_scrap} {off};
+  exec_task {cmd_scrap_off} {choose_best_weapon} {%1} {%2} {
+    #action {ALREADY WIELDING} {task_cmd_scrap_off_done};
+    #action {You wield Achilles' Spear.} {task_cmd_scrap_off_done};
+    #action {You do not seem to have the} {task_cmd_scrap_off_fail};    
+    #action {You are already wielding something.} {task_cmd_scrap_off_fail}
+  }
+}
+
+#alias {cmd_scrap_on} {
+  #var {mode_scrap} {on};
+  exec_task {cmd_scrap_on} {choose_best_weapon} {%1} {%2} {
+    #action {ALREADY WIELDING} {task_cmd_scrap_on_done};  
+    #action {You wield The Holy Avenger.} {task_cmd_scrap_on_done};
+    #action {You wield A glowing trident.} {task_cmd_scrap_on_done};
+    #action {You wield Clangeddin's Fury.} {task_cmd_scrap_on_done};
+    #action {You do not seem to have the} {task_cmd_scrap_on_fail};    
+    #action {You are already wielding something.} {task_cmd_scrap_on_fail}
+  }
+}
+
+#alias {cmd_life_protect_on} {
+  #var {mode_life_protect} {on};
+  exec_task {cmd_life_protect_on} {choose_best_weapon} {%1} {%2} {
+    #action {ALREADY WIELDING} {task_cmd_life_protect_on_done};  
+    #action {You wield Claw of The Toucan.} {task_cmd_life_protect_on_done};
+    #action {You do not seem to have the} {task_cmd_life_protect_on_fail};    
+    #action {You are already wielding something.} {task_cmd_life_protect_on_fail}
+  }
+};
+
+#alias {cmd_life_protect_off} {
+  #var {mode_life_protect} {off};
+  exec_task {cmd_life_protect_off} {choose_best_weapon} {%1} {%2} {
+    #action {ALREADY WIELDING} {task_cmd_life_protect_off_done};  
+    #action {You wield} {task_cmd_life_protect_off_done};
+    #action {You do not seem to have the} {task_cmd_life_protect_off_fail};    
+    #action {You are already wielding something.} {task_cmd_life_protect_off_fail}
+  }
+}
+
+#alias {cmd_mob_align_evil} {
+  #var {mode_align} {evil};
+  exec_task {cmd_mob_align_evil} {choose_best_weapon} {%1} {%2} {
+    #action {ALREADY WIELDING} {task_cmd_mob_align_evil_done};  
+    #action {You wield The Holy Avenger.} {task_cmd_mob_align_evil_done};
+    #action {You wield Achilles' Spear.} {task_cmd_mob_align_evil_done};;
+    #action {You wield Clangeddin's Fury.} {task_cmd_mob_align_evil_done};
+    #action {You do not seem to have the} {task_cmd_mob_align_evil_fail};    
+    #action {You are already wielding something.} {task_cmd_mob_align_evil_fail}
+  }
+}
+
+#alias {cmd_mob_align_good} {
+  #var {mode_align} {good};
+  exec_task {cmd_mob_align_good} {choose_best_weapon} {%1} {%2} {
+    #action {ALREADY WIELDING} {task_cmd_mob_align_good_done};  
+    #action {You wield The Holy Avenger.} {task_cmd_mob_align_good_done};
+    #action {You wield Achilles' Spear.} {task_cmd_mob_align_good_done};
+    #action {You wield Clangeddin's Fury.} {task_cmd_mob_align_good_done};
+    #action {You do not seem to have the} {task_cmd_mob_align_good_fail};
+    #action {You are already wielding something.} {task_cmd_mob_align_good_fail}
+  }  
+}
+
+#alias {cmd_pick_lock} {
+  cmd_issue_order {pick %1} {%2} {%3}
+}
+
+#nop --------------------------
+#nop Follow orders
+#nop --------------------------
+
+#class {follow_orders} {open}
+
+#list {allow_orders} {create}
+  {Sid}
+  {Silk}
+  {group}
+
+#alias {do_order} {
+  #local {allow} {0};
+  #list {allow_orders} {find} {%1} {allow};
+  debug DO ORDER {%1} {%2} allow=$allow;
+  
+  #if {"$allow" == "0"} {
+    order_tell {%1} {FAIL: %2 -- not allowed}
+  } {
+    #switch {"%2"} {
+      #case {"cast"} {
+        exec_cast {%3} {%4}
+	  {order_done {%1} {cast %3}}
+	  {order_fail {%1} {cast %3}}
+      };
+      
+      #case {"layhands"} {order_dispatch {%2} {cmd_layhands %3} {%1} {%2}};
+      #case {"recall"} {executor {%2} {global_tasks} {clear}; order_dispatch {%2} {cmd_recall} {%1} {%2}};
+      #case {"noscrap"} {order_dispatch {%2} {cmd_scrap_off} {%1} {%2}};
+      #case {"scrap"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};
+      #case {"scrappy"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};      
+	
+      #default {order_tell {%1} {FAIL: %2 -- unrecognized order}}
+    }
+  }
+}
+
+#alias {order_dispatch} {
+  debug ORDER-DISPATCH %1 %2 %3;
+  exec {order_%1} {%2} {order_done {%3} {%4}} {order_fail {%3} {%4}}
+}
+
+#alias {order_tell} {
+  #if {"%1" == "group"} {
+    tell group '%2
+  } {
+    tell %1 %2
+  }  
+}
+
+#alias {order_done} {
+  order_tell {%1} {OK: %2}
+}
+
+#alias {order_fail} {
+  #if {"%3" == ""} {
+    order_tell {%1} {FAIL: %2}
+  } {
+    order_tell {%1} {FAIL: %2 -- %3}
+  }
+}
+
+#action {%1 tells the group 'cast {armor|bless}'} {do_order {group} {cast} {%2} {%1}}
+#action {%1 tells you 'cast {armor|bless}'} {do_order {%1} {cast} {%2} {%1}}
+#action {%1 tells you '{healme|lay|layhands}'} {do_order {%1} {layhands} {%1}}
+#action {%1 tells the group '{healme|lay|layhands}'} {do_order {group} {layhands} {%1}}
+#action {%1 tells the group '{recall|noscrap|scrap|scrappy}'} {do_order {group} {%2}}
+ 
+#class {follow_orders} {save}
+#class {follow_orders} {close}

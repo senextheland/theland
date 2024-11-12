@@ -1,0 +1,53 @@
+#class {logging} {open}
+
+#list {ignore_users} {create}
+  {The ogre berserker (Sid)}
+  {ogre berserker poly Sid}
+  {Puff}
+  {Senex}    
+  {Sid}
+  {Silk}
+  {Zifnab}
+  {the Alchemist}
+  {The DM}
+  {Slick Willy}
+
+#list {ignore_messages} {create}
+  {'We're happy for ya!'}
+  {'Of all the things I've lost, I miss my mind the most.'}
+  {'The cake is a lie!'}
+  {'Whoa, I really suck at this game.'}
+  {'Nobody makes me bleed my own blood! NOBODY!'}    
+
+#function {log_time} {
+  #format {result} {%t} {%Y-%m-%dT%H:%M:%S}
+}
+
+#function {ignore_user} {
+  #list {ignore_users} {find} {%1} {result}
+}
+
+#function {ignore_message} {
+  #list {ignore_messages} {find} {%1} {result}
+}
+
+#alias {log_event} {
+  #line log {$me-crushed.log} {@log_time{} %0}
+}
+
+#alias {log_tell} {
+  #if {@ignore_user{%2} == 0 && @ignore_message{%3} == 0} {
+    #line log {$me-tells.log} {@log_time{} %1 %2: %3}
+  }
+}
+
+#action {%1 is crushed.} {log_event %0}
+#action {%1 is rended} {log_event %0}
+#action {The supernatural protection of %1 fades noticeably.} {log_event %0}
+#action {%1 tells you %2} {log_tell {tell} {%1} {%2}} {9}
+#action {%1 shouts some bull %2} {log_tell {shout} {%1} {%2}} {9}
+#action {%1 tells the group %2} {log_tell {group} {%1} {%2}} {9}
+#action {%1 shouts an auction %2} {log_tell {auction} {%1} {%2}} {9}
+  
+#class {logging} {save}
+#class {logging} {close}

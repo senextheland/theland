@@ -1,0 +1,112 @@
+#class {walk} {open}
+
+#alias {cmd_walk_fast} {
+  debug CMD-WALK-FAST: {%1} --> {%3};
+  exec_task {cmd_walk_fast} {%1} {%3} {%4} {
+    #action {Alas, you cannot go that way...} {task_cmd_walk_fast_fail};
+    #action {%2} {debug WALK-FAST DONE; task_cmd_walk_fast_done};
+    #action {You are pissed and attack %%1!} {task_cmd_walk_fast_fail {fighting}};
+    #action {You attack %%1 for no reason!} {task_cmd_walk_fast_fail {fighting}} 
+  } {30}
+}
+
+#alias {cmd_walk_once} {
+  exec_task {cmd_walk_once} {#path {walk}; #path {show}} {%1} {%2} {
+    #action {Alas, you cannot go that way...} {task_cmd_walk_once_fail {bad-path}};
+    #action {Exits:} {task_cmd_walk_once_done};
+    #action {seems to be closed.} {task_cmd_walk_once_fail {closed}};
+    #action {No way! You are fighting for your life!} {task_cmd_walk_once_fail {fighting}};
+    #action {Sorry, there is no room to get in there.} {task_cmd_walk_once_fail {no-room}};
+    #event {END OF PATH} {task_cmd_walk_once_fail {end-of-path}}
+  }
+}
+
+#alias {walk_retry_off} {#nop}
+#alias {walk_retry} {
+  #class {walk_retry} {open};
+
+  #alias {walk_retry_done} {walk_retry_off; %1};
+  #alias {walk_retry_fail} {walk_retry_off; %2};
+
+  #alias {attempt_move} {
+    exec {attempt_move} {cmd_walk_once}
+      {zone_step_continue {full} {walk_retry_done}}
+      {walk_recover_fail %%%0}
+  };
+      
+  #alias {walk_recover_fail} {
+    #local {reason} {%%1};
+    #switch {"$reason"} {
+      #case {"fighting"} {
+        debug MOVE-ONCE fighting --> try-soon;
+	hook {on_rip} {once} {attempt_move} {walk_attempt_recovery};
+	#delay {walk_recover_fail} {walk_attempt_recovery} {5}
+      };
+      
+      #default {walk_retry_fail {$reason}}
+    }
+  };
+
+  #alias {walk_attempt_recovery} {
+    #path {move} {-1};
+    #path {show};
+    
+    hook {on_rip} {remove} {attempt_move};
+    #undelay {walk_recover_fail};
+    
+    attempt_move
+  };
+
+  #class {walk_retry} {save};
+  #class {walk_retry} {close};
+
+  #alias {walk_retry_off} {
+    #class {walk_retry} {kill};
+    hook {on_rip} {remove} {attempt_move};
+    #undelay {move_recover_fail};    
+    #alias {walk_retry_off} {#nop}
+  };
+
+  attempt_move
+}
+
+#alias {walk_each} {
+  #class {walk_each} {open};
+
+  #var {original_path} {%1};
+  #var {walk_each_state} {ok};
+  #alias {on_walk_room} {%2};
+  #alias {walk_each_done_continuation} {walk_each_end; %3};
+  #alias {walk_each_fail_continuation} {walk_each_end; %4};
+  
+  #path {unzip} {$original_path};
+
+  #alias {step} {
+    #if {"$walk_each_state" == "ok"} {
+      walk_retry {on_walk_room} {step_failed}
+    } {
+      walk_each_done_continuation    
+    }
+  };
+
+  #alias {step_failed} {
+    #if {"%%1" == "end-of-path"} {
+      #var {walk_each_state} {done};
+      on_walk_room      
+    } {
+      debug WALK-EACH step failed;
+      #path show;
+      walk_each_fail_continuation
+    }
+  };
+
+  #alias {walk_each_end} {
+    #class {walk_each} {kill}
+  };
+
+  #class {walk_each} {save};
+  #class {walk_each} {close}  
+}
+
+#class {walk} {save}
+#class {walk} {close}

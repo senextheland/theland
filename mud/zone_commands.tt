@@ -1,0 +1,15 @@
+#alias def_zone_task {
+  #alias {%1} {
+    exec {%1} {%2 %%0}
+      {debug ZONE TASK OK: %1; on_zone_action_done}
+      {debug ZONE TASK FAIL: %1; on_zone_action_fail}
+   }
+}
+
+def_zone_task {wait_for_room} {action_wait_for_room}
+def_zone_task {teleport_room} {action_teleport_room}
+def_zone_task {repair_equipment} {eq_repair}
+def_zone_task {check_container} {action_check_container}
+def_zone_task {check_fish} {action_check_fish}
+def_zone_task {begin_zone_confirm_fish} {action_begin_zone_confirm_fish}
+def_zone_task {end_zone_confirm_fish} {action_end_zone_confirm_fish}

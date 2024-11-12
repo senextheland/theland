@@ -1,0 +1,20 @@
+#read {mud/task.tt}
+#read {mud/exec.tt}
+#read {mud/hook.tt}
+#read {mud/commands.tt}
+#read {mud/tick.tt}
+#read {mud/cast.tt}
+#read {mud/eq-repair.tt}
+#read {mud/recover.tt}
+#read {mud/robot.tt}
+#read {mud/fight.tt}
+#read {mud/protect.tt}
+#read {mud/assist.tt}
+#read {mud/walk.tt}
+
+#read {mud/prompt.tt}
+#read {mud/health.tt}
+
+
+
+

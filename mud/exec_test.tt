@@ -1,0 +1,35 @@
+#read mud/exec.tt
+
+#class {test_exec} {open}
+
+def_task {wimp_on} {wimp} {
+  #action {Ok, you are now in wimpy mode.} {task_wimp_on_done};
+  #action {Ok, you are no longer a wimp...} {task_wimp_on_attempt}
+}
+
+def_task {wimp_off} {wimp} {
+  #action {Ok, you are now in wimpy mode.} {task_wimp_off_attempt};
+  #action {Ok, you are no longer a wimp...} {task_wimp_off_done}
+}
+
+#alias {end_test} {
+  #class {test_exec} {kill};
+  debug END-TEST: %0
+}
+
+#nop #list {exec_test} {create} {wimp_off} {wimp_on}
+#nop exec_each {exec_test} {end_test DONE} {end_test FAIL}
+
+#alias {test_exec_hook} {
+  debug HOOOOK;
+  #delay {hook_delay} {%1} {2}
+}
+
+task_list {exec_test} {create} {end_test DONE} {end_test FAIL}
+task_list {exec_test} {add} {wimp_off}
+task_list {exec_test} {add} {wimp_on}
+task_list {exec_test} {continue-hook-add} {test_exec_hook} {test_exec_hook}
+task_list {exec_test} {nudge}
+  
+#class {test_exec} {close}
+#class {test_exec} {save}

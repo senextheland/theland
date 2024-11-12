@@ -1,0 +1,33 @@
+#class {cast} {open}
+
+#alias {cmd_cast} {
+  exec_task {cmd_cast} {%1} {%2} {%3} {
+    #action {You can't summon enough energy to cast the spell.} {task_cmd_cast_fail low-mana};
+    #action {You lost your concentration!} {task_cmd_cast_attempt};
+    #action {Ok.} {task_cmd_cast_done};
+    #action {Olle Bolle Snop Snyf?} {task_cmd_cast_fail typo};
+    #action {Gryffe Olle Gnyffe Snop???} {task_cmd_cast_fail typo};
+    #action {Bolle Snylle Gryf Bylle?!!?} {task_cmd_cast_fail typo};
+    #action {Nobody here by that name.} {task_cmd_cast_fail no-target};
+    #action {You are in a silence zone, you can't make a sound!} {task_cmd_cast_fail silent-room};
+    #action {Nah... You feel too relaxed to do that..} {task_cmd_cast_fail resting};
+    #action {In your dreams, or what?} {task_cmd_cast_fail resting};
+    #action {Who should the spell be cast upon?} {task_cmd_cast_fail missing-target};
+    #action {Your lips do not move, no magic appears.} {task_cmd_cast_fail silent-room};
+    #action {Your spell fizzles in failure.} {task_cmd_cast_fail silent-room};
+    #action {Nobody around by that name.} {task_cmd_cast_fail no-target}
+  }
+}
+
+#alias {exec_cast} {
+  #local {spell} {%1};
+  #local {spell_target} {%2};
+
+  #nop this label helps prevent spamming an already-queued spell;
+  #local {label} {cast:$spell:$spell_target};
+  
+  exec {$label} {cmd_cast {cast '$spell' $spell_target}} {%3} {%4}
+}
+
+#class {cast} {save}
+#class {cast} {close}

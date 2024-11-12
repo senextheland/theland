@@ -1,0 +1,97 @@
+#class {fish} {open}
+
+#alias {fish_container} {golden-case}
+
+#alias {fish_once_end} {#nop}
+#alias {fish_once} {
+  #class {fish_once} {open};
+
+  #var {fish_target} {%1};
+  #alias {fish_once_done} {fish_once_end; %2};
+  #alias {fish_once_fail} {fish_once_end; %3};
+
+  #var {fish_state} {idle};
+  
+  #alias {fish_once_end} {  
+    #var {fish_state} {off};
+    hook {on_fight_start} {remove} {fish};
+    put all.frozen-fish $fish_container;
+    #class {fish_once} {kill}
+  };
+
+  hook {on_fight_start} {once} {fish} {fish_once_end};
+
+  #alias {throw_fish} {
+    #if {"$combat_status" == "idle"} {
+      #var {fish_state} {throwing};
+      zone_step_continue {quick} {throw frozen-fish $fish_target}
+    } {
+      fish_once_fail {fighting}
+    }
+  };
+
+  #alias {no_fish} {
+    debug NO FISH!!;
+    fish_once_fail {no-dagger}
+  };
+
+  #action {You don't have that!} {exec {cmd_get_fish_out} {cmd_get_fish_out} {throw_fish} {no_fish}}; 
+  #action {You don't see anybody around meeting that description.} {fish_once_fail {no-mob}} {4}; 
+
+  #alias {cmd_get_fish_out} {
+    exec_task {cmd_get_fish_out} {get frozen-fish $fish_container} {%%1} {%%2} {
+      #action {You get a frozen fish from} {task_cmd_get_fish_out_done};
+      #action {You do not see a fish in} {task_cmd_get_fish_out_fail}
+    }
+  };
+
+  #alias {on_get_fish} {
+    #if {"$fish_state" == "throwing"} {
+      put all.frozen-fish $fish_container
+    } {
+      recover_fish
+    }
+  };
+
+
+  #action {You catch a frozen fish} {throw_fish};
+  #action {A frozen fish falls to the ground near you, since you couldn't catch it.} {
+    exec {cmd_retrieve_fish} {cmd_retrieve_fish} {throw_fish} {fish_lost}
+  };  
+
+  #alias {fish_lost} {
+    debug FISH LOST!!  
+  };
+
+  #alias {cmd_retrieve_fish} {
+    exec_task {cmd_retrieve_fish} {get all.frozen-fish} {%%1} {%%2} {
+      #action {You get a frozen fish.} {task_cmd_retrieve_fish_done}
+    }
+  };
+
+
+  #action {A frozen fish suddenly reverses direction and flies %%1!} {
+    on_fish_lost {%%1};    
+    exec {cmd_get_fish_out} {cmd_get_fish_out} {throw_fish} {no_fish}
+  };
+  
+  #action {caught a frozen fish right out of the air, and its coming straight for you!} {
+    on_fish_lost {};
+    exec {cmd_get_fish_out} {cmd_get_fish_out} {throw_fish} {no_fish}
+  };
+  
+  #action {You see a frozen fish hit a wall up ahead before it can return to your hand.} {
+    on_fish_lost {};
+    exec {cmd_get_fish_out} {cmd_get_fish_out} {throw_fish} {no_fish}
+  };
+
+  #class {fish_once} {save};
+  #class {fish_once} {close};
+
+  throw_fish
+}
+
+#alias {fish} {fish_once}
+
+#class {fish} {save}
+#class {fish} {close}

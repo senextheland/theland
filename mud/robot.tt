@@ -1,0 +1,31 @@
+#class {robot} {open}
+
+#alias set_robot {
+  #class {robot} {open};
+
+  #var {robot} {%1};
+  #var {robot_description} {%2};
+
+  #alias {tell_robot} {tell %1 %%0};
+
+  #class {robot} {save};
+  #class {robot} {close};
+
+  debug SET ROBOT to "%0"
+}
+
+#alias {cmd_issue_order} {
+  exec_task {cmd_issue_order} {tell_robot order: %1} {%2} {%3} {
+    #action {tells you 'OK: %1} {debug ORDER %1: OK; task_cmd_issue_order_done};
+    
+    #action {tells you 'FAIL: %1 -- %%%1'} {
+      debug ORDER %1: FAIL-WITH-REASON {%%%1};
+      task_cmd_issue_order_fail {%%%1}
+    } {4};
+    
+    #action {tells you 'FAIL: %1} {debug ORDER %1: FAIL; task_cmd_issue_order_fail}
+  } {20}
+}
+
+#class {robot} {save}
+#class {robot} {close}

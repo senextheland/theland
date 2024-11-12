@@ -1,0 +1,289 @@
+#read mud/task.tt
+
+#class {executor} {open}
+
+#alias {labeled_task} {
+  %2
+}
+
+#alias {trampoline} {
+  #delay {%1} {%2} {0.1}
+}
+
+#alias {cc} {
+  #if {"%0" != ""} {
+    trampoline {cc} {%0}
+  }
+}
+
+#function {has_labeled_task} {
+  #list {%1} {find} {{labeled_task {%2} .*}} {result}
+}
+
+#alias {executor} {
+  #switch {"%2"} {
+    #case {"create"} {
+      #var {%1} {};
+      #list {%1[items]} {create};
+      #var {%1[current]} {};
+      
+      #alias {%1_recover} {%%1; executor {%1} {nudge}};
+      #alias {%1_end} {#nop}
+    };
+
+    #case {"on-fail"} {
+      #alias {%1_recover} {%1}
+    };
+
+    #case {"on-end"} {
+      #alias {%1_end} {%1}
+    };
+
+    #case {"add"} {
+      #nop 3: body, 4: done, 5: fail;
+      #list {%1[items]} {add}
+        {%3 {executor {%1} {_done} {%4}} {executor {%1} {_fail} {%5}}}
+    };
+
+    #case {"add-labeled"} {
+      #nop 3: label, 4: body, 5: done, 6: fail;      
+      #if {@has_labeled_task{%1;%3} != 0} {
+        debug EXECUTOR: already queued {%3} @ $result
+      } {
+        #list {%1[items]} {add}
+	  {labeled_task {%3} {%4 {executor {%1} {_done} {%5}} {executor {%1} {_fail} {%6}}}}
+      }
+    };
+
+    #case {"clear"} {
+      #list {%1[items]} {clear};
+      #var {%1[current]} {}      
+    };
+
+    #case {"run-labeled"} {
+      #nop 3: label, 4: body, 5: done, 6: fail;
+      executor {%1} {add-labeled} {%3} {%4} {%5} {%6};
+      executor {%1} {nudge}
+    };
+
+    #case {"nudge"} {
+      #if {"$%1[current]" == ""} {
+        executor {%1} {next}
+      }
+    };
+
+    #case {"next"} {
+      #list {%1[items]} {get} {1} {result};
+      #if {"$result" != "0"} {
+        #var {%1[current]} {$result};
+        trampoline {task_list_%1_next} {$%1[current]}
+      } {
+        trampoline {task_list_%1_next} {%1_end}
+      }
+    };
+
+    #case {"_done"} {
+      #list {%1[items]} {delete} {1};
+      #var {%1[current]} {};
+      hook {%1[hook]} {exec-all}
+        {cc %3; executor {%1} {nudge}}
+        {cc %4; executor {%1} {nudge}}	
+    };
+
+    #case {"_fail"} {
+      #list {%1[items]} {delete} {1};
+      #var {%1[current]} {};
+      hook {%1[hook]} {exec-all}
+        {%1_recover {%3 %4}}
+	{%1_recover {%3 %4}}
+    };
+
+    #default {
+      debug EXECUTOR {%1}: uncrecognized command "%2"
+    }
+  }
+}
+
+executor {global_tasks} {create}
+
+#alias {exec} {
+  executor {global_tasks} {run-labeled} %0
+}
+
+#alias {task_list} {
+  #switch {"%2"} {
+    #case {"create"} {
+      #var {%1} {};
+      hook {%1[hook]} {create};      
+      #alias {%1_done} {%3};
+      #alias {%1_fail} {%4};
+      task_list {%1} {clear};
+    };
+
+    #case {"clear"} {
+      #var {%1[items]} {};
+      #var {%1[current]} {}
+    };
+
+    #case {"continue-hook-add"} {
+      hook {%1[hook]} {add} {%3} {%4}
+    };
+
+    #case {"continue-hook-once"} { 
+      hook {%1[hook]} {once} {%3} {%4}
+    };
+
+    #case {"continue-hook-remove"} { 
+      hook {%1[hook]} {remove} {%3}
+    };
+
+    #case {"add"} {
+      _shift_values 2 %0;
+      #list {%1[items]} {add} $result[]
+    };
+
+    #case {"nudge"} {
+      #if {"$%1[current]" == ""} {
+        task_list {%1} {next}
+      }
+    };
+
+    #case {"next"} {
+      #list {%1[items]} {get} {1} {result};
+      #if {"$result" != "0"} {
+        debug TASK_LIST next %0 --> result=$result;
+        #var {%1[current]} {$result};
+	$%1[current] {task_list {%1} {_done} %%0} {task_list {%1} {_fail} %%0}
+      };
+      #elseif {"%3" == "done"} {
+        debug TASK-LIST next --> done;
+        #var {%1[current]} {};
+	%1_done
+      }
+    };
+
+    #case {"_done"} {
+      #if {"$%1[current]" != ""} {
+        debug TASK-LIST _done;
+        #list {%1[items]} {delete} {1};
+	#var {%1[current]} {};
+        hook {%1[hook]} {exec-each}
+          {cc %3; task_list {%1} {next} {done}}
+          {cc %4; task_list {%1} {next} {done}}
+      } {
+        debug TASK_LIST _done --> current is BLANK!
+      }
+    };
+
+    #case {"_fail"} {      
+      #if {"$%1[current]" != ""} {
+        debug TASK-LIST fail {%1}: $%1[current] --> halt;
+	#nop intentionally leaving the failed action in `[items]`;
+        #var {%1[current]} {};
+
+        _shift_values 2 %0;
+	%1_fail $result[]
+      }
+    };
+
+    #default {debug TASK-LIST: unrecognized command {%2}}
+  }
+}
+
+#alias {_shift_values} {
+  #local {number} {%1};
+  #math {number} {$number + 1};
+  #list {result} {create} %0;
+  #list {result} {delete} 1 $number
+}
+
+#alias {exec_each} {
+  #if {"%1" == ""} {debug EXEC-EACH: missing list name};
+  #elseif {"%2" == ""} {debug EXEC-EACH %1: missing done continuation};
+  #elseif {"%3" == ""} {debug EXEC-EACH %1: missing fail continuation};
+  #else {
+    #list {%1} {get} {1} {result};
+    #if {"$result" != "0"} {
+      $result
+        {_exec_each_next {%1} {%2} {%3}}
+	{_exec_each_fail {%1} {%2} {%3}}	    
+    } {
+      %2
+    }
+  }
+}
+
+#alias {_exec_each_next} {
+  #list {%1} {delete} {1};
+  exec_each {%1} {%2} {%3}
+};
+
+#alias {_exec_each_fail} {
+  debug EXEC-EACH %1 FAIL: {%1[1]};
+  #list {%1} {delete} {1};  
+  %3
+}
+
+#alias {exec_all} {
+  #if {"%1" == ""} {debug EXEC-ALL: missing list name};
+  #elseif {"%2" == ""} {debug EXEC-ALL %1: missing done continuation};
+  #elseif {"%3" == ""} {debug EXEC-ALL %1: missing fail continuation};
+  #else {
+    #list {%1} {get} {1} {result};
+    #if {"$result" != "0"} {
+      $result
+        {_exec_all_next {%1} {%2} {%3}}
+	{_exec_all_fail {%1} {%2} {%3}}	    
+    } {
+      %2
+    }
+  }
+}
+
+#alias {_exec_all_next} {
+  #list {%1} {delete} {1};
+  exec_all {%1} {%2} {%3}
+};
+
+#alias {_exec_all_fail} {
+  debug EXEC-ALL %1 FAIL: {%1[1]};
+  #list {%1} {delete} {1};  
+  exec_all {%1} {%2} {%3}
+}
+
+#alias {foreach_exec_task} {
+  #class {foreach_exec_%1} {open};
+
+  #var {foreach_exec_%1_items} {%2};
+  #list {foreach_exec_%1_items} {explode} {;};
+  #alias {foreach_exec_%1_task} {%3};
+  
+  #alias {foreach_exec_%1_done_continuation} {foreach_exec_%1_off; %4};
+  #alias {foreach_exec_%1_fail_continuation} {foreach_exec_%1_off; %5};
+  
+  #var {next_%1_item} {0};
+
+  #alias {exec_next_%1_item} {
+    #list {foreach_exec_%1_items} {get} {1} {next_%1_item};
+    #if {"$next_%1_item" == "0"} {
+      foreach_exec_%1_done_continuation
+    } {
+      #list {foreach_exec_%1_items} {delete} {1};
+      foreach_exec_%1_task {$next_%1_item}
+        {exec_next_%1_item}
+	{foreach_exec_%1_fail_continuation}
+    }
+  };
+
+  #alias {foreach_exec_%1_off} {
+    #class {foreach_exec_%1} {kill}
+  };
+  
+  #class {foreach_exec_%1} {save};
+  #class {foreach_exec_%1} {close};
+
+  exec_next_%1_item
+}
+
+#class {executor} {save}
+#class {executor} {close}

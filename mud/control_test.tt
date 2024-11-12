@@ -1,0 +1,37 @@
+#class {control_test} {open}
+
+#alias {test_temple} {
+  zone_extend
+    {walk_fast {2d} {Bog and Warrax}}
+    {walk_fast {2u} {hushed and hallowed tower}}
+}
+
+#alias {test_recall} {
+  zone_extend
+    {group_recall}
+}
+
+#alias {test_regen} {
+  zone_extend
+    {zone_safety off}
+    {walk_fast {1d1u} {Inn of the Flying Circus}}
+    {zone_safety on}
+}
+
+#alias {pawn_x2} {pawn_all {queue-vine;flesh-food;vole-claws;duritium-key}}
+
+#alias {test_halt} {
+  zone_loop_stop;
+  zone_end
+}
+
+#alias {test_loop} {
+  zone_loop
+    {test_zone}
+    {test_halt}
+  ;
+  zone_loop_start
+}
+
+#class {control_test} {save}
+#class {control_test} {close}

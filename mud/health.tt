@@ -1,0 +1,113 @@
+#class {health} {open}
+
+#alias {choose_best_heal} {
+  #if {$mana < 50} {
+    cast 'cure critic' %1
+  };
+  #elseif {($max_hp - $health) < 60} {
+    cast 'cure critic' %1
+  };
+  #else {
+    cast 'heal' %1
+  }
+}
+
+#var {health_state} {init}
+#var {move_state} {init}
+#var {health_low} {0}
+#var {move_low} {0}
+#var {health_fail_cooldown} {2.0}
+
+hook {on_health_ok} {create}
+hook {on_move_ok} {create};
+
+#function {health_delta} {
+  #math {result} {$health + $health_low - $max_hp}
+}
+
+#function {move_delta} {
+  #math {result} {$movement + $move_low - $max_refresh}
+}
+  
+#alias {need_health} {
+  #if {$health_low != 0 && @health_delta{} < 0} {
+    health_transition {low}
+  };
+  #elseif {$health_low != 0 && @health_delta{} >= 0} {
+    health_transition {ok}
+  }
+}
+
+#alias {need_move} {
+  #if {$move_low != 0 && $movement < @move_delta{} < 0} {
+    move_transition {low}
+  };
+  #elseif {$move_low != 0 && @move_delta{} >= 0} {
+    move_transition {ok}
+  }
+}
+
+#alias {nudge_autohealth} {
+  need_health;
+  need_move
+}
+
+#alias {health_transition} {
+  #if {"$health_state" != "%1"} {
+    #local {previous_health_state} {$health_state};
+    #var {health_state} {%1};
+    debug AUTO-HEAL: previous=$previous_health_state state=$health_state health=$health;
+    
+    #if {"$health_state" == "ok"} {
+      hook {on_health_ok} {fire}
+    } {
+      hook {on_health_low} {fire}; 
+    }
+  };
+  
+  #if {"$health_state" == "low"} {
+    health_attempt_heal  
+  }
+}
+
+#alias {health_attempt_heal} {
+  #if {"$health_state" != "ok" && @has_labeled_task{global_tasks;health_heal} == 0} {
+    debug HEALTH-ATTEMPT-HEAL state=$health_state delta=@health_delta{} health=$health;
+    #var global_tasks;
+    exec {health_heal} {cmd_heal_me} {need_health} {#delay {need_health} {$health_fail_cooldown}}
+  }
+}
+
+#alias {move_transition} {
+  #if {"$move_state" != "%1"} {
+    #local {previous_move_state} {$move_state};
+    #var {move_state} {%1};
+    debug AUTO-REFRESH: previous=$previous_move_state state=$move_state movement=$movement;
+    
+    #if {"$move_state" == "ok"} {
+      hook {on_move_ok} {fire}
+    } {
+      hook {on_move_low} {fire};
+      health_attempt_refresh
+    }
+  };
+  
+  #if {"$move_state" == "low"} {
+    health_attempt_refresh    
+  }
+}
+
+#alias {health_attempt_refresh} {
+  #if {@has_labeled_task{global_tasks;health_refresh} == 0} {
+    exec {health_refresh} {cmd_refresh_me} {need_move} {#delay {need_move} {$health_fail_cooldown}}
+  }
+}
+
+hook {on_health_up} {add} {autohealth} {need_health}
+hook {on_health_down} {add} {autohealth} {need_health}
+hook {on_movement_up} {add} {autohealth} {need_move}
+hook {on_movement_down} {add} {autohealth} {need_move}
+hook {on_tick} {add} {autohealth} {nudge_autohealth}
+
+#class {health} {save}
+#class {health} {close}

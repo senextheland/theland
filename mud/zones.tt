@@ -1,0 +1,303 @@
+#class {zones} {open}
+
+#alias {[]newbie} {3w5s2eu}
+#alias {[]pal} {6e2u3n4e2n4e3ne2u3e5n}
+#alias {[]thief} {s2e2s8en7esnwen14eus;open gate;4snd4wswnun2dwn2wndn2en}
+
+#var {mk_pawn} {1s3w3s3e1s2e2n}
+#alias {[]pawn} {$mk_pawn}
+#var {pawn_mk} {2s2w1n3w3n3e1n}
+#alias {pawn[]} {$pawn_mk}
+#var {mk_inn} {6e1s2e5s1w1s1u}
+#alias {[]inn} {$mk_inn}
+#var {inn_mk} {1d1n1e5n2w1n2w;open gate;4w}
+#alias {inn[]} {$inn_mk}
+#var {mk_bank} {3e2n1w}
+#alias {[]bank} {$mk_bank}
+#var {bank_mk} {1e2s3w}
+#alias {bank[]} {$bank_mk}
+
+#alias {[]eddy} {5w6s2e3nw}
+#alias {eddy[]} {e3s2w6n5e}
+#var {path_hyrule} {4e3n2w9n19e1n}
+#var {path_hyrule_fairy} {3n1w1w1n}
+#alias {[]hyrule} {$path_hyrule}
+
+#var {path_enfan} {13w1n}
+#alias {[]enfan} {$path_enfan}
+#var {path_blizz} {6e10n2e17n5ene3n}
+#alias {[]blizz} {$path_blizz}
+#var {path_drow} {s2e2s8en7esnwen14eus;open gate;4snd4wswnun2d}
+#alias {[]drow} {$path_drow}
+#alias {[]yellow} {4w3n2e9n4es}
+#var {path_camelot} {6e10n2e14n2w7n2e2n2wn5n}
+#alias {[]camelot} {$path_camelot}
+#alias {[]valley} {6e10n2e4n2en2end}
+#var {path_paramor} {6e4nw}
+#alias {[]paramor} {$path_paramor}
+#alias {[]mines} {4w3n2e4nwd}
+#alias {[]church} {3w4w2s3e3s2e10n2en}
+#var {path_antipal} {6e10n2e17nw3nwn}
+#alias {[]antipal} {$path_antipal}
+#var {path_tzen} {4e2n2e2n2e1n}
+#alias {[]tzen} {4e2n2e2n2en}; #nop pick and open tagiimec, n
+#var {path_narnia} {6e5s3e1n7e1s1n1w1e1n14e1u11n;open gate;10n}
+#alias {[]narnia} {$path_narnia}
+#var {path_tridac} {s2e2s16w2sw2ses2wse2ses}
+#alias {[]tridac} {$path_tridac}
+#alias {[]red} {4w3n2e9n6e10nwn}
+#var {path_x2} {1s2e2s11w2s3e4s}
+#alias {[]x2} {$path_x2}
+#var {path_dune} {3e4s2w;get ticket;unlock curtain;drop ticket;open curtain}
+#var {path_bryad} {6e2u2n1w1n3w2s}
+#alias {[]bryad} {$path_bryad}
+
+#class {zones} {save}
+#class {zones} {close}
+
+
+#nop -----------------------------------------
+#nop Blizz
+#nop -----------------------------------------
+ 
+#alias {zone_blizz_walk} {zone_extend {walk_fast {$path_blizz} {A Frozen Path}}; zone_blizz}
+#alias {zone_blizz} {
+  zone_extend
+    {set_target blizz}
+    {group_scrappy}
+    {dagger_walk_path {3w1n4s2e1s1w2n1e2s4n1e1s} {blizz}}
+    {walk_fast {1n} {A Frozen Path}}
+}
+
+
+#nop -----------------------------------------
+#nop Antipal
+#nop -----------------------------------------
+
+#alias {zone_antipal_walk} {zone_extend {walk_fast {$path_antipal} {Morganna's Hut}}; zone_antipal}
+#alias {zone_antipal} {  
+  zone_extend
+    {set_target anti}
+    {group_scrappy}
+    {dagger_walk_path {1d1s1e1w1s1e2w1e2s3e3w2n1w1d3s1d3s2e1s1w1n1s3w1n4e1s2w1d} {anti}}
+    {open_door {temple}}
+    {dagger_walk_path {2s1e2w1e1s1e3w2e4s3n3e5w} {anti}}
+    {need_pawn pawn_antipal}
+}
+#alias {pawn_antipal} {
+  pawn_all {anti;black-boots;black-plate;black-shield;black-cloak;black-plates;wad-bandages;black-rose}
+}
+
+
+#nop -----------------------------------------
+#nop Tridac
+#nop -----------------------------------------
+
+#alias {zone_tridac_walk} {zone_extend {walk_fast {$path_tridac;1d} {Ice Cavern Entrance}}; zone_abbrev_tridac}
+#alias {zone_abbrev_tridac} {
+  zone_extend
+    {set_target tridac}    
+    {dagger_walk_path {1s2e1s1e1s1e2w1e1n1w1n2w} {tridac}}
+    {dagger_walk_path {1w2s1w1n1s1e2n1e2s} {tridac}}
+
+    {kill_walk_path {2s} {tridac}}
+    
+    {dagger_walk_path {2e1n1e2s1w1s1w1e1s1e} {tridac}}
+    {teleport_room {Stopped}}
+    {kill_room {tridac}}
+    {dagger_walk_path {3e2s1e1n1e} {tridac}}
+    {kill_walk_path {1n1e} {tridac}}
+    {need_pawn pawn_tridac}
+}
+#alias {pawn_tridac} {pawn_all {tridac}}
+
+
+#nop -----------------------------------------
+#nop Hyrule
+#nop -----------------------------------------
+
+#alias {zone_fairy_walk} {
+  ext_walk_to_hyrule;
+  ext_hyrule_fairy
+}
+
+#alias {zone_hyrule_walk} {
+  ext_walk_to_hyrule;
+  ext_hyrule_fairy;
+  ext_fairy_regen;
+  ext_hyrule_around_fairy;
+  ext_fairy_regen;
+  zone_extend
+    {need_pawn pawn_hyrule}
+}
+
+#alias {ext_walk_to_hyrule} {
+  zone_extend
+    {set_target hyrule}
+    {walk_fast {$path_hyrule} {On the sandy ocean shore of Hyrule}}    
+}
+
+#alias {ext_hyrule_fairy} {
+  zone_extend
+    {dagger_walk_path {2n} {hyrule}}
+    {kill_walk_path {3e3w1n} {hyrule}}
+    {dagger_walk_path {2w} {hyrule}}
+    {walk_fast {1n} {Before a magical pond}}
+}
+
+#alias {ext_fairy_regen} {
+  zone_extend
+    {confirm_room {Before a magical pond}}
+    {regen_fairy}
+}
+
+#alias {ext_hyrule_around_fairy} {
+  zone_extend
+    {walk_fast {1s} {Within the green woods of Hyrule}}
+    {dagger_walk_path {2e1s} {hyrule}}
+    {kill_walk_path {1s1n} {hyrule}}
+    {dagger_walk_path {1e1s1n1e} {hyrule}}
+    {kill_walk_path {1e1w} {hyrule}}
+    {dagger_walk_path {1n} {hyrule}}
+    {kill_walk_path {1e1w} {hyrule}}
+    {dagger_walk_path {2n} {hyrule}}
+    {kill_walk_path {1e1w} {hyrule}}
+    {dagger_walk_path {1n2e2w1s1e1s1e3s} {hyrule}}
+    {kill_walk_path {1s1n2w1n2w1n2w} {hyrule}}
+    {walk_fast {1n} {Before a magical pond}}
+}
+
+#alias {pawn_hyrule} {pawn_all {hyrule-spear}{hyrule-ball}{boulder}}
+
+
+#nop -----------------------------------------
+#nop Xanth2
+#nop -----------------------------------------
+
+#alias {zone_x2_walk} {zone_extend {walk_fast {$path_x2;1e1s} {A Marshy Glen}}; zone_x2}
+#alias {zone_x2} {
+  zone_extend
+    {set_target xanth2}
+    {dagger_walk_path {1s2e1w5s6e1n1e2s} {xanth2}}
+    {confirm_room {Approaching The Gap Chasm}}
+    {kill_walk_path {1s} {xanth2}}
+    {confirm_room {The Brink of the Gap Chasm}}
+    {kill_walk_path {2w} {xanth2}}
+    {confirm_exit {An Invisible Bridge}}
+    {kill_walk_path {2s} {xanth2}}
+    {confirm_room {The Far Side of the Gap}}
+    {dagger_walk_path {1d1w1d1n1w1e1s1u1e1u} {xanth2}}
+    {kill_walk_path {3s} {xanth2}}
+    
+    {dagger_all {saw;tree}}
+    {kill_walk_path {1n} {xanth2}}
+    {dagger_all {saw;tree}}
+
+    {kill_walk_path {1s1e2s} {xanth2}}
+    {dagger_walk_path {2s1e1s} {nickelpede}}
+    {dagger_walk_path {1n1w3n} {xanth2}}
+    {kill_walk_path {1e1s1w1s} {xanth2}}
+    
+    {walk_fast {4s} {Castle Roogna's Front Foyer}}
+
+    {set_target undead}
+    {dagger_walk_path {2e1u1d4w1u1d2e} {undead}}
+    {need_pawn pawn_x2}
+}
+#alias {pawn_x2} {pawn_all {queue-vine;flesh-food;vole-claws;duritium-key}}
+
+
+#nop -----------------------------------------
+#nop Tzen
+#nop -----------------------------------------
+
+#alias {zone_tzen} {
+  ext_walk_tzen;
+  ext_walk_tzen_palace;
+  ext_tzen_floor_one;
+  zone_extend {regen_some};
+  ext_tzen_floor_two;
+  ext_tzen_get_magicite;
+  zone_extend {need_pawn pawn_tzen}
+}
+
+#alias {pawn_tzen} {pawn_all {tzencat}}
+
+#alias {zone_tzen_walk_sell_magicite} {
+  ext_walk_tzen;
+  ext_tzen_alchemist;
+  zone_extend {walk {1n}}
+};
+
+#alias {ext_walk_tzen} {
+  zone_extend
+    {walk_fast {$path_tzen} {The Base of the Ancient Mountain}}
+    {pick {tagiimec}}
+    {open_door {tagiimec}}
+    {walk_fast {2n} {The Lost City of Tzen}}
+}
+
+#alias {ext_tzen_alchemist} {
+  zone_extend
+    {walk_fast {1e1s} {The Alchemy}}
+    {pawn_all_from_bag {magicite} {xanth-bag}}
+}
+
+#alias {ext_walk_tzen_palace} {
+  zone_extend
+    {walk_fast {2n} {Before the gates of the Palace of Tzen}}
+    {unlock_door {tzen-key} {gate}}
+    {open_door {gate}}
+    
+    {zone_safety off}
+    {group_walk {1n} {You enter the Palace of Tzen}}
+    {group_teleport_room {The Palace of Tzen}}
+    {zone_safety on}
+
+    {walk_fast {1n1w2n1e1n} {The Opal Stairs}}
+    {set_zone_target feline}
+}
+
+#alias {ext_tzen_floor_one} {
+  zone_extend
+    {walk_fast {1u} {You climb the beautiful staircase to the second floor.}}
+    {dagger_walk_path {2n2e3n2w1e1s1e2s2w2s} {feline}}    
+    {walk_fast {1d} {The Opal Stairs}}
+    {sync_command {drop all.magicite}}
+}
+
+#alias {ext_tzen_get_magicite} {
+  zone_extend
+    {gather_all_into_bag {magicite} {xanth-bag}}
+}
+
+#alias {ext_tzen_floor_two} {
+  zone_extend
+    {walk_fast {2u} {You arrive at the third floor of the palace}}
+    {dagger_walk_path {3n1w2n2e2s1w3s} {feline}}
+    {walk_fast {2d} {The Opal Stairs}}    
+    {sync_command {drop all.magicite}}
+}
+
+#alias {ext_tzen_floor_three} {
+  zone_extend
+    {walk_fast {3u} {You climb to the fourth floor.}}
+    {dagger_walk_path {4n1w1n2e1s1w4s} {feline}}
+    {walk_fast {3d} {The Opal Stairs}}
+    {sync_command {drop all.magicite}}
+}
+
+
+#nop -----------------------------------------
+#nop Bryad
+#nop -----------------------------------------
+
+#alias {zone_bryad_walk} {zone_extend {walk_fast {$path_bryad} {The First Island of Bryad}}; zone_bryad}
+#alias {zone_bryad} {
+  zone_extend
+    {set_target bryad}
+    {group_noscrap}
+    {walk_fast {1e2s1w1s1w2s1e1n} {The Giant Tree}}
+    {kill_walk_path {1e} {toucan}}
+    {sync_command {get all corpse}}
+}

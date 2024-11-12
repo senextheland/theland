@@ -1,0 +1,45 @@
+#class {adapter} {open}
+
+#nop ---------------------------------------------------------------------------------
+#nop These commands need to be defined in a main character file
+#nop ---------------------------------------------------------------------------------
+
+#var {mode_scrap} {on}
+#var {mode_dispel} {off}
+#var {mode_align} {}
+#var {mode_life_protect} {}
+
+#alias {cmd_reset_weapon_state} {%1}
+#alias {cmd_dispel_on} {%2}
+#alias {cmd_dispel_off} {%1}
+#alias {cmd_scrap_on} {%1}
+#alias {cmd_scrap_off} {%1}
+#alias {cmd_mob_align_evil} {%1}
+#alias {cmd_mob_align_good} {%1}
+#alias {cmd_life_protect_on} {%2}
+#alias {cmd_life_protect_off} {%1}
+#alias {cmd_pick_lock} {%3}
+
+#alias {cmd_heal_me} {debug UNIMPLEMENTED: cmd_heal_me}
+#alias {cmd_remove_curse} {exec_cast {remove curse} {%1} {%2} {%3}}
+#alias {cmd_cast_me} {exec_cast {%1} {$me} {%2} {%3}}
+#alias {cmd_recall_fallback} {exec_cast {word} {} {%1} {%2}}
+
+#alias {regen} {debug UNIMPLEMENTED: regen}
+#alias {unregen} {debug UNIMPLEMENTED: unregen}
+
+#nop ---------------------------------------------------------------------------------
+#nop At-keys shortcuts
+#nop ---------------------------------------------------------------------------------
+ 
+#alias {scrapon} {exec {scrapon} {cmd_scrap_on} {debug SCRAP-ON: OK} {debug SCRAP-ON: FAIL}}
+#alias {scrap} {scrapon}
+#alias {scrapoff} {exec {scrapoff} {cmd_scrap_off} {debug SCRAP-OFF: OK} {debug SCRAP-OFF: FAIL}}
+#alias {noscrap} {scrapoff}
+#alias {mode_evil} {exec {mode_evil} {cmd_mob_align_evil} {debug MODE-EVIL: OK} {debug MODE-EVIL: FAIL}}
+#alias {mode_good} {exec {mode_good} {cmd_mob_align_good} {debug MODE-GOOD: OK} {debug MODE-GOOD: FAIL}}
+#alias {lifeprot} {exec {lifeprot} {cmd_life_protect_on} {debug LIFEPROT-ON: OK} {debug LIFEPROT-ON: FAIL}}
+#alias {nolifeprot} {exec {nolifeprot} {cmd_life_protect_off} {debug LIFEPROT-OFF: OK} {debug LIFEPROT-OFF: FAIL}}
+
+#class {adapter} {save}
+#class {adapter} {close}

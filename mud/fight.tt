@@ -1,0 +1,88 @@
+#nop
+
+hook {on_rip} {create}
+hook {on_fight_start} {create}
+#alias {do_fight_assist} {assist %1}
+
+#class {fight} {open}
+
+#var {combat_status} {idle}
+#var {currently_fighting} {}
+  
+#var {fighting_words} {annihilates|atomizes|bites|channels|claws|crushes|decimates|demolishes|devastates|ethereally touches|grapples with|hits|massacres|misses|mutilates|obliterates|pierces|pulverizes|punches|rocks|saws|smashes|stuns|tangles|thrashes|vanquishes|whips}
+#var {you_fighting_words} {annihilate|atomize|bite|channel|claw|crushe|decimate|demolish|devastate|grapple with|hit|leaps upon|massacre|mutilate|obliterate|pierce|pulverize|punch|rock|thrash|stun|vanquish|whip}
+
+#action {You {$you_fighting_words} %2 with} {update_fight {%2}}
+#action {%1 {$fighting_words} you} {update_fight {%1}}
+#action {%1 sees you, and attacks!} {update_fight {%1}}
+#action {You dodge %1's} {update_fight {%1}}
+#action {Your fire shield flares about %1 and you have} {update_fight {%1}}
+
+#action {You intentionally collide with %1 and send him sprawling to the ground.} {update_fight {%1}}
+#action {As %1 avoids your bash, you topple over and fall to the ground.} {update_fight {%1}; stand}
+#action {Maybe you should get on your feet first?} {stand}
+#action {You are rescued by %1, you are confused!} {
+  #var {combat_status} {idle};
+  maybe_assist {%1} {$currently_fighting}
+}
+#action {%1 disappears.} {
+  #if {"$combat_status" != "idle"} {  
+    debug MOB TELEPORTED AWAY;
+    hook on_prompt {once} {after_mob_teleport} {
+      end_fight {$currently_fighting} {teleport}
+    }
+  }
+}
+
+#action {R.I.P} {
+  hook on_prompt {once} {after_rip} {
+    end_fight {$currently_fighting} {rip}
+  }
+}
+
+#alias {reset_fight_timer} {
+  #undelay {fighting_timeout};
+  #delay {fighting_timeout} {fighting_timed_out} {5}    
+}
+
+#alias {update_fight} {
+  reset_fight_timer;
+  #if {"$combat_status" == "idle"} {
+    debug BEGIN FIGHT;
+    #var {combat_status} {fighting};
+    #var {currently_fighting} {%1};
+    hook on_fight_start {fire} {%1}
+  }
+}
+
+#alias {maybe_assist} {
+  reset_fight_timer;
+  #if {"$combat_status" == "idle"} {
+    debug BEGIN ASSIST {%1} {%2};
+    #var {combat_status} {fighting};
+    #var {currently_fighting} {%2};
+    do_fight_assist {%1} {%2}
+  }
+}
+
+#alias {end_fight} {
+  #if {"$combat_status" == "fighting"} {
+    #var {combat_status} {idle};
+    #var {currently_fighting} {};
+    debug END FIGHT will emit RIP after short delay;
+    #undelay {fighting_timeout};
+    #delay {fighting_timeout} {
+      #var {fight_last_mob} {%1};
+      #var {fight_end_reason} {%2};
+      hook {on_rip} {exec-each} {#nop} {#nop}
+    } {0.1}
+  }
+}
+
+#alias {fighting_timed_out} {
+  debug FIGHT TIMED OUT (bug?);
+  end_fight {$currently_fighting}
+}
+
+#class {fight} {save}
+#class {fight} {close}

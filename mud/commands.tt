@@ -1,0 +1,302 @@
+#class {commands} {open}
+
+#var {target} {}
+
+#alias {cmd_sneak} {
+  exec_task {cmd_sneak} {sneak} {%1} {%2} {
+    #action {Ok, you'll try to move silently for a while.} {task_cmd_sneak_done};
+    #action {You are no longer sneaky.} {task_cmd_sneak_attempt}
+  }
+}
+
+#alias {cmd_unsneak} {
+  exec_task {cmd_unsneak} {sneak} {%1} {%2} {
+    #action {Ok, you'll try to move silently for a while.} {task_cmd_unsneak_attempt};
+    #action {You are no longer sneaky.} {task_cmd_unsneak_done}
+  }
+}
+
+#alias {cmd_agg} {
+  exec_task {cmd_agg} {agg} {%1} {%2} {
+    #action {You are now aggressive towards all aggressive monsters, and will attack first!} {task_cmd_agg_done};
+    #action {You are not aggressive towards aggressive monsters anymore.} {task_cmd_agg_attempt}
+  }
+}
+
+#alias {cmd_unagg} {
+  exec_task {cmd_unagg} {agg} {%1} {%2} {
+    #action {You are now aggressive towards all aggressive monsters, and will attack first!} {task_cmd_unagg_attempt};
+    #action {You are not aggressive towards aggressive monsters anymore.} {task_cmd_unagg_done}
+  }
+}
+
+#alias {cmd_pick} {
+  exec_task {cmd_pick} {pick %1} {%2} {%3} {
+    #action {The lock quickly yields to your skills.} {task_cmd_pick_done};
+    #action {I see no %1 here.} {task_cmd_pick_fail};
+    #action {Oh.. it wasn't locked at all.} {task_cmd_pick_done};
+    #action {You failed to pick the lock.} {task_cmd_pick_attempt};
+    #action {You realize that the door is already open.} {task_cmd_pick_done}
+  }
+}
+
+#alias {cmd_open_door} {
+ exec_task {cmd_open_door} {open %1} {%2} {%3} {
+   #action {Ok.} {task_cmd_open_door_done};
+   #action {It's already open!} {task_cmd_open_door_done};
+   #action {Heck.. it ain't even closed!} {task_cmd_open_door_done};
+   #action {I see no %1 here.} {task_cmd_open_door_fail};
+   #action {The lock quickly yields to your skills.} {task_cmd_open_door_fail}
+ }
+}
+
+#alias {cmd_unlock_door} {
+ exec_task {cmd_unlock_door} {get %1; unlock %2; drop all.%1} {%3} {%4} { 
+   #action {You do not have the proper key for that.} {task_cmd_unlock_door_fail};
+   #action {*click*} {task_cmd_unlock_door_done};
+   #action {It's already unlocked, it seems.} {task_cmd_unlock_door_done};
+   #action {Heck.. it ain't even closed!} {task_cmd_unlock_door_done}
+ }  
+}
+
+#alias {cmd_unlock_door_with_key} {
+ exec_task {cmd_unlock_door_with_key} {%1; unlock %2; %3} {%4} {%5} { 
+   #action {You do not have the proper key for that.} {task_cmd_unlock_door_with_key_fail};
+   #action {*click*} {task_cmd_unlock_door_with_key_done};
+   #action {It's already unlocked, it seems.} {task_cmd_unlock_door_with_key_done};
+   #action {Heck.. it ain't even closed!} {task_cmd_unlock_door_with_key_done}
+ }  
+}
+
+#alias {cmd_close_door} {
+  exec_task {cmd_close_door} {close %1} {%2} {%3} {
+    #action {Ok.} {task_cmd_close_door_done};
+    #action {I see no %1 here.} {task_cmd_close_door_fail};
+    #action {It's already closed!} {task_cmd_close_door_done}
+  }
+}
+
+#alias {cmd_wiggle} {
+  exec_task {cmd_wiggle} {wiggle} {%1} {%2} {
+    #action {Your wiggle} {task_cmd_wiggle_done}
+  }
+}
+
+#alias {cmd_look_room} {
+  exec_task {cmd_look_room} {look} {%2} {%3} {
+    #action {%1} {task_cmd_look_room_done};
+    #action {Exits:} {task_cmd_look_room_fail}
+  }
+}
+
+#alias {reset_target} {#var {target} {%1}}
+#alias {cmd_set_target} {
+  exec_task {cmd_set_target} {#show SET-TARGET: %1} {%2} {%3} {
+    #action {SET-TARGET: %%1} {reset_target {%%1}; task_cmd_set_target_done}
+  }
+}
+
+#alias {cmd_recall} {
+  exec_task {cmd_recall} {look} {%1} {%2} {
+    #action {Inn of the Flying Circus} {task_cmd_recall_done};
+    #action {Exits:} {rec recall-scroll};
+    #action {You do not have that item.} {
+      cmd_recall_fallback
+        {task_cmd_recall_done}
+        {task_cmd_recall_fail}
+    }
+  }
+}
+
+#alias {cmd_ponder} {
+  exec_task {cmd_ponder} {ponder} {%1} {%2} {
+    #action {You ponder the situation.} {task_cmd_ponder_done}
+  }
+}
+
+#alias {cmd_walk} {
+  debug ACTION-WALK {%1} -- {%2};
+  exec_task {cmd_walk} {%1} {%3} {%4} {
+    #action {Alas, you cannot go that way...} {task_cmd_walk_fail};
+    #action {Sorry, there is no room to get in there.} {task_cmd_walk_attempt};
+    #action {%2} {debug WALK-FAST DONE; task_cmd_walk_done};
+    #action {Nah... You feel too relaxed to do that..} {stand; task_cmd_walk_attempt}    
+  }
+}
+
+#alias {cmd_autoloot} {
+  exec_task {cmd_autoloot} {autoloot %1} {%2} {%3} {
+    #action {Autoloot what?!} {task_cmd_autoloot_fail};
+    #action {Autoloot is now ON.} {#if {"%1" == "on"} {task_cmd_autoloot_done} {task_cmd_autoloot_fail}};
+    #action {Autoloot is now OFF.} {#if {"%1" == "off"} {task_cmd_autoloot_done} {task_cmd_autoloot_fail}};
+    #action {Autolooting GOLD only.} {#if {"%1" == "gold"} {task_cmd_autoloot_done} {task_cmd_autoloot_fail}}
+  }
+}
+
+#alias {cmd_wait_here} {
+  exec_task {cmd_wait_here} {rest} {%1} {%2} {
+    #action {You sit down and rest your tired bones.} {task_cmd_wait_here_done};
+    #action {You are already resting.} {task_cmd_wait_here_done}
+  }  
+}
+
+#alias {cmd_give_all} {
+  exec_task {cmd_give_all} {give all.%1 %2} {%3} {%4} {
+    #action {You do not seem to have anything like that.} {task_cmd_give_all_fail};
+    #action {You give} {task_cmd_give_all_done}
+  }
+}
+
+#alias {cmd_score} {
+  #class {score} {open};
+
+  #var {score_max_hit} {0};
+  #var {score_max_mana} {0};
+  #var {score_max_movement} {0};
+  #var {score_gold_coins} {0};
+  #var {score_alignment} {0};
+
+  #var {max_mana} {0};
+  #var {max_refresh} {0};   
+  #var {max_hp} {0};
+
+  #class {score} {save};
+  #class {score} {close};
+
+  exec_task {cmd_score} {score} {%2} {%3} {
+    #action {You have %%%d(%%%d) hit, %%%d(%%%d) mana and %%%d(%%%d) movement points.} {  
+      #var {health} {%%%1}; #var {score_max_hit} {%%%2}; #var {max_hp} {%%%2};
+      #var {mana} {%%%3}; #var {score_max_mana} {%%%4}; #var {max_mana} {%%%4};
+      #var {movement} {%%%5}; #var {score_max_movement} {%%%6}; #var {max_refresh} {%%%6}
+    };
+
+    #action {Your alignment (-1000 : +1000): %%%d.} {
+      #var {score_alignment} {%%%1}
+    };
+
+    #action {have %%%d gold coins.} {
+      #var {score_gold_coins} {%%%1}
+    };
+
+    #action {You have been playing for} {%1; task_cmd_score_done}
+  }
+}
+
+#alias {cmd_wait_for_room} {
+  exec_task {cmd_wait_for_room}
+    {look}
+    {debug FOUND ROOM; %2}
+    {debug NO ROOM FOUND; %3}
+    {
+      #action {%1} {task_cmd_wait_for_doom_done};
+      #action {Exits:} {task_cmd_wait_for_room_reset_timeout} {6}
+    }
+}
+
+#alias {cmd_teleport_room} {
+  exec_task {cmd_teleport_room}
+    {#tick {teleport_room} {look} {1}; look}
+    {debug FOUND TELEPORT ROOM; %2}
+    {debug NO TELEPORT ROOM FOUND; %3}
+    {
+      #action {%1} {task_cmd_teleport_room_done};
+      #alias {task_cmd_teleport_room_end_hook} {
+        #untick {teleport_room}
+      }
+    }
+}
+
+#alias {cmd_layhands} {
+  exec_task {cmd_layhands} {lay %1} {%2} {%3} {
+    #action {You never did get First Aid Merit Badge did you?} {task_cmd_layhands_fail};
+    #action {You lay hands on} {task_cmd_layhands_done};
+    #action {Don't try to heal what ain't hurt!} {task_cmd_layhands_done}; 
+    #nop TODO -- not enough mana
+  } {15}
+}
+
+#alias {cmd_ask_for_heal} {
+  exec_task {cmd_ask_for_heal} {tell_robot healme} {%1} {%2} {
+    #action {tells you 'heal failed} {debug ASK-FOR-HEAL: fail; task_cmd_ask_for_heal_fail};
+    #action {tells you 'cure critic failed} {debug ASK-FOR-HEAL: fail; task_cmd_ask_for_heal_fail};
+    #action {You feel better!} {task_cmd_ask_for_heal_done};
+    #action {A strange cold fire seizes your heart} {task_cmd_ask_for_heal_done};
+    #action {lays hands on you.} {task_cmd_ask_for_heal_done}
+  }
+}
+
+#alias {cmd_ask_for_refresh} {
+  exec_task {cmd_ask_for_refresh} {tell_robot cast second wind} {%1} {%2} {
+    #action {tells you 'second wind failed} {task_cmd_ask_for_refresh_fail};
+    #action {You feel less tired.} {task_cmd_ask_for_refresh_done}
+  }
+}
+
+#alias {cmd_check_container} {
+  exec_task {cmd_check_container} {look in %1} {%3} {%4} {
+    #action {You do not see that item here.} {
+      debug CONTAINER-CHECK: NO CONTAINER {%1};
+      task_cmd_check_container_fail
+    };
+
+    #action {(carried) :} {
+      hook {on_prompt} {once} {cmd_check_container} {
+        debug CONTAINER-CHECK: MISSING {%2};
+        #alias {on_prompt} {#nop};
+	task_cmd_check_container_fail
+      }
+    };
+    
+    #action {%2} {
+      debug CONTAINER-CHECK: FOUND {%2};
+      hook {on_prompt} {remove} {cmd_check_container};
+      task_cmd_check_container_done
+    }
+  } 
+}
+
+#alias {cmd_check_exit} {
+  exec_task {cmd_check_exit} {exits} {%2} {%3} {
+    #action {%1} {
+      debug CHECK-EXIT-FOUND;
+      hook {on_prompt} {remove} {cmd_check_exit};
+      task_cmd_check_exit_done
+    };
+    
+    #action {Obvious exits:} {
+      hook {on_prompt} {once} {cmd_check_exit} {
+	debug CHECK-EXIT-PROMPT-FAIL;
+	task_cmd_check_exit_fail
+      }
+    }
+  }
+}
+
+#alias {cmd_deposit} {
+  exec_task {cmd_deposit} {#show GIVE-DEPOSIT} {%1} {%2} {
+    #var {deposit_coins} {0};
+    
+    #action {GIVE-DEPOSIT} {
+      #math {deposit_coins} {$score_gold_coins - 600000};
+      #if {$deposit_coins > 0} {
+        debug DEPOSIT (ok) deposit=$deposit_coins total=$score_gold_coins;
+        deposit $deposit_coins
+      } {        
+        debug DEPOSIT (gold-low) deposit=$deposit_coins total=$score_gold_coins;
+	task_cmd_deposit_done
+      }
+    };
+    #action {Thank you.} {task_cmd_deposit_done}
+  }
+}
+
+#alias {cmd_farlook} {
+  exec_task {cmd_farlook} {farlook %1} {%2} {%3} {
+    #action {you spot %%%1.} {task_cmd_farlook_done};
+    #action {You peer around, but can't find anyone of that description.} {task_cmd_farlook_fail {not-found}};
+    #action {You see %%%1 right here.} {task_cmd_farlook_fail {here}}
+  }
+}
+
+#class {commands} {save}
+#class {commands} {close}

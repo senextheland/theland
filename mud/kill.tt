@@ -1,0 +1,72 @@
+#class {kill} {open}
+
+#alias {kill_room} {
+  #class {kill_room} {open};
+
+  #var {kill_room_targets} {%1};
+  #alias {kill_room_done} {kill_room_end; %2};
+  
+  #list {kill_room_targets} {explode} {;};
+  #var {kill_room_target} {};
+      
+  #var {kill_room_next_target} {0};
+
+  #alias {kill_room_attack} {
+    reset_zone_timeout;
+    kill $kill_room_target
+  };
+
+  #alias {kill_room_next_target} {
+    #list {kill_room_targets} {get} {1} {kill_room_target};
+    #if { "$kill_room_target" == "0" } {
+      kill_room_done
+    } {
+      #list {kill_room_targets} {delete} {1};
+      kill_room_attack
+    }
+  };
+
+  #action {They aren't here.} {kill_room_next_target};
+  hook {on_rip} {add} {kill_room} {
+    trampoline {kill_room} {kill_room_attack};
+    %%1
+  };
+
+  #alias {kill_room_end} {
+    #class {kill_room} {kill};
+    #undelay {kill_room}
+  };
+
+  #class {kill_room} {save};
+  #class {kill_room} {close};
+
+  kill_room_next_target
+}
+
+#alias {kill_walk_path_end} {#nop}
+#alias {kill_walk_path} {
+  #class {kill_walk_path} {open};
+
+  #var {kill_walk_path} {%1};
+  #var {kill_walk_path_target} {%2};
+  #alias {kill_walk_path_done} {kill_walk_path_end; %3};
+  #alias {kill_walk_path_fail} {kill_walk_path_end; %4};
+
+  #alias {kill_walk_path_end} {
+    #class {kill_walk_path} {kill};
+    #alias {kill_walk_path_end} {#nop}
+  };
+
+  #alias {kill_walk_room} {
+    kill_room {$kill_walk_path_target} {step}
+  };
+  
+  #class {kill_walk_path} {save};
+  #class {kill_walk_path} {close};
+
+  walk_each {$kill_walk_path} {kill_walk_room} {kill_walk_path_done} {kill_walk_path_fail};
+  step
+}
+
+#class {kill} {save}
+#class {kill} {close}

@@ -1,0 +1,64 @@
+#class {spellup} {open}
+
+#var need_spells {bless;armor}
+
+#alias {spellup} {
+  #class {spellup} {open};
+
+  #alias {spellup_done_continuation} {%1};
+  #list {attr_spells} {create};
+
+  #action {Spell : '{[\w\s]+}'} {#list {attr_spells} add {%%1}};  
+
+  #action {You are susceptible to} {
+    hook {on_prompt} {once} {spellup} {
+      diff_need_spells;
+      #class {spellup} {save}
+    }
+  };
+
+  #alias {cmd_cast_if_needed} {
+    #list {attr_spells} {find} {%%1} {result};
+    debug SPELLS attr_spells=$attr_spells;
+    debug SPELLUP: probe %%1 --> $result (%%0);
+    #if {$result == 0} {
+      cmd_cast_me {%%1} {%%2} {%%3}
+    } {
+      %%2
+    }
+  };
+
+  #alias {diff_need_spells} {
+    debug SPELLUP: checking $need_spells;
+    foreach_exec_task {diff_need_spells} {$need_spells} {cmd_cast_if_needed}
+      {spellup_done_continuation}
+      {spellup_done_continuation}
+  };
+
+  attr
+}
+
+#alias {need_spell_add} {
+  #local {temp_spells} {$need_spells};
+  #list {temp_spells} {explode} {;};
+  #list {temp_spells} {find} {%1} {result};
+  #if {"$result" == "0"} {
+    #list {temp_spells} {add} {%1};
+    #list {temp_spells} {collapse} {;};
+    #var {need_spells} {$temp_spells}
+  }
+}
+
+#alias {need_spell_remove} {
+  #local {temp_spells} {$need_spells};
+  #list {temp_spells} {explode} {;};
+  #list {temp_spells} {find} {%1} {result};
+  #if {"$result" != "0"} {
+    #list {temp_spells} {delete} {$result};
+    #list {temp_spells} {collapse} {;};
+    #var {need_spells} {$temp_spells}
+  }  
+}
+
+#class {spellup} {save}
+#class {spellup} {close}

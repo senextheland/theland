@@ -1,0 +1,136 @@
+#alias {eq_repair} {
+  #class {eq_repair} {open};
+
+  #alias {on_repair_done} {#class {eq_repair} {kill}; %1};
+  #alias {on_repair_fail} {#class {eq_repair}; #class {eq_repair} {kill}; %2};  
+
+  #list {eq_list} {create};
+  #var {eq_item_index} {0};  
+  #var {eq_item_name} {0};
+  #var {current_eq_list_item} {0};
+  
+  #list {eq_map} {create}
+    {A glowing breast plate}{ucardi-plate}
+    {a ring made of pure holiday spirit}{holiday-ring}
+    {A ring of giant's strength}{giant-strength}
+    {the lions mane}{mane}
+    {A glowing visor}{ucardi-visor}
+    {A pair of glowing leg plates}{ucardi-plates}
+    {Toq's second-hand leather boots}{despair-boots}
+    {A pair of glowing gauntlets}{ucardi-gauntlets}
+    {Armor Formed from Filthy Water}{despair-bracers}
+    {the shield of the lion}{shield}
+    {Mystic Ruby Waistband}{waistband}
+    {A golden key shaped into a wristband}{key-band}
+    {the light blue bracelet of the valley}{blue-bracelet}
+    {A Purple Shard}{shard}
+    {A glowing scale of the serpent}{serpent-scale}
+    {the One Ring}{one-ring}
+    {An embroidered fur cloak}{fur-cloak}
+    {The robe of the golden dragon}{dragon-robe}
+    {a Bene Gesserit hood}{hood}
+    {polyester slacks}{slacks}
+    {gorilla gloves}{gloves}
+    {A pair of Golden Armlets}{armlets}
+    {A Heavy Tower Shield}{shield}
+    {a white robe}{white-robe}
+    {a cheetah skin}{cheetah-skin}
+    {A Flaming Bracelet}{flaming-bracelet}
+    {A wristband woven of moss}{mossy}
+    {An Inky Black Flame}{black-flame}
+    {the Skin of the Sky Silkworm}{silkworm}
+    {A hide of a Fruban villager}{ponasdar-hide}
+    {the lionskin suit}{lionskin-suit}
+    {a sturdy mithril shield}{sturdy-shield}
+    {A Warder's Cloak}{warder-cloak}
+    {broons bane}{broons}
+    {A Mithril Girdle with Dwarven Runes}{mithril-girdle}
+    {Some mithril plate mail}{mithril-plate}
+    {a ring made of pure holiday spirit}{holiday-ring}
+    {Some Wicker Boots}{wicker-boots}
+    {the Firestar}{firestar}
+    {A cloak with the Imperial Crest}{imperial-cloak}
+    {A halo}{halo}
+    {green scale armor}{green-scale-armor}
+    {a Carbondanium Shield}{carbondanium-shield}
+    {The bracelet of the minotaur}{minotaur}
+    {A wristband woven of moss}{mossy}
+    {The Elfstone}{elfstone}
+    {Some black calfskin gloves}{calfskin-gloves}
+    {a small mithril girdle}{mithril-girdle}
+    {Some green armor}{green-armor}
+    {A bejeweled war crown}{war-crown}
+    {An Ornate beer Stein}{stein}
+    {The Pelt of the Golden Fox}{fox-pelt}
+    {Gauntlets of Ogre Power}{ogre-gauntlets}
+    {Desert Boots}{desert-boots}
+    {A Black Quilted Doublet}{quilted-doublet}
+    {A feather ring}{feather-ring}
+    {A Band of Tangle Tree Bark}{tree-bark}
+    {an 'I'm a Newbie!' Hat}{hat}
+    {A blue jewel suspended from a light gold chain}{blue-jewel}
+    {The Royal Scepter of the UnderSea Kingdoms}{undersea-scepter}
+    {The Holy Grail(invisible)}{holy-grail}
+    {The Holy Grail}{holy-grail}    
+    ;  
+
+  #alias {eq_repair_check} {
+    repair_next_item
+  };
+
+  #alias {repair_next_item} {
+    #list {eq_list} {get} {1} {current_eq_list_item};
+    #if {"$current_eq_list_item" != "0"} {
+      #list {eq_list} {delete} {1};
+      #list {current_eq_list_item} {explode} {:};
+      rem $current_eq_list_item[1]
+    } {
+      on_repair_done
+    }
+  };
+
+  #alias {repair_item} {
+    give $eq_item_name super
+  };
+
+  #alias {wear_again} {
+    #switch {"$current_eq_list_item[2]"} {
+      #case {"used as light"} {grab $eq_item_name};
+      #case {"held"} {grab $eq_item_name};
+      #case {"worn around wrist"} {wear $eq_item_name wrist};
+      #default {wear $eq_item_name}
+    }
+  };
+
+  #action {You are using:} {
+    hook {on_prompt} {once} {eq_repair} {eq_repair_check}
+  };
+
+  #action {[%%s%%d] <%%3> %%4} {
+    #regex {%%4} {It is in %%%2 condition.} {
+      #if {"&2" != "excellent"} {
+        #list {eq_list} {add} {%%2:%%3:&1}
+      }
+    }
+  };
+
+  #action {You stop using %%1.} {
+    #list {eq_map} {find} {%%1} {eq_item_index};
+    #if {$eq_item_index != 0} {    
+      #math {eq_item_index} {$eq_item_index + 1};
+      #var {eq_item_name} $eq_map[$eq_item_index];
+      repair_item
+    } {
+      #showme CANT LOOKUP NAME FOR %%1
+    }    
+  };
+
+  #action {The Super Repair Guy gives you} {
+    wear_again; repair_next_item
+  };
+
+  #class {eq_repair} {save};
+  #class {eq_repair} {close};
+
+  eq
+}

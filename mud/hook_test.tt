@@ -1,0 +1,45 @@
+#read mud/task.tt
+#read mud/exec.tt
+#read mud/hook.tt
+
+#class {hook_test} {open}
+
+#list {hooks_fired} {create};
+
+#alias {bounce_around} {
+  exec_task {bounce_around} {bounce} {%1} {%2} {
+    #action {BOIINNNNNNGG!} {task_bounce_around_done}; 
+    #alias {task_bounce_around_end_hook} {
+      #list {hooks_fired} {add} {bounce_around}
+    }   
+  }
+}
+
+#alias {rock_out} {
+  exec_task {rock_out} {rock} {%1} {%2} {
+    #nop fail on purpose;
+    #action {You rock out with your cock out!} {task_rock_out_fail forced};
+  
+    #alias {task_rock_out_end_hook} {
+      #list {hooks_fired} {add} {rock_out}
+    }  
+  }
+}
+
+#alias {end_test} {
+  debug TEST-HOOK %0: fired=$hooks_fired[];
+  #class {hook_test} {kill}
+}
+
+hook {test_hook} {create}
+hook {test_hook} {add} {hook1} {bounce_around}
+hook {test_hook} {add} {hook2} {rock_out}
+
+#class hook_test;
+
+hook {test_hook} {exec-each}
+  {end_test DONE}
+  {end_test FAIL}
+
+#class {hook_test} {save}
+#class {hook_test} {close}

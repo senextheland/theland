@@ -1,0 +1,81 @@
+#class {recover} {open}
+
+#var {fish_lost} {0}
+#var {fish_recover} {off}
+#var {fish_container} {golden-case}
+#var {expect_fish} {a frozen fish{.*}[4]}
+
+#alias {reset_lost_fish} {
+  #var {fish_lost} {0};
+  #var {fish_recover} {off}
+}
+
+#action {A long silver fish is here, immortalized in ice} {get all.frozen-fish};
+#action {gives you a frozen fish.} {fish_recovered {given}};
+#action {You get a frozen fish from the corpse} {fish_recovered {corpse}};
+
+#alias {fish_recovered} {
+  #if {$fish_lost > 0 || "%1" != ""} {
+    exec_cast {bless} {frozen-fish}
+      {fish_recovered_store}
+      {fish_recovered_store}
+  } {
+    put frozen-fish $fish_container
+  }
+}
+
+#alias {fish_recovered_store} {
+  exec {cmd_store_fish} {cmd_store_fish}
+    {on_fish_recovered_scrappy {1}}
+    {on_fish_recovered_scrappy {1}}
+}
+
+#alias {cmd_store_fish} {
+  exec_task {cmd_store_fish} {put frozen-fish $fish_container} {%1} {%2} {
+    #action {You put a frozen fish in a golden case} {task_cmd_store_fish_done};
+    #action {You don't seem to have the frozen-fish.} {task_cmd_store_fish_fail};
+    #action {You don't seem to have the $fish_container.} {task_cmd_store_fish_fail}
+  }
+}
+
+#alias {on_fish_recovered_scrappy} {
+  #local {number_recovered} {%1};
+  
+  #if {$fish_lost > 0 && $number_recovered > 0} {
+    #math {fish_lost} {$fish_lost - $number_recovered}
+  };
+  
+  #if {$fish_lost <= 0} {
+    tell group 'FISH RECOVERED: scrappy;
+    scrapon
+  }
+}
+
+#alias {on_fish_lost} {
+  #local {direction} {%1};
+  #math {fish_lost} {$fish_lost + 1};
+  tell group 'FISH LOST $direction -- total_lost=$fish_lost;
+  #if {"$mode_scrap" != "off"} {
+    tell group 'noscrap;
+    noscrap
+  }
+}
+
+#alias {cmd_check_fish} {
+  cmd_check_container {$fish_container} {$expect_fish}
+    {reset_lost_fish; %1}
+    {%2}
+}
+
+#alias {recover_fish_check_container_hook} {
+  #if {$fish_lost > 0} {
+    exec {recover_fish_check_container_hook} {cmd_check_fish}
+      {on_fish_recovered_scrappy; %1}      
+      {debug RECOVER-FISH -- still missing lost=$fish_lost; %1}
+   } {
+    %1
+  }	
+}
+
+#class {recover} {save}
+#class {recover} {close}

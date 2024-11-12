@@ -1,0 +1,71 @@
+#class {tick} {open}
+
+#var {tick_state} {reset}
+#var {fired_on_tick_moment} {0}
+#var {tick_time} {75}
+#var {tick_buffer} {10}
+#math {tick_soon_time} {$tick_time - $tick_buffer}
+
+hook {on_tick} {create}
+hook {on_tick_soon} {create}
+
+#alias {fire_on_tick} {
+  #format {result} {%T};
+  #if {($result - $fired_on_tick_moment) > $tick_buffer} {
+    #var {tick_state} {fired};
+    #var {fired_on_tick_moment} {$result};
+    hook {on_tick} {fire}
+  }
+}
+
+#alias {reset_clock} {
+  #var {tick_state} {%1};
+
+  #if {"$tick_state" == "tick"} {
+    #delay {clock_soon} {
+      #var {tick_state} {soon};
+      debug TICK SOON!!;
+      hook {on_tick_soon} {fire}
+    } {$tick_soon_time};
+  
+    #ticker {clock_tick} {reset_clock {timer}} {$tick_time}
+  };
+
+  fire_on_tick
+}
+
+#action {The sun slowly disappears behind the Dragon Spine mountains to the west.} {reset_clock {tick}}
+#action {The moon sets behind some distant clouds.} {reset_clock {tick}}
+#action {READ THE NEWS!} {reset_clock {tick}}
+#action {The full moon rises in the eastern horizon.} {reset_clock {tick}}
+#action {The sky is getting cloudy.} {reset_clock {tick}}
+#action {The night has begun, spreading darkness throughout the land.} {reset_clock {tick}}
+#action {You take a deep breath and fill your stomach with energy} {reset_clock {tick}}
+#action {A new day of adventure has begun.} {reset_clock {tick}}
+#action {The clouds disappear and the sky becomes empty.} {reset_clock {tick}}
+#action {It starts to rain.} {reset_clock {tick}}
+#action {The rain has stopped, leaving the ground wet and muddy.} {reset_clock {tick}}
+#action {You are caught in a ferocious lightning storm.} {reset_clock {tick}}
+#action {The lightning has gone, but it is still raining.} {reset_clock {tick}}
+
+hook {sanc_down} {create}
+hook {protection_down} {create}
+hook {strength_down} {create}
+hook {bless_down} {create}
+hook {armor_down} {create}
+hook {shield_down} {create}
+hook {fly_down} {create}
+
+#action {Your protective magic dissipates.} {hook {sanc_down} {fire}; reset_clock {tick}}
+#action {Evil holds dominion over you again as your warding powers fade.} {
+  hook {protection_down} {fire};
+  reset_clock {tick}
+}
+#action {You don't feel as strong.} {hook {strength_down} {fire}; reset_clock {tick}}
+#action {You feel less righteous.} {hook {bless_down} {fire}; reset_clock {tick}}
+#action {You feel less protected.} {hook {armor_down} {fire}; reset_clock {tick}}
+#action {Your shield of protection flickers, then disappears.} {hook {shield_down} {fire}; reset_clock {tick}}
+#action {You sink towards the ground as your magic wears off.} {hook {fly_down} {fire}; reset_clock {tick}}
+
+#class {tick} {save}
+#class {tick} {close}

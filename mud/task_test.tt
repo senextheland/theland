@@ -1,0 +1,18 @@
+#read mud/task.tt
+
+#class {test_task} {open}
+
+def_task {wimp_on} {wimp} {
+  #action {Ok, you are now in wimpy mode.} {task_wimp_on_done};
+  #action {Ok, you are no longer a wimp...} {task_wimp_on_attempt}
+}
+
+#alias {end_test} {
+  #class {test_task} {kill};
+  debug %0
+}
+
+wimp_on {end_test DONE} {end_test FAIL}
+  
+#class {test_task} {close}
+#class {test_task} {save}

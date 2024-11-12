@@ -1,0 +1,96 @@
+#class {pawn} {open}
+
+#alias {cmd_pawn_item} {
+  exec_task {cmd_pawn_item} {sell %1} {%2} {%3} {
+    #action {You can't let go of it, it must be CURSED!} {
+      cmd_remove_curse {%1}
+        {task_cmd_pawn_item_attempt}
+	{task_cmd_pawn_iteqm_fail}
+    };    
+    #action {Slick Willy gives you} {sell %1};
+    #action {You are not carrying that item!} {task_cmd_pawn_item_done};
+    #action {Sorry, but you cannot do that here!} {task_cmd_pawn_item_fail}
+  }
+}
+
+#alias {pawn_all} {
+  foreach_exec_task {pawn_all} {%1} {cmd_pawn_item}
+    {%2}
+    {%3}
+}
+
+#alias {cmd_pawn_all_from_bag} {
+  #class {cmd_pawn_all_from_bag} {open};
+
+  #var {pawn_from_item} {%1};
+  #var {pawn_from_bag} {%2};
+  #alias {pawn_from_done} {pawn_from_end; %3};
+  #alias {pawn_from_fail} {pawn_from_end; %4};
+
+  #alias {pawn_from_end} {
+    #class {cmd_pawn_all_from_bag} {kill}
+  };
+
+  #alias {pawn_one} {
+    get $pawn_from_item $pawn_from_bag;
+  };
+
+  #action {You get} {sell $pawn_from_item} {3};
+  #action {Wonderful! I'll give you} {pawn_one} {3};
+  #action {You do not see} {pawn_from_done} {3};
+  
+  #class {cmd_pawn_all_from_bag} {save};
+  #class {cmd_pawn_all_from_bag} {close};
+
+  pawn_one
+}
+
+#alias {cmd_gather_all_into_bag} {
+  #class {cmd_gather_all_into_bag} {open};
+
+  #var {gather_item} {%1};
+  #var {gather_bag} {%2};
+  #var {gather_did_get_items} {false};
+  #alias {gather_all_into_bag_done} {gather_end; %3};
+  #alias {gather_all_into_bag_fail} {gather_end; %4};
+
+  #alias {gather_end} {
+    #class {cmd_gather_all_into_bag} {kill}
+  };
+
+  #alias {gather_some} {
+    get 9*$gather_item
+  };
+
+  #alias {gather_debounced_on_get} {
+    #if {"$gather_did_get_items" == "false"} {
+      #var {gather_did_get_items} {true};
+      gather_put_items
+    }
+  };
+
+  #alias {gather_put_items} {
+    put all.$gather_item $gather_bag;
+  };
+
+  #alias {gather_debounced_on_put} {
+    #if {"$gather_did_get_items" == "true"} {
+      #var {gather_did_get_items} {false};
+      gather_some
+    }
+  };
+
+  #action {You get} {gather_debounced_on_get} {3};
+  #action {You put} {gather_debounced_on_put} {3};  
+  #action {You do not see any more items by this name here.} {gather_all_into_bag_done};
+  #action {You do not see a} {gather_all_into_bag_done};
+
+  #class {cmd_gather_all_into_bag} {save};
+  #class {cmd_gather_all_into_bag} {close};
+
+  gather_some
+}
+
+
+#class {pawn} {save}
+#class {pawn} {close}

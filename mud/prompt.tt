@@ -1,0 +1,57 @@
+#nop
+
+hook {on_prompt} {create}
+hook {on_health_up} {create}
+hook {on_health_down} {create}
+hook {on_mana_up} {create}
+hook {on_movement_up} {create}
+hook {on_movement_down} {create}
+
+#class {event} {kill}
+#class {event} {open}
+
+#var {last_health} {0}
+#var {health} {0}
+#var {last_mana} {0}
+#var {mana} {0}
+#var {last_movement} {0}
+#var {movement} {0}
+
+#alias {set_health} {
+  #var {last_health} {$health};
+  #var {health} {%1}
+}
+
+#alias {set_mana} {
+  #var {last_mana} {$mana};
+  #var {mana} {%1}
+}
+
+#alias {set_move} {
+  #var {last_movement} {$movement};
+  #var {movement} {%1}
+}
+
+#alias {trigger_prompt} {
+  #if {$health > $last_health} {hook {on_health_up} {fire}};
+  #elseif {$health < $last_health} {hook {on_health_down} {fire}};
+    
+  #if {$mana > $last_mana} {hook {on_mana_up} {fire}};
+    
+  #if {$movement > $last_movement} {hook {on_movement_up} {fire}};
+  #elseif {$movement < $last_movement} {hook {on_movement_down} {fire}};
+  
+  hook {on_prompt} {fire}
+}
+
+#action {^H:%d M:%d V:%d >} {set_health {%1}; set_mana {%2}; set_move {%3}; trigger_prompt} {4}
+#action {^H:%d M:%d >} {set_health {%1}; set_mana {%2}; set_move {$score_max_movement}; trigger_prompt} {4}
+#action {^H:%d V:%d >} {set_health {%1}; set_mana {$score_max_mana}; set_move {%2}; trigger_prompt} {4}
+#action {^M:%d V:%d >} {set_health {$score_max_hit}; set_mana {%1}; set_move {%2}; trigger_prompt} {4}
+#action {^H:%d >} {set_health {%1}; set_mana {$score_max_mana}; set_move {$score_max_movement}; trigger_prompt}
+#action {^M:%d >} {set_health {$score_max_hit}; set_mana {%1}; set_move {$score_max_movement}; trigger_prompt}
+#action {^V:%d >} {set_health {$score_max_hit}; set_mana {$score_max_mana};  set_move {%1}; trigger_prompt}
+#action {^>} {set_health {$score_max_hit}; set_mana {$score_max_mana}; set_move {$score_max_movement}; trigger_prompt}
+
+#class {event} {save}
+#class {event} {close}

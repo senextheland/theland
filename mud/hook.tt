@@ -1,0 +1,53 @@
+#class {hook} {open}
+
+#alias {hook} {
+  #switch {"%2"} {
+    #case {"create"} {
+      #var {%1} {}
+    };
+
+    #case {"add"} {
+      #var {%1[%3]} {%4}
+    };
+
+    #case {"remove"} {
+      #unvar {%1[%3]}
+    };
+
+    #case {"once"} {
+      #var {%1[%3]} {hook {%1} {remove} {%3}; %4}
+    };
+
+    #case {"clear"} {
+      #var {%1} {}
+    };
+
+    #case {"fire"} {
+      #local {fire_queue} {};
+      #list {fire_queue} {add} $%1[];
+      #list {fire_queue} {simplify};
+      #foreach {$fire_queue} {result} {
+        $result
+      }
+    };
+
+    #case {"exec-all"} {
+      #list {%1_exec_queue} {create} $%1[];
+      exec_all {%1_exec_queue}
+        {#unvar {%1_exec_queue}; %3}
+	{#unvar {%1_exec_queue}; %4}
+    };
+
+    #case {"exec-each"} {
+      #list {%1_exec_queue} {create} $%1[];
+      exec_each {%1_exec_queue}
+        {#unvar {%1_exec_queue}; %3}
+	{#unvar {%1_exec_queue}; %4}
+    };
+
+    #default {debug HOOK: unrecognized command "%2"}
+  }
+}
+
+#class {hook} {save}
+#class {hook} {close}

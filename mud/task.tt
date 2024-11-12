@@ -1,0 +1,76 @@
+#alias {debug} {
+  #line ignore #show %0
+}
+
+#alias {def_task} {
+  #nop 1: name;
+  #nop 2: body;
+  #nop 3: setup;
+  
+  #alias {%1} {
+    exec_task {%1} {%2}
+      {%%1} {%%2}
+      {%3}
+      %%3
+  }
+}
+
+#alias {exec_sync_task1} {
+  exec_task {%1} {#show %1} {%2} {%3} {
+    #action {%1} {
+      %4;
+      trampoline {%1} {task_%1_done}
+    }
+  }
+}
+
+#alias {exec_task} {
+  #class {task_%1} {open};
+
+  #alias {task_%1_body} {%2};
+  #alias {task_%1_done_continuation} {task_%1_end; %3};
+  #alias {task_%1_fail_continuation} {task_%1_end; %4};
+  #alias {task_%1_setup} {%5};
+
+  #if {"%6" == ""} {
+    #var {task_%1[timeout]} {20}
+  } {
+    #var {task_%1[timeout]} {%6}
+  };
+
+  #var {task_%1[attempts]} {3};
+
+  #alias {task_%1_done} {#show TASK %1 DONE};
+  #alias {task_%1_fail} {#show TASK %1 FAIL: %%1};
+  #action {TASK %1 DONE} {task_%1_done_continuation};
+  #action {TASK %1 FAIL: %%1} {task_%1_fail_continuation {%%1}};
+
+  #alias {task_%1_attempt} {
+    task_%1_reset_timeout;
+    #math {task_%1[attempts]} {$task_%1[attempts] - 1};
+    #if {$task_%1[attempts] >= 0} {
+      task_%1_body
+    } {
+      task_%1_fail {too-many-attempts}
+    }
+  };
+
+  #alias {task_%1_reset_timeout} {
+    #delay {task_%1_timeout} {task_%1_fail {timeout}} {$task_%1[timeout]}
+  };
+
+  #alias {task_%1_end} {
+    #undelay {task_%1_timeout};
+    task_%1_end_hook;
+    #class {task_%1} {kill}
+  };
+
+  #alias {task_%1_end_hook} {#nop};
+
+  task_%1_setup;
+
+  #class {task_%1} {save};
+  #class {task_%1} {close};
+
+  task_%1_attempt
+}

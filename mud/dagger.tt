@@ -1,0 +1,126 @@
+#class {dagger} {open}
+
+#alias {dagger_mode} {fish}
+
+#alias {dagger_all_end} {#nop}
+#alias {dagger_all} {
+  #class {dagger_all} {open};
+
+  #list {dagger_all_targets} {create} {%1};  
+  #alias {dagger_all_done} {dagger_all_end; %2};
+  #alias {dagger_all_fail} {dagger_all_end; %3};
+  
+  #var {dagger_all_current_target} {};
+  #alias {dagger_all_end} {
+    hook {on_rip} {remove} {dagger_all};
+    fish_end;
+    #class {dagger_all} {kill}
+  };
+
+  #alias {dagger_all_attack} {
+    #var {dagger_all_current_target};
+    dagger_mode {$dagger_all_current_target}
+      {trampoline {dagger_all_attack} {dagger_all_attack}}
+      {dagger_all_attack_fail}
+  };
+
+  #alias {dagger_all_attack_fail} {
+    debug DAGGER-ALL-FAIL: {%%1};
+    #switch {"%%1"} {
+      #case {"fighting"} {dagger_all_fighting};
+      #case {"no-dagger"} {dagger_all_fail {no-dagger}};
+      #case {"no-mob"} {dagger_all_next};
+      #default {dagger_all_next}
+    }   
+  };
+
+  #alias {dagger_all_fighting} {
+    debug DAGGER-ALL: fighting --> nop;
+    fish_end
+  };
+
+  hook {on_rip} {add} {dagger_all} {
+    trampoline {dagger_all} {debug TRAMPOLINE --> attack; dagger_all_attack};
+    %1
+  };
+
+  #alias {dagger_all_next} {    
+    #list {dagger_all_targets} {get} {1} {dagger_all_current_target};
+    #if { "$dagger_all_current_target" == "0" } {
+      dagger_all_done
+    } {
+      #list {dagger_all_targets} {delete} {1};
+      dagger_all_attack
+    }
+  };
+
+  #class {dagger_all} {save};
+  #class {dagger_all} {close};
+
+  dagger_all_next
+}
+
+#alias {dagger_walk_end} {#nop}
+#alias {dagger_walk_path} {
+  #class {dagger_walk_path} {open};
+
+  #var {dagger_walk_path} {%1};
+  #var {dagger_walk_target} {%2};
+  #alias {dagger_walk_done} {dagger_walk_end; %3};
+  #alias {dagger_walk_fail} {dagger_walk_end; %4};
+
+  #alias {dagger_walk_kill_room} {
+    kill_room {$dagger_walk_target}
+      {dagger_walk_kill_room_done}
+  };
+
+  #alias {dagger_walk_kill_room_done} {
+    debug DAGGER-WALK-KILL-ROOM-DONE --> farlook;
+    exec {dagger_walk_kill_room_done} {cmd_farlook $dagger_walk_target}
+      {dagger_walk_farlook_found}
+      dagger_walk_farlook_fail
+  };
+
+  #alias {dagger_walk_farlook_found} {
+    debug DAGGER-WALK-FARLOOK-FOUND;
+    dagger_all {$dagger_walk_target}
+      {dagger_walk_throw_done}
+      {dagger_walk_throw_fail %%0}
+  };
+
+  #alias {dagger_walk_farlook_fail} {
+    debug DAGGER-WALK-FARLOOK-FAIL --> %%1;
+    #switch {"%%1"} {
+      #case {"here"} {dagger_walk_kill_room};
+      #case {"not-found"} {step};
+      #default {debug dagger_walk_farlook_fail UNRECOGNIZED COMMAND {%%1}}
+    }    
+  };
+
+  #alias {dagger_walk_throw_done} {
+    debug DAGGER-WALK-THROW-DONE --> step;
+    step
+  };
+
+  #alias {dagger_walk_throw_fail} {
+    debug DAGGER-WALK-THROW-FAIL: %%0;
+    #switch {"%%1"} {
+      #case {"no-mob"} {dagger_walk_throw_done};
+      #default {dagger_walk_fail %%0}
+    }
+  };
+
+  #class {dagger_walk_path} {save};
+  #class {dagger_walk_path} {close};
+
+  #alias {dagger_walk_end} {
+    #class {dagger_walk_path} {kill};
+    #alias {dagger_walk_end} {#nop}
+  };
+
+  walk_each {%1} {dagger_walk_kill_room} {dagger_walk_done} {dagger_walk_fail};
+  dagger_walk_kill_room
+}
+
+#class {dagger} {save}
+#class {dagger} {close}
