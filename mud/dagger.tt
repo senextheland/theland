@@ -18,6 +18,10 @@
   };
 
   #alias {dagger_all_attack} {
+    zone_continuation {dagger_all_attack_after_continuation}
+  };
+
+  #alias {dagger_all_attack_after_continuation} {
     #var {dagger_all_current_target};
     dagger_mode {$dagger_all_current_target}
       {trampoline {dagger_all_attack} {dagger_all_attack}}

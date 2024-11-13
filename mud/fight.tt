@@ -9,8 +9,8 @@ hook {on_fight_start} {create}
 #var {combat_status} {idle}
 #var {currently_fighting} {}
   
-#var {fighting_words} {annihilates|atomizes|bites|channels|claws|crushes|decimates|demolishes|devastates|ethereally touches|grapples with|hits|massacres|misses|mutilates|obliterates|pierces|pulverizes|punches|rocks|saws|smashes|stuns|tangles|thrashes|vanquishes|whips}
-#var {you_fighting_words} {annihilate|atomize|bite|channel|claw|crushe|decimate|demolish|devastate|grapple with|hit|leaps upon|massacre|mutilate|obliterate|pierce|pulverize|punch|rock|thrash|stun|vanquish|whip}
+#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|channels|claws|crushes|decimates|demolishes|devastates|ethereally touches|grapples with|hits|leaps upon|massacres|misses|mutilates|obliterates|pierces|pulverizes|punches|rocks|saws|smashes|stuns|tangles|thrashes|vanquishes|whips}
+#var {you_fighting_words} {annihilate|atomize|beat the ever living shit out of|bite|channel|claw|crushes|decimate|demolish|devastate|grapple with|hit|leap upon|massacre|mutilate|obliterate|pierce|pulverize|punch|rock|thrash|stun|vanquish|whip}
 
 #action {You {$you_fighting_words} %2 with} {update_fight {%2}}
 #action {%1 {$fighting_words} you} {update_fight {%1}}

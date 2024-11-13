@@ -2,8 +2,10 @@
 
 #alias {test_temple} {
   zone_extend
+    {zone_safety off}
     {walk_fast {2d} {Bog and Warrax}}
     {walk_fast {2u} {hushed and hallowed tower}}
+    {zone_safety on}
 }
 
 #alias {test_recall} {
@@ -27,7 +29,7 @@
 
 #alias {test_loop} {
   zone_loop
-    {test_zone}
+    {test_temple}
     {test_halt}
   ;
   zone_loop_start

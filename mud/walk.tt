@@ -30,7 +30,7 @@
 
   #alias {attempt_move} {
     exec {attempt_move} {cmd_walk_once}
-      {zone_step_continue {full} {walk_retry_done}}
+      walk_retry_done
       {walk_recover_fail %%%0}
   };
       
@@ -83,7 +83,7 @@
 
   #alias {step} {
     #if {"$walk_each_state" == "ok"} {
-      walk_retry {on_walk_room} {step_failed}
+      walk_retry {zone_continuation {on_walk_room}} {step_failed}
     } {
       walk_each_done_continuation    
     }

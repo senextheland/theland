@@ -29,7 +29,7 @@
 
   #alias {maybe_regen_done} {
     #undelay {maybe_regen_done_delay};
-    #delay {maybe_regen_done} {when_regen_done {on_regen_done}} {0.1}
+    #delay {maybe_regen_done} {on_regen_done} {0.1}
   };
 
   #alias {regen_off} {
@@ -104,7 +104,7 @@
     } {
       debug REGEN-FAIRY: skip move
     };
-    regen_fairy_mana_up
+    trampoline {cmd_regen_fairy_until} {regen_fairy_mana_up}
   }
 }
 

@@ -23,11 +23,15 @@ task_list {zone_steps} {create} {zone_finish} {zone_recover}
 #alias {zone_loop} {
   #var {zone_state} {init};
   #list {zones} {clear};
+  task_list {zone_steps} {clear};
+  executor {global_tasks} {clear};
+  reset_zone_timeout;
   #list {zones} {add} %0
 }
 
 #alias {zone_loop_start} {
   #var {zone_state} {start};
+  zone_rewind;
   zone_finish
 }
 
@@ -48,14 +52,12 @@ task_list {zone_steps} {continue-hook-add} {10_zone_loop_stop_hook} {zone_loop_s
 task_list {zone_steps} {continue-hook-add} {20_zone_loop_safety_hook} {zone_loop_safety_hook}
 task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zone_loop_continue_when_hook}
 
-#alias {zone_step_continue} {
-  #var {zone_step_continue_type} {%1};
-
+#alias {zone_continuation} {
   #if {"$zone_state" == "testing"} {
-    #unvar {zone_step_continue_type}; %2
+    #unvar {zone_step_continue_type}; %1
   } {
     hook {zone_steps[hook]} {exec-each}
-      {#unvar {zone_step_continue_type}; %2}
+      {#unvar {zone_step_continue_type}; %1}
       {debug ZONE-STEP-CONTINUE-FAIL --> ??}
   }
 }
@@ -71,9 +73,7 @@ task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zo
 #alias {zone_loop_safety_hook} {
   #if {"$zone_safety" == "on"} {
     reset_zone_timeout;
-    #if {"$zone_step_continue_type" != "quick"} {
-      cmd_presence_check {$robot} {$robot_description} {%1} {%2}
-    }
+    cmd_presence_check {$robot} {$robot_description} {%1} {%2}
   } {
     %1
   }
@@ -88,7 +88,7 @@ task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zo
   }
 }
 
-#alias {reset_zone_timeout} {  
+o#alias {reset_zone_timeout} {  
   #delay {reset_zone_timeout} {zone_timeout} {60}
 }
 
@@ -128,14 +128,24 @@ task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zo
   zone_timeout_off;
 
   #if {"$zone_current" == "zone_interlude"} {
-    #list {zones} {get} {1} {result};
-    #list {zones} {delete} {1};
-    #list {zones} {add} {$result};
+    zone_fast_forward;
     zone_start {$zones[1]}
   } {
     zone_start {zone_interlude}
   };
 }
+
+#alias {zone_rewind} {
+  #list {zones} {insert} {1} {$zones[-1]};
+  #list {zones} {size} {result};
+  #list {zones} {delete} {$result};
+};
+
+#alias {zone_fast_forward} {
+  #list {zones} {get} {1} {result};
+  #list {zones} {delete} {1};
+  #list {zones} {add} {$result}
+};
 
 #alias {zone_start} {#show ZONE-START: %1}
 
@@ -150,9 +160,8 @@ task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zo
 }
 
 #alias {zone_retry} {
-  executor {global_tasks} {clear};
-  task_list {zone_steps} {clear};
-  zone_start {zone_interlude}
+  zones_rewind;
+  zone_finish
 }
 
 

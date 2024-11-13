@@ -24,7 +24,7 @@
   #alias {throw_fish} {
     #if {"$combat_status" == "idle"} {
       #var {fish_state} {throwing};
-      zone_step_continue {quick} {throw frozen-fish $fish_target}
+      throw frozen-fish $fish_target
     } {
       fish_once_fail {fighting}
     }
