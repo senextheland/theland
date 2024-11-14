@@ -76,7 +76,7 @@
       regen_fairy_done
     } {
       debug REGEN-FAIRY-MAYBE-BUY;
-      trampiline {cmd_regen_fairy_until} {maybe_buy_mana}
+      trampoline {cmd_regen_fairy_until} {maybe_buy_mana}
     }
   };
 

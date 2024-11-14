@@ -71,9 +71,7 @@ hook {on_move_ok} {create};
 }
 
 #alias {health_attempt_heal} {
-  #if {"$health_state" != "ok" && @has_labeled_task{global_tasks;health_heal} == 0} {
-    debug HEALTH-ATTEMPT-HEAL state=$health_state delta=@health_delta{} health=$health;
-    #var global_tasks;
+  #if {"$health_state" != "ok"} {
     exec {health_heal} {cmd_heal_me} {need_health} {#delay {need_health} {$health_fail_cooldown}}
   }
 }

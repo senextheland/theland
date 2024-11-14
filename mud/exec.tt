@@ -17,7 +17,7 @@
 }
 
 #function {has_labeled_task} {
-  #list {%1} {find} {{labeled_task {%2} .*}} {result}
+  #list {%1} {find} {labeled_task \{%2\} {.*}} {result}
 }
 
 #alias {executor} {
@@ -47,7 +47,7 @@
 
     #case {"add-labeled"} {
       #nop 3: label, 4: body, 5: done, 6: fail;      
-      #if {@has_labeled_task{%1;%3} != 0} {
+      #if {@has_labeled_task{%1[items];%3} != 0} {
         debug EXECUTOR: already queued {%3} @ $result
       } {
         #list {%1[items]} {add}

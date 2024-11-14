@@ -167,7 +167,7 @@
     {walk_fast {1n} {Before a magical pond}}
 }
 
-#alias {pawn_hyrule} {pawn_all {hyrule-spear}{hyrule-ball}{boulder}}
+#alias {pawn_hyrule} {pawn_all {hyrule-spear;hyrule-ball;boulder}}
 
 
 #nop -----------------------------------------
@@ -255,7 +255,7 @@
     {zone_safety on}
 
     {walk_fast {1n1w2n1e1n} {The Opal Stairs}}
-    {set_zone_target feline}
+    {set_target feline}
 }
 
 #alias {ext_tzen_floor_one} {

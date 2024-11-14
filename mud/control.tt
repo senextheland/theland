@@ -51,6 +51,7 @@ task_list {zone_steps} {create} {zone_finish} {zone_recover}
 task_list {zone_steps} {continue-hook-add} {10_zone_loop_stop_hook} {zone_loop_stop_hook}
 task_list {zone_steps} {continue-hook-add} {20_zone_loop_safety_hook} {zone_loop_safety_hook}
 task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zone_loop_continue_when_hook}
+hook {on_rip} {add} {zone_loop_rip_hook}
 
 #alias {zone_continuation} {
   #if {"$zone_state" == "testing"} {
@@ -88,7 +89,14 @@ task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zo
   }
 }
 
-o#alias {reset_zone_timeout} {  
+#alias {zone_loop_rip_hook} {
+  #if {"$zone_state" == "start"} {
+    reset_zone_timeout    
+  };
+  trampoline {zone_loop_rip_hook} {%1}
+}
+
+#alias {reset_zone_timeout} {  
   #delay {reset_zone_timeout} {zone_timeout} {60}
 }
 
@@ -160,7 +168,7 @@ o#alias {reset_zone_timeout} {
 }
 
 #alias {zone_retry} {
-  zones_rewind;
+  zone_rewind;
   zone_finish
 }
 
