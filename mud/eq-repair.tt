@@ -71,7 +71,8 @@
     {A blue jewel suspended from a light gold chain}{blue-jewel}
     {The Royal Scepter of the UnderSea Kingdoms}{undersea-scepter}
     {The Holy Grail(invisible)}{holy-grail}
-    {The Holy Grail}{holy-grail}    
+    {The Holy Grail}{holy-grail}
+    {A firefly abdomen}{abdomen}
     ;  
 
   #alias {eq_repair_check} {

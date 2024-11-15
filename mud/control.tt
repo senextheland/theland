@@ -3,6 +3,7 @@
 #list {zones} {create}
 #var {zone_current} {}
 #var {zone_state} {init}
+#var {zone_recover_state} {off}
 #var {need_pawn} {}
 
 task_list {zone_steps} {create} {zone_finish} {zone_recover}
@@ -51,7 +52,8 @@ task_list {zone_steps} {create} {zone_finish} {zone_recover}
 task_list {zone_steps} {continue-hook-add} {10_zone_loop_stop_hook} {zone_loop_stop_hook}
 task_list {zone_steps} {continue-hook-add} {20_zone_loop_safety_hook} {zone_loop_safety_hook}
 task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zone_loop_continue_when_hook}
-hook {on_rip} {add} {zone_loop_rip_hook}
+hook {on_rip} {add} {10_zone_loop_rip_hook} {zone_loop_rip_hook}
+hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recover_fish_hook}
 
 #alias {zone_continuation} {
   #if {"$zone_state" == "testing"} {
@@ -96,6 +98,14 @@ hook {on_rip} {add} {zone_loop_rip_hook}
   trampoline {zone_loop_rip_hook} {%1}
 }
 
+#alias {zone_loop_recover_fish_hook} {
+  #if {"$zone_safety" == "on"} {
+    recover_fish_check_container_hook {%1}
+  } {
+    %1
+  }
+}
+
 #alias {reset_zone_timeout} {  
   #delay {reset_zone_timeout} {zone_timeout} {60}
 }
@@ -135,25 +145,13 @@ hook {on_rip} {add} {zone_loop_rip_hook}
   task_list {zone_steps} {clear};
   zone_timeout_off;
 
-  #if {"$zone_current" == "zone_interlude"} {
+  #if {"$zone_current" == "zone_interlude"} {    
     zone_fast_forward;
     zone_start {$zones[1]}
   } {
     zone_start {zone_interlude}
   };
 }
-
-#alias {zone_rewind} {
-  #list {zones} {insert} {1} {$zones[-1]};
-  #list {zones} {size} {result};
-  #list {zones} {delete} {$result};
-};
-
-#alias {zone_fast_forward} {
-  #list {zones} {get} {1} {result};
-  #list {zones} {delete} {1};
-  #list {zones} {add} {$result}
-};
 
 #alias {zone_start} {#show ZONE-START: %1}
 
@@ -165,6 +163,18 @@ hook {on_rip} {add} {zone_loop_rip_hook}
   } {
     debug ZONE-START: ignore state=$zone_state
   }
+}
+
+#alias {zone_rewind} {
+  #list {zones} {insert} {1} {$zones[-1]};
+  #list {zones} {size} {result};
+  #list {zones} {delete} {$result};
+}
+
+#alias {zone_fast_forward} {
+  #list {zones} {get} {1} {result};
+  #list {zones} {delete} {1};
+  #list {zones} {add} {$result}
 }
 
 #alias {zone_retry} {
@@ -216,6 +226,7 @@ def_zone_task0 {capture_score} {cmd_score {#nop}}
 def_zone_task1 {buy_recalls} {cmd_buy_recalls}
 def_zone_task1 {group_pawn} {cmd_group_pawn}
 def_zone_task0 {group_deposit} {cmd_group_deposit}
+def_zone_task0 {transition_zone_recovery_state} {cmd_transition_zone_recovery_state}
 
 #alias {cmd_need_pawn} {
   exec_sync_task1 {cmd_need_pawn} {%2} {%3} {
@@ -224,8 +235,32 @@ def_zone_task0 {group_deposit} {cmd_group_deposit}
   }
 }
 
+#alias {cmd_transition_zone_recovery_state} {
+  recover_fish_check_container_hook {transition_zone_recovery_continuation {%1}}
+}
+
+#alias {transition_zone_recovery_continuation} {
+  #if {$fish_lost <= 0} {
+    debug NO FISH LOST --> zone_recover_state=off --> continue;
+    #var {zone_recover_state} {off};
+    cmd_group_scrappy {%1} {%1}
+  };
+  #elseif {"$zone_recover_state" == "off"} {
+    debug FISH LOST --> zone_recover_state=on --> retry;
+    #var {zone_recover_state} {on};
+    zone_rewind;
+    cmd_group_noscrap {%1} {%1}
+  };
+  #else {
+    debug FISH STILL LOST --> halt;
+    #var {zone_state} {stop};
+    %1
+  }
+}
+
 #alias {zone_interlude} {
   ext_recall_to_inn;
+  ext_maybe_recover_fish;
   ext_visit_town {$need_pawn};
   zone_extend
     {need_pawn {}}
@@ -238,6 +273,11 @@ def_zone_task0 {group_deposit} {cmd_group_deposit}
     {regen_some}
     {group_repair}
     {zone_safety on}    
+}
+
+#alias {ext_maybe_recover_fish} {
+  zone_extend
+    {transition_zone_recovery_state}
 }
 
 #alias {ext_visit_town} {

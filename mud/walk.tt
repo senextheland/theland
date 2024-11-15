@@ -1,8 +1,10 @@
 #class {walk} {open}
 
+hook {before_walk_room} {create}
+
 #alias {cmd_walk_fast} {
   debug CMD-WALK-FAST: {%1} --> {%3};
-  exec_task {cmd_walk_fast} {%1} {%3} {%4} {
+  exec_task {cmd_walk_fast} {hook {before_walk_room} {exec-each} {%1} {%1}} {%3} {%4} {
     #action {Alas, you cannot go that way...} {task_cmd_walk_fast_fail};
     #action {%2} {debug WALK-FAST DONE; task_cmd_walk_fast_done};
     #action {You are pissed and attack %%1!} {task_cmd_walk_fast_fail {fighting}};
@@ -83,10 +85,14 @@
 
   #alias {step} {
     #if {"$walk_each_state" == "ok"} {
-      walk_retry {zone_continuation {on_walk_room}} {step_failed}
+      hook {before_walk_room} {exec-each} {attempt_step} {attempt_step}      
     } {
       walk_each_done_continuation    
     }
+  };
+
+  #alias {attempt_step} {
+    walk_retry {on_walk_room} {step_failed}  
   };
 
   #alias {step_failed} {
