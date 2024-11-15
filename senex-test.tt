@@ -57,6 +57,7 @@
     {zone_x2_walk}
     {zone_tridac_walk}
     {zone_tzen}
+    {zone_tzen_walk_sell_magicite}
     {zone_bryad_walk}
   ;
   zone_loop_start
