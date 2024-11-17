@@ -69,7 +69,6 @@
     }
   };
 
-
   #action {A frozen fish suddenly reverses direction and flies %%1!} {
     on_fish_lost {%%1};    
     exec {cmd_get_fish_out} {cmd_get_fish_out} {throw_fish} {no_fish}

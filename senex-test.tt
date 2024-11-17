@@ -38,6 +38,9 @@
     #var {health_low} {400}    
   };
 
+  hook {bless_down} {add} {$me} {cmd_cast_me {bless} {debug BLESS UP} {debug BLESS FAIL}}
+  hook {armor_down} {add} {$me} {cmd_cast_me {armor} {debug ARMOR UP} {debug ARMOR FAIL}}
+
   set_robot {silk} {Silk};
   protect {$robot_description} {$robot};
   reset_weapon_state
@@ -222,6 +225,42 @@
 #alias {cmd_pick_lock} {
   cmd_issue_order {pick %1} {%2} {%3}
 }
+
+#function {autoloot_type} {
+  #switch {"%1"} {
+    #case {"no-cursed"} {#var {result} {on}};
+    #case {"some-cursed"} {#var {result} {on}};
+    #default {#var {result} {%1}}
+  }
+}
+
+
+#nop --------------------------
+#nop Overrides
+#nop --------------------------
+
+#alias {sneak} {
+  get pelt case; rem waistband; wear pelt; put waistband case
+}
+
+#alias {unsneak} {
+  rem pelt; put pelt case; get waistband case; wear waistband
+}
+
+#alias {cmd_sneak} {
+  exec_task {cmd_sneak} {sneak} {%1} {%2} {
+    #action {You wear The Pelt of the Golden Fox about your waist.} {task_cmd_sneak_done};
+    #action {You are not using it.} {task_cmd_sneak_done}
+  }
+}
+
+#alias {cmd_unsneak} {
+  exec_task {cmd_unsneak} {unsneak} {%1} {%2} {
+    #action {You wear Mystic Ruby Waistband about your waist.} {task_cmd_unsneak_done};
+    #action {You are not using it.} {task_cmd_unsneak_done}
+  }
+}
+
 
 #nop --------------------------
 #nop Follow orders

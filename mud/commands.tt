@@ -2,20 +2,6 @@
 
 #var {target} {}
 
-#alias {cmd_sneak} {
-  exec_task {cmd_sneak} {sneak} {%1} {%2} {
-    #action {Ok, you'll try to move silently for a while.} {task_cmd_sneak_done};
-    #action {You are no longer sneaky.} {task_cmd_sneak_attempt}
-  }
-}
-
-#alias {cmd_unsneak} {
-  exec_task {cmd_unsneak} {sneak} {%1} {%2} {
-    #action {Ok, you'll try to move silently for a while.} {task_cmd_unsneak_attempt};
-    #action {You are no longer sneaky.} {task_cmd_unsneak_done}
-  }
-}
-
 #alias {cmd_agg} {
   exec_task {cmd_agg} {agg} {%1} {%2} {
     #action {You are now aggressive towards all aggressive monsters, and will attack first!} {task_cmd_agg_done};
@@ -51,12 +37,7 @@
 }
 
 #alias {cmd_unlock_door} {
- exec_task {cmd_unlock_door} {get %1; unlock %2; drop all.%1} {%3} {%4} { 
-   #action {You do not have the proper key for that.} {task_cmd_unlock_door_fail};
-   #action {*click*} {task_cmd_unlock_door_done};
-   #action {It's already unlocked, it seems.} {task_cmd_unlock_door_done};
-   #action {Heck.. it ain't even closed!} {task_cmd_unlock_door_done}
- }  
+  cmd_unlock_door_with_key {get %1} {%2} {drop all.%1} {%3} {%4}
 }
 
 #alias {cmd_unlock_door_with_key} {
@@ -188,7 +169,7 @@
     {debug FOUND ROOM; %2}
     {debug NO ROOM FOUND; %3}
     {
-      #action {%1} {task_cmd_wait_for_doom_done};
+      #action {%1} {task_cmd_wait_for_room_done};
       #action {Exits:} {task_cmd_wait_for_room_reset_timeout} {6}
     }
 }
@@ -295,6 +276,14 @@
     #action {you spot %%%1.} {task_cmd_farlook_done};
     #action {You peer around, but can't find anyone of that description.} {task_cmd_farlook_fail {not-found}};
     #action {You see %%%1 right here.} {task_cmd_farlook_fail {here}}
+  }
+}
+
+#alias {cmd_drop_all} {
+  exec_task {cmd_drop_all} {drop all.%1} {%2} {%3} {
+    #action {You drop} {task_cmd_drop_all_done};
+    hook {on_prompt} {once} {cmd_drop_all} {task_cmd_drop_all_done};
+    #alias {task_cmd_drop_all_end_hook} {hook {on_prompt} {remove} {cmd_drop_all}}
   }
 }
 

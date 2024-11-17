@@ -47,6 +47,7 @@ hook {on_tick_soon} {create}
 #action {The rain has stopped, leaving the ground wet and muddy.} {reset_clock {tick}}
 #action {You are caught in a ferocious lightning storm.} {reset_clock {tick}}
 #action {The lightning has gone, but it is still raining.} {reset_clock {tick}}
+#action {The blizzard is over, but it is still snowing.} {reset_clock {tick}}
 
 hook {sanc_down} {create}
 hook {protection_down} {create}

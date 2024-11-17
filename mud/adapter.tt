@@ -28,6 +28,14 @@
 #alias {regen} {debug UNIMPLEMENTED: regen}
 #alias {unregen} {debug UNIMPLEMENTED: unregen}
 
+#function {autoloot_type} {
+  #switch {"%1"} {
+    #case {"no-cursed"} {#var {result} {on}};
+    #case {"some-cursed"} {#var {result} {gold}};
+    #default {#var {result} {%1}}
+  }
+}
+
 #nop ---------------------------------------------------------------------------------
 #nop At-keys shortcuts
 #nop ---------------------------------------------------------------------------------
@@ -40,6 +48,25 @@
 #alias {mode_good} {exec {mode_good} {cmd_mob_align_good} {debug MODE-GOOD: OK} {debug MODE-GOOD: FAIL}}
 #alias {lifeprot} {exec {lifeprot} {cmd_life_protect_on} {debug LIFEPROT-ON: OK} {debug LIFEPROT-ON: FAIL}}
 #alias {nolifeprot} {exec {nolifeprot} {cmd_life_protect_off} {debug LIFEPROT-OFF: OK} {debug LIFEPROT-OFF: FAIL}}
+
+
+#nop ---------------------------------------------------------------------------------
+#nop Optional overrides
+#nop ---------------------------------------------------------------------------------
+
+#alias {cmd_sneak} {
+  exec_task {cmd_sneak} {sneak} {%1} {%2} {
+    #action {Ok, you'll try to move silently for a while.} {task_cmd_sneak_done};
+    #action {You are no longer sneaky.} {task_cmd_sneak_attempt}
+  }
+}
+
+#alias {cmd_unsneak} {
+  exec_task {cmd_unsneak} {sneak} {%1} {%2} {
+    #action {Ok, you'll try to move silently for a while.} {task_cmd_unsneak_attempt};
+    #action {You are no longer sneaky.} {task_cmd_unsneak_done}
+  }
+}
 
 #class {adapter} {save}
 #class {adapter} {close}

@@ -9,8 +9,16 @@
   #alias {on_regen_fail} {regen_off; %4};
   #var {regen_state} {off};
 
+  #function {regen_need_mana} {
+    #math {result} {$max_mana - $regen_mana_threshold}
+  };
+
+  #function {regen_need_move} {
+    #math {result} {$max_refresh - $regen_move_threshold}
+  };
+
   #function {is_regen_done} {
-   #math {result} {$mana >= ($max_mana - $regen_mana_threshold) && $health >= ($max_refresh - $regen_move_threshold)}
+    #math {result} {$mana >= @regen_need_mana{} && $movement >= @regen_need_move{}}
   };
 
   #alias {regen_mana_hook} {
@@ -50,7 +58,7 @@
     debug REGEN --> skip;
     on_regen_done
   } {
-    debug REGEN --> start;
+    tell group 'REGEN --> start (mana:$mana target:@regen_need_mana{});
     #var {regen_state} {on};
     regen
   }
