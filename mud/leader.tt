@@ -65,17 +65,26 @@ def_group_task0 {cmd_group_unagg} {unagg} {cmd_unagg}
 }
 
 #alias {cmd_group_walk} {
-  exec_task {cmd_group_walk} {%1} {%3} {%4} {
-    #action {Sorry, there is no room to get in there.} {task_cmd_group_walk_attempt};
+  cmd_group_walk_kill {%1} {%2} {} {%3} {%4}
+}
+
+#alias {cmd_group_walk_kill} {
+  exec_task {cmd_group_walk_kill} {%1} {%4} {%5} {
+    #action {Sorry, there is no room to get in there.} {task_cmd_group_walk_kill_attempt};
     #action {Alas, you cannot go that way...} {
       tell group 'walk failed;
-      task_cmd_group_walk_fail
+      task_cmd_group_walk_kill_fail
     };
     
-    #action {%2} {    
-      debug GROUP-WALK DONE;
+    #action {%2} {
+      #if {"%3" != ""} {
+        debug GROUP-WALK DONE --> kill %3;
+        kill %3;
+      } {
+        debug GROUP-WALK DONE
+      };
       tell group 'walk: %1 -- "%2";
-      task_cmd_group_walk_done
+      task_cmd_group_walk_kill_done
     }
   }
 }

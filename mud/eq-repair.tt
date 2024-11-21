@@ -73,6 +73,8 @@
     {The Holy Grail(invisible)}{holy-grail}
     {The Holy Grail}{holy-grail}
     {A firefly abdomen}{abdomen}
+    {Silver Elven Armor}{tuor-armor}
+    {A swan winged helm}{tuor-swan-helm}
     ;  
 
   #alias {eq_repair_check} {

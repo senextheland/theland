@@ -298,7 +298,7 @@
     }
   }
 }
-
+	
 #alias {order_dispatch} {
   debug ORDER-DISPATCH %1 %2 %3;
   exec {order_%1} {%2} {order_done {%3} {%4}} {order_fail {%3} {%4}}
@@ -324,7 +324,7 @@
   }
 }
 
-#action {%1 tells the group 'cast {armor|bless}'} {do_order {group} {cast} {%2} {%1}}
+#action {%1 tells the group 'cast {armor|bless|cure blind}'} {do_order {group} {cast} {%2} {%1}}
 #action {%1 tells you 'cast {armor|bless}'} {do_order {%1} {cast} {%2} {%1}}
 #action {%1 tells you '{healme|lay|layhands}'} {do_order {%1} {layhands} {%1}}
 #action {%1 tells the group '{healme|lay|layhands}'} {do_order {group} {layhands} {%1}}

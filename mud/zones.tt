@@ -45,12 +45,15 @@
 #alias {[]narnia} {$path_narnia}
 #var {path_tridac} {s2e2s16w2sw2ses2wse2ses}
 #alias {[]tridac} {$path_tridac}
-#alias {[]red} {4w3n2e9n6e10nwn}
+#var {path_red} {4w3n2e9n6e10nwn}
+#alias {[]red} {$path_red}
 #var {path_x2} {1s2e2s11w2s3e4s}
 #alias {[]x2} {$path_x2}
 #var {path_dune} {3e4s2w;get ticket;unlock curtain;drop ticket;open curtain}
 #var {path_bryad} {6e2u2n1w1n3w2s}
 #alias {[]bryad} {$path_bryad}
+#var {path_despair} {3w;open gate;2w2w2s1w2s1e3s}
+#alias {[]despair} {$path_despair}
 
 #class {zones} {save}
 #class {zones} {close}
@@ -234,7 +237,11 @@
   ext_walk_tzen;
   ext_walk_tzen_palace;
   ext_tzen_floor_one;
-  zone_extend {regen_some};
+  zone_extend
+    {zone_safety off}
+    {regen_some}
+    {zone_safety on}
+    ;
   ext_tzen_floor_two;
   ext_tzen_get_magicite;
   zone_extend {need_pawn pawn_tzen};
@@ -388,3 +395,75 @@
 #nop -----------------------------------------
 
 #alias {zone_narnia_walk} {zone_extend {walk_fast {$path_narnia} {A small stone building}}}
+
+
+#nop -----------------------------------------
+#nop Despair
+#nop -----------------------------------------
+
+#alias {zone_despair_nw_walk} {
+  ext_despair_walk;
+  ext_despair_nw
+}
+
+#alias {zone_despair_walk_sell_basalt} {
+  ext_despair_walk;
+  ext_despair_iggy;
+  zone_extend
+    {walk_fast {1n} {Outside the Maze}}
+}
+
+#alias {ext_despair_walk} {zone_extend {walk_fast {$path_despair} {Outside the Maze}}}
+
+#alias {ext_despair_iggy} {
+  zone_extend
+    {walk_fast {10w10s} {A short hairy man covered in scratches}}
+    {zone_safety off}
+    {pawn_all_from_bag {basalt} {xanth-bag}}
+    {zone_safety on}
+}
+
+#alias {ext_despair_nw} {
+  zone_extend
+    {walk_fast {10w1u} {Northwest Entrance to the Maze}}
+    {group_autoloot no-cursed}
+    {set_target despair}
+    
+    {kill_walk_path {1s} {despair}}
+    {dagger_walk_path {1s} {despair}}
+    {kill_walk_path {3e2w1n1e1n2w} {despair}}
+
+    {kill_walk_path {2s1e1s} {despair}}
+    {dagger_walk_path {3s} {despair}}
+    {kill_walk_path {1e2w1e1s} {despair}}
+    {dagger_walk_path {2e} {despair}}
+    {kill_walk_path {1s3n} {despair}}
+    {dagger_walk_path {1w1n} {despair}}
+    {kill_walk_path {2e2w1n} {despair}}
+    {dagger_walk_path {3e} {despair}}
+}
+
+
+#nop -----------------------------------------
+#nop Red Castle
+#nop -----------------------------------------
+
+#alias {zone_red_bosses} {ext_red_walk; ext_red_underground}
+#alias {ext_red_walk} {zone_extend {walk_fast {$path_red} {Ambushed in the Mountains!}}}
+#alias {ext_red_underground} {
+  zone_extend
+    {set_target {red}}
+    {group_agg}
+    {group_autoloot gold}
+    {kill_walk_path {1e} {red}}
+    {kill_walk_path {1e1n1e1n1e1s1d1w1n} {red}}
+}
+
+#alias {ext_red_dragon} {
+  zone_extend
+    {set_target {dragon}}
+    {group_noscrap}
+    {group_autoloot on}
+    {group_walk_kill {1n1w} {Dragons Grotto} {dragon}}
+}
+

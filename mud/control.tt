@@ -183,8 +183,40 @@ hook {on_zone_end} {create}
 
 #alias {zone_retry} {
   executor {global_tasks} {clear};
+  task_list {zone_steps} {clear};
+  cmd_check_fish
+    {zone_retry_all_fishes}
+    {zone_retry_fishes_missing}
+}
+
+#alias {zone_retry_all_fishes} {
   zone_rewind;
   zone_finish
+}
+
+#alias {zone_retry_fishes_missing} {
+  #nop revert the recover state to "off" so it's set back to "on" + rewind;
+  #var {zone_recover_state} {off};
+  zone_finish
+}
+
+#alias {transition_zone_recovery_continuation} {
+  #if {$fish_lost <= 0} {
+    debug NO FISH LOST --> zone_recover_state=off --> continue;
+    #var {zone_recover_state} {off};
+    cmd_group_scrappy {%1} {%1}
+  };
+  #elseif {"$zone_recover_state" == "off"} {    
+    #var {zone_recover_state} {on};
+    zone_rewind;
+    tell group 'FISH LOST --> zone_recover_state=on --> retry;
+    cmd_group_noscrap {%1} {%1}
+  };
+  #else {
+    tell group 'FISH STILL LOST --> halt;
+    #var {zone_state} {stop};
+    %1
+  }
 }
 
 
@@ -250,25 +282,6 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
   cmd_check_fish
     {transition_zone_recovery_continuation {%1}}
     {transition_zone_recovery_continuation {%1}}
-}
-
-#alias {transition_zone_recovery_continuation} {
-  #if {$fish_lost <= 0} {
-    debug NO FISH LOST --> zone_recover_state=off --> continue;
-    #var {zone_recover_state} {off};
-    cmd_group_scrappy {%1} {%1}
-  };
-  #elseif {"$zone_recover_state" == "off"} {    
-    #var {zone_recover_state} {on};
-    zone_rewind;
-    tell group 'FISH LOST --> zone_recover_state=on --> retry;
-    cmd_group_noscrap {%1} {%1}
-  };
-  #else {
-    tell group 'FISH STILL LOST --> halt;
-    #var {zone_state} {stop};
-    %1
-  }
 }
 
 #alias {cmd_announce} {
@@ -358,6 +371,7 @@ def_zone_task2 {gather_all_into_bag} {cmd_gather_all_into_bag}
 def_zone_task2 {unlock_door} {cmd_unlock_door}
 def_zone_task3 {unlock_door_with_key} {cmd_unlock_door_with_key}
 def_zone_task2 {group_walk} {cmd_group_walk}
+def_zone_task3 {group_walk_kill} {cmd_group_walk_kill}
 def_zone_task1 {group_teleport_room} {cmd_group_teleport_room}
 def_zone_task1 {group_autoloot} {cmd_group_autoloot}
 def_zone_task1 {group_drop_all} {cmd_group_drop_all}
