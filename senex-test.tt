@@ -38,8 +38,9 @@
     #var {health_low} {400}    
   };
 
-  hook {bless_down} {add} {$me} {cmd_cast_me {bless} {debug BLESS UP} {debug BLESS FAIL}}
-  hook {armor_down} {add} {$me} {cmd_cast_me {armor} {debug ARMOR UP} {debug ARMOR FAIL}}
+  hook {bless_down} {add} {$me} {cmd_cast_me {bless} {debug BLESS UP} {debug BLESS FAIL}};
+  hook {armor_down} {add} {$me} {cmd_cast_me {armor} {debug ARMOR UP} {debug ARMOR FAIL}};
+  need_spell_add {spiritual armor};
 
   set_robot {silk} {Silk};
   protect {$robot_description} {$robot};
@@ -66,6 +67,25 @@
   zone_loop_start
 }
 
+#alias {load_test_loop} {
+  zone_loop
+    {zone_tridac_kill}  
+    {zone_despair_sw_walk}
+    {zone_tridac_kill}
+    {zone_x2_kill}
+    {zone_tridac_kill}
+    {zone_bryad_walk}
+    {zone_antipal_kill}
+    {zone_blizz_kill}
+    {zone_tridac_kill}
+    {zone_tzen}
+    {zone_tzen_walk_sell_magicite}  
+}
+
+#alias {test_loop} {
+  load_test_loop;
+  zone_loop_start
+}
 
 #nop --------------------------
 #nop adapter.tt
@@ -81,19 +101,19 @@
   rest;
   get stars-cloak $regen_bag; rem mane; wear stars-cloak neck;
   get purple-cape $regen_bag; rem lionskin-suit; wear purple-cape;
-  get mithril-helmet $regen_bag; rem ucardi-visor; wear mithril-helmet;
+  get mithril-helmet $regen_bag; rem ucardi-visor; rem tuor-helm; wear mithril-helmet;
   get all.locust-skin $regen_bag; rem ucardi-plates; wear skin legs;
   get sapphire-ring $regen_bag; get spectral-band $regen_bag;
-  rem holiday-ring; rem feather-ring;
+  rem holiday-ring; rem feather-ring; rem giant-strength;
   wear sapphire-ring; wear spectral-band
 }
  
 #alias {unregen} {
   rem sapphire-ring; rem spectral-band;
-  wear holiday-ring; wear feather-ring;
+  wear holiday-ring; wear feather-ring; wear giant-strength;
   put sapphire-ring $regen_bag; put spectral-band $regen_bag;  
   stand;
-  rem mithril-helmet; wear ucardi-visor; put mithril-helmet $regen_bag;
+  rem mithril-helmet; wear ucardi-visor; wear tuor-helm; put mithril-helmet $regen_bag;
   rem fey; put fey case; wear mane;
   rem stars-cloak; put stars-cloak $regen_bag; wear mane;  
   rem purple-cape; wear lionskin-suit; put purple-cape $regen_bag;

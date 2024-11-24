@@ -91,7 +91,14 @@ def_group_task0 {cmd_group_unagg} {unagg} {cmd_unagg}
 
 #alias {cmd_group_teleport_room} {
   tell group 'teleport-room: %1;
-  cmd_teleport_room {cmd_group_teleport_room} {%1} {%2} {%3}
+  cmd_teleport_room {%1} {%2} {%3}
+}
+
+#alias {cmd_group_cast} {
+  #nop FIXME -- it would be better to execute these as continuations, but this tasks blocks them from running;
+  cmd_cast_me {%1} {#nop} {#nop};
+  exec_cast {%1} {$robot} {#nop} {#nop};
+  trampoline {cmd_group_cast} {%2}
 }
 
 #class {leader} {save}

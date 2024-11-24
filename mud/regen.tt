@@ -22,22 +22,27 @@
   };
 
   #alias {regen_mana_hook} {
-    debug REGEN MANA UP: mana=$mana goal=$regen_mana_threshold max=$score_max_mana;
+    debug REGEN MANA UP: mana=$mana goal=@regen_need_mana{} max=$score_max_mana;
     #if {@is_regen_done{} == 1} {
-      maybe_regen_done
+      debounce_regen_done
     }  
   };
 
   #alias {regen_move_hook} {
-    debug REGEN MOVE UP: move=$movement goal=$regen_move_threshold max=$score_max_movement;
+    debug REGEN MOVE UP: move=$movement goal=@regen_need_move{} max=$score_max_movement;
     #if {@is_regen_done{} == 1} {
-      maybe_regen_done
+      debounce_regen_done
     }  
   };
 
-  #alias {maybe_regen_done} {
-    #undelay {maybe_regen_done_delay};
-    #delay {maybe_regen_done} {on_regen_done} {0.1}
+  #alias {debounce_regen_done} {
+    #undelay {debounce_regen_done};
+    #delay {debounce_regen_done} {debounced_regen_done} {0.1}
+  };
+
+  #alias {debounced_regen_done} {
+    tell group 'REGEN --> done;
+    on_regen_done  
   };
 
   #alias {regen_off} {
@@ -58,7 +63,7 @@
     debug REGEN --> skip;
     on_regen_done
   } {
-    tell group 'REGEN --> start (mana:$mana target:@regen_need_mana{});
+    tell group 'REGEN --> start (m:$mana v:$movement target m:@regen_need_mana{} v:@regen_need_move{});
     #var {regen_state} {on};
     regen
   }

@@ -28,9 +28,12 @@
   };
 
   #alias {diff_need_spells} {
-    foreach_exec_task {diff_need_spells} {$need_spells} {cmd_cast_if_needed}
-      {spellup_done_continuation}
-      {spellup_done_continuation}
+    #nop FIXME -- it would be better to execute with foreach_exec_task, but this tasks blocks them from running;
+    #local {spell} {};
+    #foreach {$need_spells} {spell} {
+      cmd_cast_if_needed {$spell} {#nop} {#nop}
+    };
+    trampoline {diff_need_spells} {spellup_done_continuation}
   };
 
   #alias {spellup_once_end} {
@@ -64,6 +67,67 @@
     #var {need_spells} {$temp_spells}
   }  
 }
+
+#var {mode_spirit_armor} {off}
+#alias {spirit_armor_off} {
+  #var {mode_spirit_armor} {off}
+}
+
+#alias {spirit_armor_on} {  
+  #class {spirit_armor} {open};
+
+  #alias {spa_down} {
+    #var {mode_spa} {down};
+    cast_unless_fighting {spiritual armor}
+  };  
+
+  #class {spa_group} {save};
+  #class {spa_group} {close};
+
+  #alias {spa_off} {
+    #alias {spa_off} {#nop};
+    #class {spa_group} {kill};
+    need_spell_remove {spiritual armor}
+  };
+
+  need_spell_add {spiritual armor};
+  spellup
+}
+
+hook {sanc_down} {create}
+hook {protection_down} {create}
+hook {strength_down} {create}
+hook {bless_down} {create}
+hook {armor_down} {create}
+hook {shield_down} {create}
+hook {fly_down} {create}
+hook {spirit_armor_down} {create}
+
+#var spell_state {}
+#alias {spell_state_down} {
+  #var spell_state[%1] {down};
+  hook {%1_down} {fire}
+}
+
+#alias {spell_state_up} {
+  #var spell_state[%1] {up}
+}
+
+#action {Your protective magic dissipates.} {spell_state_down {sanc}; reset_clock {tick}}
+#action {Evil holds dominion over you again as your warding powers fade.} {
+  spell_state_down {protection};
+  reset_clock {tick}
+}
+#action {You don't feel as strong.} {spell_state_down {strength}; reset_clock {tick}}
+#action {You feel less righteous.} {spell_state_down {bless}; reset_clock {tick}}
+#action {You feel less protected.} {spell_state_down {armor}; reset_clock {tick}}
+#action {Your shield of protection flickers, then disappears.} {spell_state_down {shield}; reset_clock {tick}}
+#action {You sink towards the ground as your magic wears off.} {spell_state_down {fly}; reset_clock {tick}}
+#action {Your holy protection disappears.} {spell_state_down {spirit_armor}}
+
+#action {You call on your diety to protect you, and are engulfed in shaft of light.} {spell_state_up {spirit_armor}}
+#action {You feel the blessing of a diety upon you.} {spell_state_up {bless}}
+#action {You feel someone protecting you.} {spell_state_up {armor}}
 
 #class {spellup} {save}
 #class {spellup} {close}

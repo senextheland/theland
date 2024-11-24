@@ -308,6 +308,7 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
     {announce {next_zone_announcement} {2.0}}
     {regen_some}
     {group_repair}
+    {group_spellup}
     {zone_safety on}  
 }
 
@@ -379,6 +380,7 @@ def_zone_task0 {group_sneak} {cmd_group_sneak}
 def_zone_task0 {group_unsneak} {cmd_group_unsneak}
 def_zone_task0 {group_agg} {cmd_group_agg}
 def_zone_task0 {group_unagg} {cmd_group_unagg}
+def_zone_task1 {group_cast} {cmd_group_cast}
 
 #class {control} {save}
 #class {control} {close}

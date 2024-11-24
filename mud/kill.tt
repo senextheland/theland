@@ -53,6 +53,7 @@
   #alias {kill_walk_path_fail} {kill_walk_path_end; %4};
 
   #alias {kill_walk_path_end} {
+    hook {before_walk_room} {remove} {kill_walk_path};
     #class {kill_walk_path} {kill};
     #alias {kill_walk_path_end} {#nop}
   };
@@ -64,6 +65,7 @@
   #class {kill_walk_path} {save};
   #class {kill_walk_path} {close};
 
+  hook {before_walk_room} {add} {kill_walk_path} {zone_continuation};
   walk_each {$kill_walk_path} {kill_walk_room} {kill_walk_path_done} {kill_walk_path_fail};
   step
 }

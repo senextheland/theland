@@ -5,7 +5,8 @@
 #var {expect_fish} {a frozen fish{.*}[4]}
 
 #alias {reset_lost_fish} {
-  #var {fish_lost} {0}
+  #var {fish_lost} {0};
+  #var {zone_recover_state} {off}
 }
 
 #alias {fish_still_lost} {

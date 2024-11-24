@@ -49,24 +49,5 @@ hook {on_tick_soon} {create}
 #action {The lightning has gone, but it is still raining.} {reset_clock {tick}}
 #action {The blizzard is over, but it is still snowing.} {reset_clock {tick}}
 
-hook {sanc_down} {create}
-hook {protection_down} {create}
-hook {strength_down} {create}
-hook {bless_down} {create}
-hook {armor_down} {create}
-hook {shield_down} {create}
-hook {fly_down} {create}
-
-#action {Your protective magic dissipates.} {hook {sanc_down} {fire}; reset_clock {tick}}
-#action {Evil holds dominion over you again as your warding powers fade.} {
-  hook {protection_down} {fire};
-  reset_clock {tick}
-}
-#action {You don't feel as strong.} {hook {strength_down} {fire}; reset_clock {tick}}
-#action {You feel less righteous.} {hook {bless_down} {fire}; reset_clock {tick}}
-#action {You feel less protected.} {hook {armor_down} {fire}; reset_clock {tick}}
-#action {Your shield of protection flickers, then disappears.} {hook {shield_down} {fire}; reset_clock {tick}}
-#action {You sink towards the ground as your magic wears off.} {hook {fly_down} {fire}; reset_clock {tick}}
-
 #class {tick} {save}
 #class {tick} {close}

@@ -9,8 +9,8 @@ hook {on_fight_start} {create}
 #var {combat_status} {idle}
 #var {currently_fighting} {}
   
-#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|channels|claws|crushes|decimates|demolishes|devastates|ethereally touches|grapples with|hits|leaps upon|massacres|misses|mutilates|obliterates|pierces|pulverizes|punches|rocks|saws|smashes|stuns|tangles|thrashes|vanquishes|whips}
-#var {you_fighting_words} {annihilate|atomize|beat the ever living shit out of|bite|channel|claw|crushes|decimate|demolish|devastate|grapple with|hit|leap upon|massacre|mutilate|obliterate|pierce|pulverize|punch|rock|thrash|stun|vanquish|whip}
+#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleave|channels|claws|crushes|decimates|demolishes|devastates|ethereally touches|grapples with|hits|leaps upon|massacres|misses|mutilates|obliterates|pierces|pulverizes|punches|rocks|saws|smashes|stuns|tangles|thrashes|vanquishes|whips}
+#var {you_fighting_words} {annihilate|atomize|beat the ever living shit out of|bite|channel|claw|cleaves|crushes|decimate|demolish|devastate|grapple with|hit|leap upon|massacre|mutilate|obliterate|pierce|pulverize|punch|rock|thrash|stun|vanquish|whip}
 
 #action {You {$you_fighting_words} %2 with} {update_fight {%2}}
 #action {%1 {$fighting_words} you} {update_fight {%1}}
@@ -35,7 +35,9 @@ hook {on_fight_start} {create}
 }
 
 #action {R.I.P} {
+  debug RIP ACTION --> dispatch through prompt;
   hook on_prompt {once} {after_rip} {
+    debug RIP ACTION --> prompt triggered --> end_fight;
     end_fight {$currently_fighting} {rip}
   }
 }
@@ -66,6 +68,7 @@ hook {on_fight_start} {create}
 }
 
 #alias {end_fight} {
+  debug END FIGHT status=$combat_status;
   #if {"$combat_status" == "fighting"} {
     #var {combat_status} {idle};
     #var {currently_fighting} {};
@@ -77,6 +80,7 @@ hook {on_fight_start} {create}
       hook {on_rip} {exec-each} {#nop} {#nop}
     } {0.1}
   }
+  { debug END-FIGHT --> skip }
 }
 
 #alias {fighting_timed_out} {

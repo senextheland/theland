@@ -63,8 +63,11 @@
 #nop Blizz
 #nop -----------------------------------------
  
-#alias {zone_blizz_walk} {zone_extend {walk_fast {$path_blizz} {A Frozen Path}}; zone_blizz}
-#alias {zone_blizz} {
+#alias {zone_blizz_walk} {ext_blizz_walk; ext_blizz_dagger}
+#alias {zone_blizz_kill} {ext_blizz_walk; ext_blizz_kill; ext_blizz_chasm_kill}
+#alias {ext_blizz_walk} {zone_extend {walk_fast {$path_blizz} {A Frozen Path}}}
+
+#alias {ext_blizz_dagger} {
   zone_extend  
     {set_target blizz}
     {group_autoloot no-cursed}    
@@ -72,13 +75,46 @@
     {walk_fast {1n} {A Frozen Path}}
 }
 
+#alias {ext_blizz_kill} {
+  zone_extend  
+    {set_target blizz}
+    {group_autoloot no-cursed}    
+    {kill_walk_path {3w1n4s2e1s1w2n1e2s4n1e1s} {blizz}}
+    {walk_fast {1n} {A Frozen Path}}
+}
+
+#alias {ext_blizz_chasm_kill} {
+  zone_extend
+    {kill_walk_path {3w1s2w} {blizz}}
+    {zone_safety off}    
+    {wait_for_room {You land in the snow!}}
+    {kill_walk_path {1u} {blizz}}
+    {zone_safety on}
+    {kill_walk_path {3n1s1w1e5s1n1e} {blizz}}
+}
+
+#alias {ext_blizz_fortress} {
+  zone_extend
+    {set_target frost}
+    {unlock_door {ice-key} {fortress}}
+    {open_door {fortress}}
+    {kill_walk_path {1e1u1e1n1u1e1n1e1s2w1d1w1s1w1n1u2w1n1e1n1e1u} {frost}}
+
+    {set_target elf}
+    {unlock_door {blue-key} {chamber}}
+    {open_door {chamber}}
+    {kill_walk_path {1u} {elf}}
+}
 
 #nop -----------------------------------------
 #nop Antipal
 #nop -----------------------------------------
 
-#alias {zone_antipal_walk} {zone_extend {walk_fast {$path_antipal} {Morganna's Hut}}; zone_antipal}
-#alias {zone_antipal} {  
+#alias {zone_antipal_walk} {ext_antipal_walk; ext_antipal_dagger}
+#alias {zone_antipal_kill} {ext_antipal_walk; ext_antipal_kill; ext_antipal_bosses}
+#alias {ext_antipal_walk} {zone_extend {walk_fast {$path_antipal} {Morganna's Hut}}}
+
+#alias {ext_antipal_dagger} {  
   zone_extend
     {set_target anti}
     {group_autoloot some-cursed}    
@@ -87,6 +123,28 @@
     {dagger_walk_path {2s1e2w1e1s1e3w2e4s3n3e5w} {anti}}
     {need_pawn pawn_antipal}
 }
+
+#alias {ext_antipal_kill} {  
+  zone_extend
+    {set_target anti}
+    {group_autoloot some-cursed}    
+    {kill_walk_path {1d1s1e1w1s1e2w1e2s3e3w2n1w1d3s1d3s2e1s1w1n1s3w1n4e1s2w1d} {anti}}
+    {open_door {temple}}
+    {kill_walk_path {2s1e2w1e1s1e3w2e4s3n3e5w} {anti}}
+    {need_pawn pawn_antipal}
+}
+
+#alias {ext_antipal_bosses} {
+  zone_extend
+    {set_target sasparin}
+    {kill_walk_path {1s} {sasparin}}
+    {kill_walk_path {1n2e1n2e} {anti}}
+    {set_target lassiter}
+    {open_door {door}}
+    {kill_walk_path {1e} {lassiter}}
+    {kill_walk_path {2w} {anti}}
+}
+
 #alias {pawn_antipal} {
   pawn_all {anti;black-boots;black-plate;black-shield;black-cloak;black-plates;wad-bandages;black-rose}
 }
@@ -96,8 +154,12 @@
 #nop Tridac
 #nop -----------------------------------------
 
-#alias {zone_tridac_walk} {zone_extend {walk_fast {$path_tridac;1d} {Ice Cavern Entrance}}; zone_abbrev_tridac}
-#alias {zone_abbrev_tridac} {
+#alias {zone_tridac_walk} {ext_tridac_walk; zone_tridac_abbrev_dagger}
+#alias {zone_tridac_kill} {ext_tridac_walk; zone_tridac_abbrev_kill}
+#alias {ext_tridac_walk} {zone_extend {walk_fast {$path_tridac;1d} {Ice Cavern Entrance}}}
+#alias {pawn_tridac} {pawn_all {tridac}}
+
+#alias {zone_tridac_abbrev_dagger} {
   zone_extend
     {set_target tridac}
     {group_autoloot no-cursed}    
@@ -113,7 +175,24 @@
     {kill_walk_path {1n1e} {tridac}}
     {need_pawn pawn_tridac}
 }
-#alias {pawn_tridac} {pawn_all {tridac}}
+
+#alias {zone_tridac_abbrev_kill} {
+  zone_extend
+    {set_target tridac}
+    {group_autoloot no-cursed}    
+    {kill_walk_path {1s2e1s1e1s1e2w1e1n1w1n2w} {tridac}}
+    {kill_walk_path {1w2s1w1n1s1e2n1e2s} {tridac}}
+
+    {kill_walk_path {2s} {tridac}}
+    
+    {kill_walk_path {2e1n1e2s1w1s1w1e1s1e} {tridac}}
+    {teleport_room {Stopped}}
+    {kill_room {tridac}}
+    {kill_walk_path {3e2s1e1n1e} {tridac}}
+    {kill_walk_path {1n1e} {tridac}}
+    {need_pawn pawn_tridac}
+}
+
 
 
 #nop -----------------------------------------
@@ -195,8 +274,10 @@
 #nop Xanth2
 #nop -----------------------------------------
 
-#alias {zone_x2_walk} {zone_extend {walk_fast {$path_x2;1e1s} {A Marshy Glen}}; zone_x2}
-#alias {zone_x2} {
+#alias {zone_x2_walk} {ext_x2_walk; zone_x2_dagger}
+#alias {zone_x2_kill} {ext_x2_walk; ext_x2_kill}
+#alias {ext_x2_walk} {zone_extend {walk_fast {$path_x2;1e1s} {A Marshy Glen}}}
+#alias {ext_x2_dagger} {
   zone_extend
     {set_target xanth2}
     {group_autoloot some-cursed}    
@@ -226,6 +307,27 @@
     {dagger_walk_path {2e1u1d4w1u1d2e} {undead}}
     {need_pawn pawn_x2}
 }
+
+#alias {ext_x2_kill} {
+  zone_extend
+    {set_target xanth2}
+    {group_autoloot some-cursed}    
+    {kill_walk_path {1s2e1w5s6e1n1e2s} {xanth2}}
+    {confirm_room {Approaching The Gap Chasm}}
+    {kill_walk_path {1s} {xanth2}}
+    {confirm_room {The Brink of the Gap Chasm}}
+    {kill_walk_path {2w} {xanth2}}
+    {confirm_exit {An Invisible Bridge}}
+    {kill_walk_path {2s} {xanth2}}
+    {confirm_room {The Far Side of the Gap}}
+    {kill_walk_path {1d1w1d1n1w1e1s1u1e1u} {xanth2}}
+    {kill_walk_path {3s} {xanth2}}
+    {kill_walk_path {1n2e1n2w4s1e1s} {xanth2}}
+    {kill_walk_path {1n1w3n1e1s1w1s} {xanth2}}
+    {walk_fast {4s} {Castle Roogna's Front Foyer}}
+    {kill_walk_path {2w1u1d2e2s2n2e1u1d2w} {xanth2}}
+}
+
 #alias {pawn_x2} {pawn_all {queue-vine;flesh-food;vole-claws;duritium-key}}
 
 
@@ -233,18 +335,23 @@
 #nop Tzen
 #nop -----------------------------------------
 
+#alias {ext_regen_some} {
+  zone_extend
+    {zone_safety off}
+    {regen_some}
+    {zone_safety on}     
+}
+
 #alias {zone_tzen} {
   ext_walk_tzen;
   ext_walk_tzen_palace;
   ext_tzen_floor_one;
-  zone_extend
-    {zone_safety off}
-    {regen_some}
-    {zone_safety on}
-    ;
+  ext_regen_some;
   ext_tzen_floor_two;
+  ext_regen_some;
+  ext_tzen_floor_three;  
   ext_tzen_get_magicite;
-  zone_extend {need_pawn pawn_tzen};
+  zone_extend {need_pawn pawn_tzen}
 }
 
 #alias {pawn_tzen} {pawn_all {tzencat}}
@@ -254,7 +361,7 @@
   ext_tzen_alchemist;
   zone_extend
     {walk_fast {1n} {The Lost City of Tzen}}
-};
+}
 
 #alias {ext_walk_tzen} {
   zone_extend
@@ -314,9 +421,19 @@
   zone_extend
     {group_autoloot no-cursed}  
     {walk_fast {3u} {You climb to the fourth floor.}}
-    {dagger_walk_path {4n1w1n2e1s1w4s} {feline}}
-    {walk_fast {3d} {The Opal Stairs}}
+    {dagger_walk_path {4n1w1n2e1s1w3s} {feline}}
+    {group_cast {remove poison}}    
+    {walk_fast {1s3d} {The Opal Stairs}}
     {group_drop_all magicite}
+}
+
+#alias {ext_tzen_floor_four} {
+  zone_extend
+    {group_autoloot no-cursed}  
+    {walk_fast {4u} {You arrive at the fifth floor of the palace}}
+    {dagger_walk_path {2n1w2n1w1n1e2s1e3s} {feline}}
+    {walk_fast {4d} {The Opal Stairs}}
+    {group_drop_all magicite}  
 }
 
 
@@ -406,9 +523,25 @@
   ext_despair_nw
 }
 
+#alias {zone_despair_sw_walk} {
+  ext_despair_walk;
+  zone_extend {walk_fast {10w19s} {Outside the Maze}};  
+  ext_despair_sw;
+  zone_extend
+    {confirm_room {Southwest Entrance to the Maze}}
+    {walk_fast {1d9n} {A short hairy man covered in scratches}}
+    ;
+  ext_despair_iggy;
+  zone_extend
+    {walk_fast {1n} {Outside the Maze}}    
+}
+
 #alias {zone_despair_walk_sell_basalt} {
   ext_despair_walk;
-  ext_despair_iggy;
+  zone_extend
+    {walk_fast {10w10s} {A short hairy man covered in scratches}}
+    ;  
+  ext_despair_iggy;  
   zone_extend
     {walk_fast {1n} {Outside the Maze}}
 }
@@ -417,15 +550,17 @@
 
 #alias {ext_despair_iggy} {
   zone_extend
-    {walk_fast {10w10s} {A short hairy man covered in scratches}}
     {zone_safety off}
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {xanth-bag}}
     {pawn_all_from_bag {basalt} {xanth-bag}}
     {zone_safety on}
 }
 
+#alias {ext_iggy_nw} {walk_fast {9n} {Outside the Maze}}
 #alias {ext_despair_nw} {
   zone_extend
-    {walk_fast {10w1u} {Northwest Entrance to the Maze}}
+    {walk_fast {1u} {Northwest Entrance to the Maze}}
     {group_autoloot no-cursed}
     {set_target despair}
     
@@ -443,27 +578,61 @@
     {dagger_walk_path {3e} {despair}}
 }
 
+#alias {ext_despair_nw_crazy} {
+  zone_extend
+    {walk_fast {1u} {Northwest Entrance to the Maze}}
+    {group_autoloot no-cursed}
+    {set_target despair}
+    
+    {kill_walk_path {2s} {despair}}
+    {kill_walk_path {3e2w1n1e1n2w} {despair}}
+
+    {kill_walk_path {2s1e4s} {despair}}
+    {kill_walk_path {1e2w1e1s2e} {despair}}
+    {kill_walk_path {1s3n1w1n} {despair}}
+    {kill_walk_path {2e2w1n3e} {despair}}
+}
+
+#alias {ext_iggy_to_sw} {walk_fast {10s} {Outside the Maze}}
+#alias {ext_despair_sw} {
+  zone_extend
+    {walk_fast {1u} {Southwest Entrance to the Maze}}
+    {group_autoloot no-cursed}
+    {set_target despair}
+
+    {kill_walk_path {6n1s2e} {despair}}
+    {kill_walk_path {1n2s1w2e1w1s1e1w1s2e2w2s2w} {despair}}    
+    {kill_walk_path {3e} {despair}}
+    {kill_walk_path {1n2e1s1w1e1n2w1s1w2n2e1n1e1s1e1n1e2s1w1s3e} {despair}}
+    {kill_walk_path {3w1n1e2n1w1s1w1n1w1s2w} {despair}}    
+    {kill_walk_path {1n1e1w1n1e1n1e} {despair}}
+    {kill_walk_path {1w1s2w3s3n1e1n2w5s} {despair}}    
+    {kill_walk_path {6n1s2e1n1e1n1w1n2w1s1e1s} {despair}}
+    {kill_walk_path {1n1w1n2e1s1e1s1w1s2w5s} {despair}}
+}
+
+
 
 #nop -----------------------------------------
 #nop Red Castle
 #nop -----------------------------------------
 
-#alias {zone_red_bosses} {ext_red_walk; ext_red_underground}
+#alias {zone_red_bosses} {ext_red_walk; ext_red_battlemaster}
+
 #alias {ext_red_walk} {zone_extend {walk_fast {$path_red} {Ambushed in the Mountains!}}}
-#alias {ext_red_underground} {
+
+#alias {ext_red_battlemaster} {
   zone_extend
     {set_target {red}}
     {group_agg}
     {group_autoloot gold}
     {kill_walk_path {1e} {red}}
-    {kill_walk_path {1e1n1e1n1e1s1d1w1n} {red}}
+    {kill_walk_path {1e1n1e1n1e1s1d1w1s1w} {red;beast}}
+    {dagger_walk_path {1n} {beast}}
+    {set_target {battlemaster}}
+    {group_autoloot on}    
+    {kill_walk_path {1w} {battlemaster}}
+    {walk_fast {1e} {The Cut Passage}}
 }
 
-#alias {ext_red_dragon} {
-  zone_extend
-    {set_target {dragon}}
-    {group_noscrap}
-    {group_autoloot on}
-    {group_walk_kill {1n1w} {Dragons Grotto} {dragon}}
-}
-
+#alias {pawn_red} {pawn_all {red-helm;red-shield;red-gauntlets}}

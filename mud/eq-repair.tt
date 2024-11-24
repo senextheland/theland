@@ -75,6 +75,7 @@
     {A firefly abdomen}{abdomen}
     {Silver Elven Armor}{tuor-armor}
     {A swan winged helm}{tuor-swan-helm}
+    {A tarnished ring}{???-ring}
     ;  
 
   #alias {eq_repair_check} {
