@@ -77,7 +77,16 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
 #alias {zone_loop_safety_hook} {
   #if {"$zone_safety" == "on"} {
     reset_zone_timeout;
-    cmd_presence_check {$robot} {$robot_description} {%1} {%2}
+    cmd_presence_check {$robot} {$robot_description} {%1} {zone_loop_safety_presence_fail %2}
+  } {
+    %1
+  }
+}
+
+#alias {zone_loop_safety_presence_fail} {
+  #if {"$zone_state" == "start"} {
+    debug ZONE-PRESENCE-FAIL safety=$zone_safety state=$zone_state --> retry;
+    zone_retry    
   } {
     %1
   }

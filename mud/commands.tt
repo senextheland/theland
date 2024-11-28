@@ -197,9 +197,10 @@
 #alias {cmd_wait_for_time} {
   exec_task {cmd_wait_for_time} {wait_for_time_delay} {%2} {%3} {
     #alias {wait_for_time_delay} {
-      #delay {#show DONE cmd_wait_for_time} {%1}
+      debug WAIT FOR TIME --> %1;
+      #delay {wait_for_time_delay} {#show DONE cmd_wait_for_time} {%1}
     };
-    #action {#show DONE cmd_wait_for_time} {task_cmd_wait_for_time_done}
+    #action {DONE cmd_wait_for_time} {task_cmd_wait_for_time_done}
   }
 }
 

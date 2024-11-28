@@ -550,16 +550,87 @@
 #alias {load_darkwiz_keys} {get all.key xanth-bag}
 #alias {store_darkwiz_keys} {put all.key xanth-bag}
 
-#alias {zone_darkwiz_castle} {
+#alias {ext_darkwiz_castle_entrance} {
   zone_extend
     {group_walk {1n1e} {The Great Gate}}
     {set_target {darkwiz}}
     {group_scrappy}  
-    {group_imm energy off}
+    {group_imm energy on}
     {group_autoloot heavy}
     {unlock_door_with_key {get all.key} {gate north} {store_darkwiz_keys}}
-    
-    {dagger_walk_path {1n} {darkwiz}}
+    {open_door {gate north}}
+    {kill_walk_path {1n} {darkwiz}}    
+    {close_door {gate south}}
+}
+
+#alias {ext_darkwiz_castle_floor_one} {
+  zone_extend    
+    {dagger_walk_path {3e1u1d3w1n1e3w} {darkwiz}}
+    {pick {door}}
+    {open_door {door}}
+    {kill_walk_path {1w1e4n} {darkwiz}}
+    {pick {door}}
+    {open_door {door}}
+    {dagger_nearby {darkwiz} {Nearby}}
+    {walk_fast {1w1e} {A dark hallway}}
+    {dagger_walk_path {3e1n} {darkwiz}}
+    {kill_walk_path {1s1w1s1n2w1s1e1s1e1s}}
+}
+
+#alias {ext_darkwiz_tower_floor_one} {
+  zone_extend
+    {unlock_door_with_key {load_darkwiz_keys} {door west} {store_darkwiz_keys}}
+    {open_door {door west}}
+    {walk_fast {1e} {A stone hallway}}
+    {dagger_walk_path {4w} {darkwiz}}
+    {kill_walk_path {1w1e} {darkwiz}}
+}
+
+#alias {ext_darkwiz_tower_floor_two} {
+  zone_extend
+    {group_walk {1w1u} {Ascending the Tower}}
+    {kill_room {darkwiz}}
+    {dagger_nearby {darkwiz} {Immediately}}
+    {group_walk {1u1n} {The Second floor of the Tower}}
+    {kill_room {darkwiz}}
+    {dagger_walk_path {1w1n1e} {darkwiz}}
+    {kill_walk_path {1e1s2w1n1e} {darkwiz}}
+}
+
+#alias {ext_darkwiz_tower_floor_three} {
+  zone_extend
+    {kill_walk_path {1u} {darkwiz}}
+    {dagger_walk_path {1s} {darkwiz}}
+    {walk_fast {1u} {Crenelated Wall}}
+    {walk_fast {1d} {The Third Floor of the Tower}}
+    {kill_walk_path {1w1n1e1s1w1n} {darkwiz}}    
+}
+
+#alias {ext_darkwiz_tower_exit} {
+  zone_extend
+    {walk_fast {1d1w1s1e} {The Second floor of the Tower}}
+    {group_walk {1s1d} {Ascending the Tower}}
+    {group_walk {1d1e} {A narrow stone hallway}}
+    {walk_fast {3e} {The Castle Entrance}}
+}
+
+#alias {ext_darkwiz_behind_mirror} {
+  zone_extend
+    {walk_fast {1n1e} {A room with a mirror}}
+    {pick {mirror}}
+    {open {mirror}}
+    {walk_fast {1n} {Through the scrying glass}}
+    {kill_walk_path {2n2e3s1e3n2w2s} {darkwiz}}
+    {walk_fast {1s} {The Castle Entrance}}    
+}
+
+#alias {ext_darkwiz_castle_exit} {
+  zone_extend
+    {unlock_door_with_key {load_darkwiz_keys} {gate south} {store_darkwiz_keys}}
+    {open_door {gate south}}
+    {walk_fast {1s} {The Great Gate}}
+    {close_door {gate north}}
+    {sync_command {load_darkwiz_keys; drop all.key}}
 }
 
 
