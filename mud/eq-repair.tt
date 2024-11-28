@@ -76,6 +76,7 @@
     {Silver Elven Armor}{tuor-armor}
     {A swan winged helm}{tuor-swan-helm}
     {A tarnished ring}{???-ring}
+    {A bracelet made of stone}{stone-bracelet}
     ;  
 
   #alias {eq_repair_check} {

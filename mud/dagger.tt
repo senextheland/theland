@@ -45,7 +45,7 @@
 
   hook {on_rip} {add} {dagger_all} {
     trampoline {dagger_all} {debug TRAMPOLINE --> attack; dagger_all_attack};
-    %1
+    %%1
   };
 
   #alias {dagger_all_next} {    
@@ -80,7 +80,7 @@
 
   #alias {dagger_walk_kill_room_done} {
     debug DAGGER-WALK-KILL-ROOM-DONE --> farlook;
-    exec {dagger_walk_kill_room_done} {cmd_farlook $dagger_walk_target}
+    exec {dagger_walk_kill_room_done} {cmd_farlook $dagger_walk_target {}}
       {dagger_walk_farlook_found}
       dagger_walk_farlook_fail
   };
@@ -124,6 +124,94 @@
 
   walk_each {%1} {dagger_walk_kill_room} {dagger_walk_done} {dagger_walk_fail};
   dagger_walk_kill_room
+}
+
+#alias {dagger_nearby} {
+  #class {dagger_nearby} {open};
+
+  #var {dagger_nearby_target} {%1};
+  #var {dagger_nearby_range} {%2};
+  #alias {dagger_nearby_done} {dagger_nearby_end; %3};
+  #alias {dagger_nearby_fail} {dagger_nearby_end; %4};
+
+  #alias {dagger_nearby_end} {
+    hook {on_rip} {remove} {dagger_nearby};
+    #class {dagger_nearby} {kill}    
+  };
+
+  #alias {dagger_nearby_farlook} {
+    exec {dagger_nearby_farlook} {cmd_farlook $dagger_nearby_target {$dagger_nearby_range}}
+      {dagger_nearby_farlook_found}
+      dagger_nearby_farlook_fail  
+  };
+
+  #alias {dagger_nearby_farlook_found} {
+    debug DAGGER-NEARBY-FARLOOK-FOUND;
+    dagger_nearby_attack
+  };
+
+  #alias {dagger_nearby_farlook_fail} {
+    debug DAGGER-NEARBY-FARLOOK-FAIL --> %%1;
+    #switch {"%%1"} {
+      #case {"here"} {dagger_walk_kill_room};
+      #case {"not-found"} {dagger_nearby_done};
+      #case {"not-nearby"} {dagger_nearby_done};
+      #default {debug dagger_nearby_farlook_fail UNRECOGNIZED COMMAND {%%1}}
+    }  
+  };
+
+  #alias {dagger_nearby_kill_room} {
+    kill_room {$dagger_nearby_target}
+      {dagger_nearby_farlook}
+  };
+
+  #alias {dagger_nearby_throw_done} {
+    debug DAGGER-NEARBY-THROW-DONE --> step;
+    dagger_nearby_done
+  };
+
+  #alias {dagger_nearby_throw_fail} {
+    debug DAGGER-NEARBY-THROW-FAIL: %%0;
+    #switch {"%%1"} {
+      #case {"no-mob"} {dagger_nearby_throw_done};
+      #default {dagger_nearby_fail %%0}
+    }
+  };
+
+  #alias {dagger_nearby_attack} {
+    zone_continuation {dagger_nearby_attack_after_continuation}
+  };
+
+  #alias {dagger_nearby_attack_after_continuation} {
+    dagger_mode {$dagger_nearby_target}
+      {trampoline {dagger_nearby_attack} {dagger_nearby_farlook}}
+      {dagger_nearby_attack_fail}
+  };
+
+  #alias {dagger_nearby_attack_fail} {
+    debug DAGGER-NEARBY-FAIL: {%%1};
+    #switch {"%%1"} {
+      #case {"fighting"} {dagger_nearby_fighting};
+      #case {"no-dagger"} {dagger_nearby_fail {no-dagger}};
+      #case {"no-mob"} {dagger_nearby_done};
+      #default {dagger_nearby_done}
+    }   
+  };
+
+  #alias {dagger_nearby_fighting} {
+    debug DAGGER-NEARBY: fighting --> nop;
+    fish_end
+  };
+
+  hook {on_rip} {add} {dagger_nearby} {
+    trampoline {dagger_nearby} {debug TRAMPOLINE --> farlook; dagger_nearby_farlook};
+    %%1
+  };
+
+  #class {dagger_nearby} {save};
+  #class {dagger_nearby} {close};
+
+  dagger_nearby_farlook
 }
 
 #class {dagger} {save}

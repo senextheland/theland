@@ -317,16 +317,12 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
 
 #alias {ext_visit_town} {
   zone_extend
-    {zone_safety off}
     {walk_fast {$inn_mk} {Market Square}}
     ;
   
   ext_buy_recalls;
   #if {"%1" != "" } {ext_pawn {%1}};
-  ext_bank;
-
-  zone_extend
-    {zone_safety on}
+  ext_bank
 }
 
 #alias {ext_buy_recalls} {
@@ -363,6 +359,7 @@ def_zone_task0 {group_noscrap} {cmd_group_noscrap}
 def_zone_task1 {open_door} {cmd_open_door}
 def_zone_task1 {teleport_room} {cmd_teleport_room}
 def_zone_task1 {wait_for_room} {cmd_wait_for_room}
+def_zone_task1 {wait_for_time} {cmd_wait_for_time}
 def_zone_task1 {confirm_room} {cmd_look_room}
 def_zone_task1 {confirm_exit} {cmd_check_exit}
 def_zone_task0 {regen_fairy} {cmd_regen_fairy}
@@ -381,6 +378,8 @@ def_zone_task0 {group_unsneak} {cmd_group_unsneak}
 def_zone_task0 {group_agg} {cmd_group_agg}
 def_zone_task0 {group_unagg} {cmd_group_unagg}
 def_zone_task1 {group_cast} {cmd_group_cast}
+def_zone_task0 {group_stand} {cmd_group_stand}
+def_zone_task2 {group_imm} {cmd_group_imm}
 
 #class {control} {save}
 #class {control} {close}

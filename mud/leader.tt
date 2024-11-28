@@ -19,6 +19,15 @@
   } {15}
 }
 
+#alias {def_group_task2} {
+  #alias {%1} {
+    exec_task {%1} {tell group '%2} {%%3} {%%4} {
+      #action {FAIL: %2} {task_%1_fail};
+      #action {OK: %2} {%3 {task_%1_done} {task_%1_fail}}
+    }
+  } {15}
+}
+
 def_group_task0 {cmd_group_recall} {recall} {cmd_recall}
 def_group_task0 {cmd_group_repair} {repair-eq} {eq_repair}
 def_group_task1 {cmd_group_pawn} {pawn: %1} {%1}
@@ -33,6 +42,8 @@ def_group_task0 {cmd_group_sneak} {sneak} {cmd_sneak}
 def_group_task0 {cmd_group_unsneak} {unsneak} {cmd_unsneak}
 def_group_task0 {cmd_group_agg} {agg} {cmd_agg}
 def_group_task0 {cmd_group_unagg} {unagg} {cmd_unagg}
+def_group_task0 {cmd_group_stand} {stand} {cmd_stand}
+def_group_task2 {cmd_group_imm} {imm: %1 %2} {cmd_imm_%1_%2}
 
 #alias {cmd_presence_check} {
   exec_task {cmd_presence_check} {farlook %1} {%3} {%4} {

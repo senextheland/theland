@@ -76,7 +76,6 @@
     {zone_tridac_kill}
     {zone_bryad_walk}
     {zone_antipal_kill}
-    {zone_blizz_kill}
     {zone_tridac_kill}
     {zone_tzen}
     {zone_tzen_walk_sell_magicite}  
@@ -104,13 +103,13 @@
   get mithril-helmet $regen_bag; rem ucardi-visor; rem tuor-helm; wear mithril-helmet;
   get all.locust-skin $regen_bag; rem ucardi-plates; wear skin legs;
   get sapphire-ring $regen_bag; get spectral-band $regen_bag;
-  rem holiday-ring; rem feather-ring; rem giant-strength;
+  rem holiday-ring; rem broons; rem giant-strength;
   wear sapphire-ring; wear spectral-band
 }
  
 #alias {unregen} {
   rem sapphire-ring; rem spectral-band;
-  wear holiday-ring; wear feather-ring; wear giant-strength;
+  wear holiday-ring; wear broons; wear giant-strength;
   put sapphire-ring $regen_bag; put spectral-band $regen_bag;  
   stand;
   rem mithril-helmet; wear ucardi-visor; wear tuor-helm; put mithril-helmet $regen_bag;
@@ -120,6 +119,47 @@
   rem locust-skin; put all.locust-skin $regen_bag; wear ucardi-plates
 }
 
+#nop Heavy Tower Shield is IMM FIRE
+#var {imm} {{fire}{on} {energy}{off}}
+
+#alias {imm_energy_on} {
+  get spectral-band xanth-bag;
+  rem broons-bane; wear spectral-band;
+  put broons-bane xanth-bag
+}
+
+#alias {imm_energy_off} {
+  get broons-bane xanth-bag;
+  rem spectral-band; wear broons-bane;
+  put spectral-band xanth-bag
+}
+
+#alias {imm_transition} {
+  #if {"$imm[%1]" != "%2"} {
+    #var {imm[%1]} {%2};
+    imm_%1_%2
+  } {
+    #show IMM ALREADY %1 --> %2    
+  }
+}
+
+#alias {cmd_imm_fire_on} {%1}
+#alias {cmd_imm_fire_off} {%1}
+
+#alias {cmd_imm_transition} {
+  exec_task {cmd_imm_%1_%2} {imm_transition {%1} {%2}} {%4} {%5} {
+    #action {%3} {task_cmd_imm_%1_%2_done};
+    #action {IMM ALREADY %1 --> %2} {task_cmd_imm_%1_%2_done}
+  }
+}
+
+#alias {cmd_imm_energy_on} {
+  cmd_imm_transition {energy} {on} {You wear Spectral Band} {%1} {%2}
+}
+
+#alias {cmd_imm_energy_off} {
+  cmd_imm_transition {energy} {off} {You wear broons bane} {%1} {%2}
+}
 
 #var {weapon_noscrap} {achilles-spear}
 #var {weapon_align_evil} {fury}
@@ -250,6 +290,7 @@
   #switch {"%1"} {
     #case {"no-cursed"} {#var {result} {on}};
     #case {"some-cursed"} {#var {result} {on}};
+    #case {"heavy"} {#var {result} {on}};    
     #default {#var {result} {%1}}
   }
 }
@@ -307,12 +348,14 @@
 	  {order_done {%1} {cast %3}}
 	  {order_fail {%1} {cast %3}}
       };
+      #case {"imm"} {order_dispatch {%2} {cmd_imm {%3} {%4}} {%1} {%2}};
       
       #case {"layhands"} {order_dispatch {%2} {cmd_layhands %3} {%1} {%2}};
       #case {"recall"} {executor {%2} {global_tasks} {clear}; order_dispatch {%2} {cmd_recall} {%1} {%2}};
       #case {"noscrap"} {order_dispatch {%2} {cmd_scrap_off} {%1} {%2}};
       #case {"scrap"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};
-      #case {"scrappy"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};      
+      #case {"scrappy"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};
+      #case {"stand"} {order_dispatch {%2} {cmd_stand} {%1} {%2}};
 	
       #default {order_tell {%1} {FAIL: %2 -- unrecognized order}}
     }
@@ -345,6 +388,7 @@
 }
 
 #action {%1 tells the group 'cast {armor|bless|cure blind}'} {do_order {group} {cast} {%2} {%1}}
+#action {%1 tells the group 'imm: {fire|energy} {on|off}'} {do_order {group} {imm} {%2} {%3}}
 #action {%1 tells you 'cast {armor|bless}'} {do_order {%1} {cast} {%2} {%1}}
 #action {%1 tells you '{healme|lay|layhands}'} {do_order {%1} {layhands} {%1}}
 #action {%1 tells the group '{healme|lay|layhands}'} {do_order {group} {layhands} {%1}}

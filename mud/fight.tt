@@ -9,7 +9,7 @@ hook {on_fight_start} {create}
 #var {combat_status} {idle}
 #var {currently_fighting} {}
   
-#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|crushes|decimates|demolishes|devastates|ethereally touches|grapples with|hits|leaps upon|massacres|misses|mutilates|obliterates|pierces|pulverizes|punches|rocks|saws|smashes|stuns|tangles|thrashes|vanquishes|whips}
+#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|crushes|decimates|demolishes|devastates|ethereally touches|grapples with|hits|hoofs|leaps upon|massacres|misses|mutilates|obliterates|pierces|pulverizes|punches|rocks|saws|smashes|stuns|tangles|thrashes|vanquishes|whips}
 #var {you_fighting_words} {annihilate|atomize|beat the ever living shit out of|bite|channel|claw|cleave|crushes|decimate|demolish|devastate|grapple with|hit|leap upon|massacre|mutilate|obliterate|pierce|pulverize|punch|rock|thrash|stun|vanquish|whip}
 
 #action {You {$you_fighting_words} %2 with} {update_fight {%2}}
@@ -18,6 +18,9 @@ hook {on_fight_start} {create}
 #action {You dodge %1's} {update_fight {%1}}
 #action {Your fire shield flares about %1 and you have} {update_fight {%1}}
 
+#action {in the back of %1, resulting in several strange noises and some blood.} {update_fight {%1}}
+#action {in the back of %1, who suddenly slumps to the ground, spastically shaking before stiffening as a lifeless corpse.} {update_fight {%1}}
+
 #action {You intentionally collide with %1 and send him sprawling to the ground.} {update_fight {%1}}
 #action {As %1 avoids your bash, you topple over and fall to the ground.} {update_fight {%1}; stand}
 #action {Maybe you should get on your feet first?} {stand}
@@ -25,6 +28,7 @@ hook {on_fight_start} {create}
   #var {combat_status} {idle};
   maybe_assist {%1} {$currently_fighting}
 }
+
 #action {%1 disappears.} {
   #if {"$combat_status" != "idle"} {  
     debug MOB TELEPORTED AWAY;

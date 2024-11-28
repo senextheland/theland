@@ -95,6 +95,13 @@
   }
 }
 
+#alias {cmd_stand} {
+  exec_task {cmd_stand} {stand} {%1} {%2} {
+    #action {stand up.} {task_cmd_stand_done};
+    #action {You are already standing.} {task_cmd_stand_done}
+  }
+}
+
 #alias {cmd_walk} {
   debug ACTION-WALK {%1} -- {%2};
   exec_task {cmd_walk} {%1} {%3} {%4} {
@@ -187,6 +194,15 @@
     }
 }
 
+#alias {cmd_wait_for_time} {
+  exec_task {cmd_wait_for_time} {wait_for_time_delay} {%2} {%3} {
+    #alias {wait_for_time_delay} {
+      #delay {#show DONE cmd_wait_for_time} {%1}
+    };
+    #action {#show DONE cmd_wait_for_time} {task_cmd_wait_for_time_done}
+  }
+}
+
 #alias {cmd_layhands} {
   exec_task {cmd_layhands} {lay %1} {%2} {%3} {
     #action {You never did get First Aid Merit Badge did you?} {task_cmd_layhands_fail};
@@ -272,8 +288,17 @@
 }
 
 #alias {cmd_farlook} {
-  exec_task {cmd_farlook} {farlook %1} {%2} {%3} {
-    #action {you spot %%%1.} {task_cmd_farlook_done};
+  exec_task {cmd_farlook} {farlook %1} {%3} {%4} {
+    #if {"%2" == "Immediately"} {
+      #action {Immediately %%%1, you spot %%%2.} {task_cmd_farlook_done} {4};
+      #action {you spot %%%1.} {task_cmd_farlook_fail {not-nearby}}
+    }; #elseif {"%2" == "Nearby"} {
+      #action {{Immediately|Nearby} %%%2, you spot %%%3.} {task_cmd_farlook_done} {4};    
+      #action {you spot %%%1.} {task_cmd_farlook_fail {not-nearby}}
+    }; #else {
+      #action {you spot %%%1.} {task_cmd_farlook_done}
+    };
+    
     #action {You peer around, but can't find anyone of that description.} {task_cmd_farlook_fail {not-found}};
     #action {You see %%%1 right here.} {task_cmd_farlook_fail {here}}
   }
