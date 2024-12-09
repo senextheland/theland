@@ -1,0 +1,166 @@
+#nop -- grep 'The white glow around' silk.log | sort | uniq | perl -pe 's/The white glow around (.*)'\''s body fades./{\u$1}/g' | sort >> sanced-mobs.txt
+#list {sanced_mobs} {create}
+{A Blood Beast}
+{A Captain of the Guard}
+{A Dwarven Ambassador}
+{A Dwarven Battlerager}
+{A Dwarven Cleric}
+{A Dwarven Guard}
+{A Dwarven High Priestess}
+{A Dwarven Miner}
+{A Dwarven Warrior}
+{A Dwarven Worker}
+{A Frost Elf Defender}
+{A Giant Ogre}
+{A Giant Spider}
+{A Gnome Ambassador}
+{A Grix bear}
+{A Guild Banker}
+{A Halfling Ambassador}
+{A Harkonnen Lieutenant}
+{A Harkonnen Sergeant}
+{A Komodo Dragon}
+{A Masturbating Mudder}
+{A Mystic Druid Guard}
+{A Sand Elemental}
+{A Sardaukar Bashar}
+{A Sardaukar Lieutenant}
+{A Stage Three Guild Navigator}
+{A Warder}
+{A Youngling}
+{A blue lynel}
+{A cataclysmic feline}
+{A druid guard}
+{A dwarven warleader}
+{A galvanized feline}
+{A giant gorilla}
+{A human Ambassador}
+{A male snow wolf}
+{A prismatic feline}
+{A raccoon}
+{A red battle rager}
+{A screeching harpy}
+{A shadowy feline}
+{A short, mean tempered goblin}
+{A small cave rat}
+{A wee pixie}
+{Allanon}
+{An Accepted}
+{An Aes Sedai of the Blue Ajah}
+{An Aes Sedai of the Brown Ajah}
+{An Aes Sedai of the Green Ajah}
+{An Aes Sedai of the Grey Ajah}
+{An Aes Sedai of the Red Ajah}
+{An Aes Sedai of the White Ajah}
+{An Aes Sedai of the Yellow Ajah}
+{An Elite Dwarven Guard}
+{An Elite Dwarven Warrior}
+{An Ix Guardian}
+{An apocalyptic feline}
+{An armos}
+{An undead servant}
+{Baby Spice}
+{Baron Harkonnen}
+{Bink of the North Village}
+{Caspian the Weapon Master}
+{Chani}
+{Commander Masan}
+{Death}
+{Doctor Yueh}
+{Duncan Idaho}
+{Emperor Shaddam IV}
+{Gawyn}
+{Ginger Spice}
+{God}
+{Good Magician Humfrey}
+{Gurney Halleck}
+{Irulan}
+{Judgment}
+{Kirk}
+{Kun the Terror of Tzen}
+{Kyojin}
+{Lassiter the Evil Commander}
+{Liet-Keynes}
+{Lightemup the Child of Gaia}
+{Living Mold}
+{Minister Zeferen}
+{Misfire}
+{Mr. Beaver}
+{OYEAH}
+{Paul-Muad'Dib, the Kwisatz Haderach}
+{Piter de Vries}
+{Posh Spice}
+{Queen Iris}
+{Ra the Sun God}
+{Rabban}
+{Sage Grand Magus of the Land}
+{Sasparin the Warlock}
+{Senex}
+{Shadout Mapes}
+{Shai'Hulud, the Old Man of the Desert}
+{Shasta}
+{Sheriam Sedai}
+{Sinon}
+{Sir Kay}
+{Smash the Ogre}
+{Smiley the Healer Extraordinaire }
+{Spock}
+{Sport Spice}
+{Stilgar}
+{The Abominable Snowman}
+{The Ancient Sand Worm}
+{The Bene Gesserit Witch}
+{The Blacknight Priest}
+{The Centaur Champion}
+{The Centaur Champion}
+{The Centaur Chief}
+{The Dwarven Foreman}
+{The Fedaykin}
+{The Fremen Teacher}
+{The Fremen Warrior}
+{The Goblin Lord}
+{The Great Sea Serpent}
+{The Hanged Man}
+{The Hawk}
+{The Moon}
+{The Reverend Mother, Gaius Helen}
+{The Sietch Guard}
+{The Star}
+{The Sun}
+{The Toucan Queen}
+{The Wiggle Queen}
+{The sea elf palace guard}
+{The smuggler leader}
+{The yellow queen}
+{Thufir Hawat}
+{Thyllis of Tzen}
+{Thyona of Tzen}
+{Toq the Giant Forest Recruit}
+{Torras of Tzen}
+{Tueller of Tzen}
+{Tuscant of Tzen}
+{The Mystic Battlemaster}
+
+#alias {dispell_once_off} {#class {dispell_once} {kill}; #var {dispell_once_mutex} {}}
+#var {dispell_once_mutex} {}
+
+#alias {dispell_once} {
+  #class {dispell_once} {open};
+
+  #alias {once_disoff} {
+    #if {"$mode_dispell" == "once"} {
+      disoff
+    };
+    dispell_once_off 
+  };
+
+  #action {The white glow around %%1 body fades.} {once_disoff};
+
+  #var {dispell_once_mutex} {on};
+  hook {on_rip} {once} {dispell_once} {once_disoff};
+  
+  #class {dispell_once} {save};
+  #class {dispell_once} {close};
+
+  exec {dispell_once} {cmd_dispell_on {once}} {#nop} {#nop}
+}

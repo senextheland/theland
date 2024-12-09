@@ -8,7 +8,18 @@
     #var {protect_state} {rescue};
     #var protect_state;
     #delay {try_rescue_delay} {try_rescue_timeout} {3};
-    rescue %1
+    #nop rescue %1;
+    hrescue
+  }
+}
+
+#alias {try_hrescue} {
+  #if {"$protect_state" == "idle"} {
+    #var protect_state;
+    #var {protect_state} {rescue};
+    #var protect_state;
+    #delay {try_rescue_delay} {try_rescue_timeout} {3};
+    hrescue
   }
 }
 
@@ -32,9 +43,13 @@
   #action {{$fighting_words} %1} {try_rescue %2};  
   #action {TAKING DAMAGE} {try_rescue %2};
   #action {Banzai! To the rescue...} {rescue_success};
+  #action {Cowabunga!!! You streak to the front of the battle like a runaway train!} {rescue_success};
   #action {You fail the rescue.} {rescue_fail};
   #action {But nobody is fighting %%1?} {rescue_no_fight};
   #action {No one should need rescuing here.} {rescue_no_fight};
+  #action {You can't get close enough to them to rescue!} {try_hrescue};
+  #action {But who would need to be rescued in such a peaceful place?} {rescue_no_fight};
+  #action {But there is no battle here!?!?} {rescue_no_fight};
 
   #class {protect} {save};
   #class {protect} {close}

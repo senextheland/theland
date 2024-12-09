@@ -5,14 +5,14 @@
 #nop ---------------------------------------------------------------------------------
 
 #var {mode_scrap} {on}
-#var {mode_dispel} {off}
+#var {mode_dispell} {off}
 #var {mode_align} {}
 #var {mode_life_protect} {}
 #var {imm} {{fire}{off} {energy}{off}}
 
 #alias {cmd_reset_weapon_state} {%1}
-#alias {cmd_dispel_on} {%2}
-#alias {cmd_dispel_off} {%1}
+#alias {cmd_dispell_on} {%2}
+#alias {cmd_dispell_off} {%1}
 #alias {cmd_scrap_on} {%1}
 #alias {cmd_scrap_off} {%1}
 #alias {cmd_mob_align_evil} {%1}
@@ -24,6 +24,8 @@
 #alias {cmd_imm_fire_off} {%1}
 #alias {cmd_imm_energy_on} {%2}
 #alias {cmd_imm_energy_off} {%1}
+#alias {cmd_imm_poison_on} {%2}
+#alias {cmd_imm_poison_off} {%1}
 
 #alias {cmd_heal_me} {debug UNIMPLEMENTED: cmd_heal_me}
 #alias {cmd_remove_curse} {exec_cast {remove curse} {%1} {%2} {%3}}
@@ -42,6 +44,8 @@
   }
 }
 
+#alias {do_fight_assist} {assist %1}
+
 #nop ---------------------------------------------------------------------------------
 #nop At-keys shortcuts
 #nop ---------------------------------------------------------------------------------
@@ -50,6 +54,9 @@
 #alias {scrap} {scrapon}
 #alias {scrapoff} {exec {scrapoff} {cmd_scrap_off} {debug SCRAP-OFF: OK} {debug SCRAP-OFF: FAIL}}
 #alias {noscrap} {scrapoff}
+#alias {dison} {exec {dison} {cmd_dispell_on {%1}} {debug DISPELL-ON: OK} {debug DISPELL-ON: FAIL}}
+#alias {disoff} {exec {disoff} {cmd_dispell_off} {debug DISPELL-OFF: OK} {debug DISPELL-OFF: FAIL}}
+#alias {nodis} {disoff}
 #alias {mode_evil} {exec {mode_evil} {cmd_mob_align_evil} {debug MODE-EVIL: OK} {debug MODE-EVIL: FAIL}}
 #alias {mode_good} {exec {mode_good} {cmd_mob_align_good} {debug MODE-GOOD: OK} {debug MODE-GOOD: FAIL}}
 #alias {lifeprot} {exec {lifeprot} {cmd_life_protect_on} {debug LIFEPROT-ON: OK} {debug LIFEPROT-ON: FAIL}}

@@ -5,7 +5,7 @@
     #action {You can't let go of it, it must be CURSED!} {
       cmd_remove_curse {%1}
         {task_cmd_pawn_item_attempt}
-	{task_cmd_pawn_iteqm_fail}
+	{task_cmd_pawn_item_fail}
     };    
     #action {Slick Willy gives you} {sell %1};
     #action {You are not carrying that item!} {task_cmd_pawn_item_done};
@@ -35,10 +35,16 @@
     get $pawn_from_item $pawn_from_bag;
   };
 
+  #alias {pawn_too_many_coins} {
+    give 500000 coins $robot;
+    pawn_one
+  };
+
   #action {You get} {sell $pawn_from_item} {3};
   #action {Wonderful! I'll give you} {pawn_one} {3};
   #action {thats a nice rock!} {pawn_one} {3};
   #action {You do not see} {pawn_from_done} {3};
+  #action {You can not possibly carry any more coins!  Visit the bank.} {pawn_too_many_coins};
   
   #class {cmd_pawn_all_from_bag} {save};
   #class {cmd_pawn_all_from_bag} {close};
@@ -92,6 +98,9 @@
   gather_some
 }
 
+#alias {cmd_pawn} {
+  %1 {%2} {%3}
+}
 
 #class {pawn} {save}
 #class {pawn} {close}

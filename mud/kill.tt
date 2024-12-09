@@ -18,23 +18,32 @@
 
   #alias {kill_room_next_target} {
     #list {kill_room_targets} {get} {1} {kill_room_target};
-    #if { "$kill_room_target" == "0" } {
+    #if {"$combat_status" != "idle"} {
+      debug KILL-ROOM: skip next target: combat_status=$combat_status
+    }; #elseif { "$kill_room_target" == "0" } {
       kill_room_done
-    } {
+    }; #else {
       #list {kill_room_targets} {delete} {1};
       kill_room_attack
     }
   };
 
+  #alias {kill_room_hands_full} {
+    debug KILL-ROOM: hands full --> reset zone timeout;
+    reset_zone_timeout
+  };
+
   #action {They aren't here.} {kill_room_next_target};
+  #action {You do the best you can!} {kill_room_hands_full};
+  #action {You have your hands full right now} {kill_room_hands_full};
   hook {on_rip} {add} {kill_room} {
     trampoline {kill_room} {kill_room_attack};
     %%1
   };
 
   #alias {kill_room_end} {
-    #class {kill_room} {kill};
-    #undelay {kill_room}
+    hook {on_rip} {remove} {kill_room};
+    #class {kill_room} {kill}
   };
 
   #class {kill_room} {save};

@@ -11,16 +11,23 @@
 #var {mk_inn} {6e1s2e5s1w1s1u}
 #alias {[]inn} {$mk_inn}
 #var {inn_mk} {1d1n1e5n2w1n2w;open gate;4w}
+#var {run_inn_mk} {run d;1n1e5n2w1n2w;open gate;4w}
 #alias {inn[]} {$inn_mk}
+#alias {run_inn[]} {$run_inn_mk}
 #var {mk_bank} {3e2n1w}
 #alias {[]bank} {$mk_bank}
 #var {bank_mk} {1e2s3w}
 #alias {bank[]} {$bank_mk}
+#var {mk_greebo} {3e3s1w}
+#alias {[]greebo} {$mk_greebo}
+#var {greebo_mk} {1e3n3w}
+#alias {greebo[]} {$greebo_mk}
 
 #alias {[]eddy} {5w6s2e3nw}
 #alias {eddy[]} {e3s2w6n5e}
 #var {path_hyrule} {4e3n2w9n19e1n}
-#var {path_hyrule_fairy} {3n1w1w1n}
+#var {path_hyrule_fairy} {3n2w1n}
+#var {run_hyrule_fairy} {run n; run w; n}
 #alias {[]hyrule} {$path_hyrule}
 
 #var {path_enfan} {13w1n}
@@ -60,13 +67,20 @@
 #class {zones} {save}
 #class {zones} {close}
 
+#alias {ext_regen_some} {
+  zone_extend
+    {zone_safety off}
+    {regen_some}
+    {zone_safety on}     
+}
+
 
 #nop -----------------------------------------
 #nop Blizz
 #nop -----------------------------------------
  
 #alias {zone_blizz_walk} {ext_blizz_walk; ext_blizz_dagger}
-#alias {zone_blizz_kill} {ext_blizz_walk; ext_blizz_kill; ext_blizz_chasm_kill}
+#alias {zone_blizz_kill} {ext_blizz_walk; ext_blizz_kill}
 #alias {ext_blizz_walk} {zone_extend {walk_fast {$path_blizz} {A Frozen Path}}}
 
 #alias {ext_blizz_dagger} {
@@ -163,7 +177,24 @@
 
 #alias {zone_tridac_walk} {ext_tridac_walk; zone_tridac_abbrev_dagger}
 #alias {zone_tridac_kill} {ext_tridac_walk; zone_tridac_abbrev_kill}
-#alias {ext_tridac_walk} {zone_extend {walk_fast {$path_tridac;1d} {Ice Cavern Entrance}}}
+
+#alias {ext_tridac_speedwalk} {zone_extend {walk_fast {$path_tridac;1d} {Ice Cavern Entrance}}}
+#alias {ext_tridac_walk} {
+  zone_extend
+    {walk_fast {s2e2s16w} {North-East Corner of a Huge Grotto}}
+    {group_autoloot {gold}}
+    {kill_walk_path {1s} {mold}}
+    {kill_walk_path {1s} {mushroom}}
+    {walk_fast {1w2ses1w} {The Tunnel}}
+    {kill_walk_path {1w} {bugbear}}
+    {walk_fast {1s1e1s} {Passage in the Bugbear Lair}}
+    {kill_walk_path {1s} {bugbear}}
+    {walk_fast {1e} {Smelly Passage}}
+    {kill_walk_path {1s} {Otyugh}}
+    {walk_fast {1d} {Ice Cavern Entrance}}
+    
+}
+
 #alias {pawn_tridac} {pawn_all {tridac}}
 
 #alias {zone_tridac_abbrev_dagger} {
@@ -185,8 +216,9 @@
 
 #alias {zone_tridac_abbrev_kill} {
   zone_extend
-    {set_target tridac}
-    {group_autoloot no-cursed}    
+    {set_target tridac}    
+    {group_autoloot no-cursed}
+    {group_agg}
     {kill_walk_path {1s2e1s1e1s1e2w1e1n1w1n2w} {tridac}}
     {kill_walk_path {1w2s1w1n1s1e2n1e2s} {tridac}}
 
@@ -211,8 +243,10 @@
   ext_hyrule_fairy
 }
 
+#alias {zone_sneak_fairy} {zone_fairy_sneak}
 #alias {zone_fairy_sneak} {
   zone_extend
+    {zone_safety off}
     {group_unagg}
     {group_sneak}
     ;
@@ -220,7 +254,7 @@
   ext_walk_to_hyrule;
 
   zone_extend
-    {walk_fast {3n2w1n} {Before a magical pond}}
+    {walk_fast {$run_hyrule_fairy} {Before a magical pond}}
     {regen_fairy}
     {group_agg}
     {group_unsneak}
@@ -283,6 +317,8 @@
 
 #alias {zone_x2_walk} {ext_x2_walk; zone_x2_dagger}
 #alias {zone_x2_kill} {ext_x2_walk; ext_x2_kill}
+#alias {zone_x2_kill_with_castle} {zone_x2_kill; ext_x2_good_magician_castle_kill}
+#alias {zone_x2_kill_with_darkwiz} {zone_x2_kill; ext_x2_to_darkwiz_castle_quick}
 #alias {ext_x2_walk} {zone_extend {walk_fast {$path_x2;1e1s} {A Marshy Glen}}}
 #alias {ext_x2_dagger} {
   zone_extend
@@ -315,6 +351,8 @@
     {need_pawn pawn_x2}
 }
 
+#nop the null target in the middle is to avoid attacking centaurs
+#nop the imm poison is in case of harpy pit
 #alias {ext_x2_kill} {
   zone_extend
     {set_target xanth2}
@@ -328,26 +366,82 @@
     {kill_walk_path {2s} {xanth2}}
     {confirm_room {The Far Side of the Gap}}
     {kill_walk_path {1d1w1d1n1w1e1s1u1e1u} {xanth2}}
-    {kill_walk_path {3s} {xanth2}}
 
+    {self_imm poison on}    
+    {kill_walk_path {3s} {xanth2}}
     {set_target null}
     {kill_walk_path {1n2e1n2w2s} {tree;grass}}
-
     {set_target {xanth2}}
     {kill_walk_path {2s1e1s1n1w2n} {nickelpede}}
-    {kill_walk_path {1n1e1s1w1s} {xanth2}}
+    {set_target null}
+    {kill_walk_path {1n1e1s1w1s} {tree;grass}}
+    {self_imm poison off}
+
+    {set_target xanth2}
     {walk_fast {4s} {Castle Roogna's Front Foyer}}
     {kill_walk_path {2w1u1d2e2s2n2e1u1d2w} {xanth2}}
 }
 
-#alias {ext_castle_to_far_side_moat} {
+#alias {ext_x2_to_darkwiz_castle_quick} {
+  ext_x2_roogna_to_dive;
+  ext_x2_dive_to_treehouse;
+  ext_treehouse_darkwiz_forest;
+  ext_darkwiz_forest_to_castle_walk;
+  ext_regen_some;
+  zone_extend
+    {group_spellup}
+    ;
+  ext_darkwiz_castle_quick  
+}
+
+#alias {ext_x2_roogna_to_dive} {
+  zone_extend
+    {set_target xanth2}
+    {walk_fast {5n} {A Small Clearing}}
+    {kill_walk_path {1e2w3n1s1e} {tree;grass}}
+    {walk_fast {1e1s} {The Dead Lake}}
+    {open_door {dive}}
+    {walk_fast {1d} {*SPLASH*}}
+    {wait_for_room {A Vast Underground Cavern}}
+}
+
+#nop could do stone-giants {kill_walk_path {2s1e1n} {stone-giant}} -- but they quake!
+#alias {ext_x2_dive_to_treehouse} {
+  zone_extend
+    {set_target {null}}
+    {group_sneak}
+    {group_unagg}
+    {walk_fast {2s1e1n} {A Solid Rock Face}}
+    {open_door {phase}}
+    {walk_fast {3e} {Ladyhawke's Treehouse}}
+}
+
+#nop could do forest creatures, but they are good align, para, and scrap -- be sneaky!
+#alias {ext_treehouse_darkwiz_forest} {
+  zone_extend
+    {pick {trapdoor}}
+    {open_door {trapdoor}}
+    {walk_fast {1d} {Deep in the woods}}
+    {walk_fast {2w3s} {A small clearing.}}
+}
+
+#alias {ext_x2_good_magician_castle_kill} {
+  ext_x2_roogna_to_far_side_moat;
+  ext_regen_some;
+  ext_x2_good_magician_castle
+}
+
+#alias {ext_x2_roogna_to_far_side_moat} {
   zone_extend
     {walk_fast {5n1e1s1e1n1e} {Before The Good Magician's Castle}}
     {walk_fast {1e} {Swimming in the Moat}}
-    {wait_for_time {5.0}}    
+    {wait_for_time {4.75}}
     {kill_walk_path {1e} {monster}}
     {walk_fast {1e} {The Far Shore}}
-    
+}
+
+#alias {ext_x2_good_magician_castle} {
+  zone_extend    
     {walk_fast {1e1s} {A scorched corridor}}
     {group_imm fire on}
     {group_noscrap}
@@ -362,6 +456,7 @@
     {kill_walk_path {1s} {magician}}
     {sync_command {get all corpse}}
 
+    {walk_fast {1d} {Inside The Castle}}
     {group_imm energy off}
     {group_imm fire off}
 }
@@ -373,32 +468,52 @@
 #nop Tzen
 #nop -----------------------------------------
 
-#alias {ext_regen_some} {
-  zone_extend
-    {zone_safety off}
-    {regen_some}
-    {zone_safety on}     
-}
+#alias {pawn_tzen} {pawn_all {tzencat}}
 
 #alias {zone_tzen} {
   ext_walk_tzen;
   ext_walk_tzen_palace;
-  ext_tzen_floor_one;
-  ext_regen_some;
-  ext_tzen_floor_two;
-  ext_regen_some;
-  ext_tzen_floor_three;  
-  ext_tzen_get_magicite;
-  zone_extend {need_pawn pawn_tzen}
+  ext_tzen_safe_floors;
+  ext_tzen_leave  
 }
 
-#alias {pawn_tzen} {pawn_all {tzencat}}
+#alias {zone_tzen_all} {
+  ext_walk_tzen;
+  ext_walk_tzen_palace;
+  ext_tzen_all_floors;
+  ext_tzen_leave
+}
 
 #alias {zone_tzen_walk_sell_magicite} {
   ext_walk_tzen;
   ext_tzen_alchemist;
   zone_extend
     {walk_fast {1n} {The Lost City of Tzen}}
+}
+
+#alias {ext_tzen_get_magicite} {
+  zone_extend
+    {gather_all_into_bag {magicite} {xanth-bag}}
+}
+
+#alias {ext_tzen_safe_floors} {
+  ext_tzen_floor_two;
+  ext_regen_some;
+  ext_tzen_floor_three;
+  ext_regen_some;
+  ext_tzen_floor_four;
+  ext_regen_some;
+  ext_tzen_floor_five
+}
+
+#alias {ext_tzen_all_floors} {
+  ext_tzen_safe_floors;
+  ext_regen_some;
+  ext_tzen_floor_six;
+  ext_regen_some;
+  ext_tzen_floor_seven;
+  ext_regen_some;  
+  ext_tzen_floor_top
 }
 
 #alias {ext_walk_tzen} {
@@ -417,6 +532,11 @@
     {zone_safety on}
 }
 
+#alias {ext_tzen_leave} {
+  ext_tzen_get_magicite;
+  zone_extend {need_pawn pawn_tzen}  
+}
+
 #alias {ext_walk_tzen_palace} {
   zone_extend
     {walk_fast {2n} {Before the gates of the Palace of Tzen}}
@@ -432,58 +552,106 @@
     {set_target feline}    
 }
 
-#alias {ext_tzen_floor_one} {
+#alias {ext_tzen_floor_two} {
   zone_extend
-    {group_autoloot no-cursed}
+    {group_autoloot some-cursed}
     {walk_fast {1u} {You climb the beautiful staircase to the second floor.}}
     {dagger_nearby {feline} {Immediately}}
     {kill_walk_path {1n} {feline}}
     {group_spellup}    
-    {dagger_walk_path {1n2e3n2w1e1s1e2s2w2s} {feline}}    
+    {dagger_walk_recollect {1n2e3n2w1e1s1e2s2w1s} {feline}}
+    {group_spellup}
+    {kill_walk_path {1s} {feline}}
     {walk_fast {1d} {The Opal Stairs}}
-    {group_drop_all magicite}
-}
-
-#alias {ext_tzen_get_magicite} {
-  zone_extend
-    {gather_all_into_bag {magicite} {xanth-bag}}
-}
-
-#alias {ext_tzen_floor_two} {
-  zone_extend
-    {group_autoloot no-cursed}  
-    {walk_fast {2u} {You arrive at the third floor of the palace}}
-    {dagger_nearby {feline} {Immediately}}
-    {kill_walk_path {1n} {feline}}
-    {group_spellup}    
-    {dagger_walk_path {2n1w2n2e2s1w3s} {feline}}
-    {walk_fast {2d} {The Opal Stairs}}
     {group_drop_all magicite}
 }
 
 #alias {ext_tzen_floor_three} {
   zone_extend
-    {group_autoloot no-cursed}  
-    {walk_fast {3u} {You climb to the fourth floor.}}
+    {group_autoloot some-cursed}  
+    {walk_fast {2u} {You arrive at the third floor of the palace}}
     {dagger_nearby {feline} {Immediately}}
     {kill_walk_path {1n} {feline}}
-    {group_spellup}   
-    {dagger_walk_path {3n1w1n2e1s1w3s} {feline}}
-    {group_cast {remove poison}}    
-    {walk_fast {1s3d} {The Opal Stairs}}
+    {group_spellup}    
+    {dagger_walk_recollect {2n1w2n2e2s1w2s} {feline}}
+    {group_spellup}
+    {kill_walk_path {1s} {feline}}    
+    {walk_fast {2d} {The Opal Stairs}}
     {group_drop_all magicite}
 }
 
 #alias {ext_tzen_floor_four} {
   zone_extend
-    {group_autoloot no-cursed}  
+    {group_autoloot some-cursed}  
+    {walk_fast {3u} {You climb to the fourth floor.}}
+    {group_imm poison on}
+    {dagger_nearby {feline} {Immediately}}
+    {kill_walk_path {1n} {feline}}
+    {group_spellup}   
+    {dagger_walk_recollect {3n1w1n2e1s1w3s} {feline}}
+    {group_spellup}
+    {kill_walk_path {1s} {feline}}
+    {group_imm poison off}
+    {walk_fast {3d} {The Opal Stairs}}
+    {group_drop_all magicite}
+}
+
+#alias {ext_tzen_floor_five} {
+  zone_extend
+    {group_autoloot some-cursed}  
     {walk_fast {4u} {You arrive at the fifth floor of the palace}}
     {dagger_nearby {feline} {Immediately}}
     {kill_walk_path {1n} {feline}}
     {group_spellup}       
-    {dagger_walk_path {1n1w2n1w1n1e2s1e3s} {feline}}
+    {dagger_walk_recollect {1n1w2n1w1n1e2s1e2s} {feline}}
+    {group_spellup}
+    {kill_walk_path {1s} {feline}}    
     {walk_fast {4d} {The Opal Stairs}}
     {group_drop_all magicite}  
+}
+
+#alias {ext_tzen_floor_six} {
+  zone_extend
+    {group_autoloot some-cursed}  
+    {walk_fast {5u} {You continue to climb the stairs and come to the sixth floor}}
+    {dagger_nearby {feline} {Immediately}}
+    {kill_walk_path {1n} {feline}}
+    {group_spellup}
+    {dagger_walk_recollect {1n2w2n1w2n4e} {feline}}
+    {kill_walk_path {1s1w1n1e1s1w1s2w2s2e1s} {feline}}
+    {group_spellup}
+    {kill_walk_path {1s} {feline}}    
+    {walk_fast {5d} {The Opal Stairs}}
+    {group_drop_all magicite}    
+}
+
+#alias {ext_tzen_floor_seven} {
+  zone_extend
+    {group_autoloot some-cursed}  
+    {walk_fast {6u} {you arrive at the seventh}}
+    {dagger_nearby {feline} {Immediately}}
+    {kill_walk_path {1n} {feline}}
+    {group_spellup}
+    {dagger_walk_recollect {1n2u1e1u1w1e2u1e1w3d1w2d1s} {feline}}
+    {group_spellup}
+    {group_cast {remove poison}}
+    {kill_walk_path {1s} {feline}}    
+    {walk_fast {6d} {The Opal Stairs}}
+    {group_drop_all magicite}    
+}
+
+#alias {ext_tzen_floor_top} {
+  zone_extend
+    {group_autoloot some-cursed}
+    {walk_fast {7u} {You climb to the very top of the magnificent staircase.}}
+    {dagger_nearby {feline} {Immediately}}
+    {kill_walk_path {1n} {feline}}
+    {group_spellup}
+    {dagger_walk_recollect {2n1w1n1s2e1n1s1w1u1d2s} {feline}}
+    {group_spellup}
+    {kill_walk_path {1s} {feline}}    
+    {walk_fast {7d} {The Opal Stairs}}
+    {group_drop_all magicite}
 }
 
 
@@ -507,20 +675,28 @@
 #nop Darkwiz
 #nop -----------------------------------------
 
-#alias {zone_darkwiz_castle_walk} {
+#alias {pawn_darkwiz} {pawn_all {darkwiz}}
+
+#alias {zone_darkwiz_castle} {
+  ext_darkwiz_castle_walk;
+  ext_darkwiz_castle
+}
+
+#alias {zone_darkwiz_castle_quick} {
+  ext_darkwiz_castle_walk;
+  ext_darkwiz_castle_quick
+}
+
+#alias {ext_darkwiz_castle_walk} {
   zone_extend
     {group_unagg}
     {group_sneak}
     ;
-  zone_darkwiz_forest_walk;
-  zone_darkwiz_forest_to_castle_walk;
-  zone_extend
-    {group_agg}
-    {group_unsneak}
-    ;
+  ext_darkwiz_forest_walk;
+  ext_darkwiz_forest_to_castle_walk
 }
 
-#alias {zone_darkwiz_forest_walk} {
+#alias {ext_darkwiz_forest_walk} {
   ext_narnia_walk;
   zone_extend
     {open_door {mirror}}
@@ -531,10 +707,13 @@
     {open_door {gate north}}
     {walk_fast {1n} {Drifting}}
     {set_target darkwiz}
+    {zone_safety off}
     {wait_for_room {A small clearing.}}
+    {zone_safety on}
 }
 
-#alias {zone_darkwiz_forest_to_castle_walk} {
+#nop trapdoor is 3n2e from small clearing
+#alias {ext_darkwiz_forest_to_castle_walk} {
   zone_extend
     {walk_fast {2n1e3n2e2n3w} {You fall!}}
     
@@ -543,8 +722,32 @@
     {zone_safety on}
     
     {walk_fast {3e2n5es4e} {The whirlpool!}}
+    {zone_safety off}
     {wait_for_room {A sandy beach}}
+    {zone_safety off}
     {walk_fast {1e3n2e2n1w1n} {The end of the path.}}    
+}
+
+#alias {ext_darkwiz_castle} {
+  ext_darkwiz_castle_entrance;
+  ext_darkwiz_castle_floor_one;
+  ext_darkwiz_behind_mirror;
+  ext_darkwiz_castle_regen_entrance;  
+  ext_darkwiz_tower_floor_one;
+  ext_darkwiz_tower_floor_two;
+  ext_darkwiz_tower_floor_three;
+  ext_darkwiz_tower_exit;
+  ext_darkwiz_castle_exit
+}
+
+#alias {ext_darkwiz_castle_quick} {
+  ext_darkwiz_castle_entrance;
+  ext_darkwiz_castle_floor_one;
+  ext_darkwiz_tower_floor_one;
+  zone_extend
+    {walk_fast {3e} {The Castle Entrance}}
+    ;
+  ext_darkwiz_castle_exit
 }
 
 #alias {load_darkwiz_keys} {get all.key xanth-bag}
@@ -554,10 +757,12 @@
   zone_extend
     {group_walk {1n1e} {The Great Gate}}
     {set_target {darkwiz}}
+    {group_agg}
+    {group_unsneak}
     {group_scrappy}  
     {group_imm energy on}
     {group_autoloot heavy}
-    {unlock_door_with_key {get all.key} {gate north} {store_darkwiz_keys}}
+    {unlock_door_with_key {get all.key;get all.key xanth} {gate north} {store_darkwiz_keys}}
     {open_door {gate north}}
     {kill_walk_path {1n} {darkwiz}}    
     {close_door {gate south}}
@@ -566,15 +771,16 @@
 #alias {ext_darkwiz_castle_floor_one} {
   zone_extend    
     {dagger_walk_path {3e1u1d3w1n1e3w} {darkwiz}}
-    {pick {door}}
-    {open_door {door}}
+    {pick {door west}}
+    {open_door {door west}}
     {kill_walk_path {1w1e4n} {darkwiz}}
-    {pick {door}}
-    {open_door {door}}
+    {pick {door west}}
+    {open_door {door west}}
     {dagger_nearby {darkwiz} {Nearby}}
     {walk_fast {1w1e} {A dark hallway}}
     {dagger_walk_path {3e1n} {darkwiz}}
-    {kill_walk_path {1s1w1s1n2w1s1e1s1e1s}}
+    {kill_walk_path {1s1w1s1n2w1s1e1s1e1s} {darkwiz}}
+    {collect_lost_fish {3e1u1d3w1n1e3w4n3e1n1s1w1s1n2w1s1e1s1e1s} {darkwiz}}
 }
 
 #alias {ext_darkwiz_tower_floor_one} {
@@ -582,17 +788,22 @@
     {unlock_door_with_key {load_darkwiz_keys} {door west} {store_darkwiz_keys}}
     {open_door {door west}}
     {walk_fast {1e} {A stone hallway}}
-    {dagger_walk_path {4w} {darkwiz}}
-    {kill_walk_path {1w1e} {darkwiz}}
+    {dagger_nearby {darkwiz} {Nearby}}
+    {kill_walk_path {2w} {darkwiz}}
+    {dagger_nearby {darkwiz} {Nearby}}
+    {kill_walk_path {2w} {darkwiz}}
 }
 
 #alias {ext_darkwiz_tower_floor_two} {
   zone_extend
     {group_walk {1w1u} {Ascending the Tower}}
     {kill_room {darkwiz}}
-    {dagger_nearby {darkwiz} {Immediately}}
+    {dagger_nearby {darkwiz} {Immediately}}    
     {group_walk {1u1n} {The Second floor of the Tower}}
     {kill_room {darkwiz}}
+    {walk_fast {1s} {The Second Floor of the Tower}}
+    {sync_command {get all.fish; put all.fish case}}
+    {walk_fast {1n} {The Second floor of the Tower}}
     {dagger_walk_path {1w1n1e} {darkwiz}}
     {kill_walk_path {1e1s2w1n1e} {darkwiz}}
 }
@@ -618,10 +829,10 @@
   zone_extend
     {walk_fast {1n1e} {A room with a mirror}}
     {pick {mirror}}
-    {open {mirror}}
+    {open_door {mirror}}
     {walk_fast {1n} {Through the scrying glass}}
-    {kill_walk_path {2n2e3s1e3n2w2s} {darkwiz}}
-    {walk_fast {1s} {The Castle Entrance}}    
+    {kill_walk_path {2n2e3s1w1e3n2w2s} {darkwiz}}
+    {walk_fast {1s1w1s} {The Castle Entrance}}    
 }
 
 #alias {ext_darkwiz_castle_exit} {
@@ -631,6 +842,25 @@
     {walk_fast {1s} {The Great Gate}}
     {close_door {gate north}}
     {sync_command {load_darkwiz_keys; drop all.key}}
+    {group_imm energy off}
+    {need_pawn pawn_darkwiz}
+}
+
+#alias {ext_darkwiz_castle_regen_entrance} {
+  zone_extend
+    {unlock_door_with_key {load_darkwiz_keys} {gate south} {store_darkwiz_keys}}
+    {open_door {gate south}}
+    {walk_fast {1s} {The Great Gate}}
+    {close_door {gate north}}
+    {group_imm energy off}    
+  ;
+  ext_regen_some;
+  zone_extend
+    {group_imm energy on}
+    {unlock_door_with_key {load_darkwiz_keys} {gate north} {store_darkwiz_keys}}
+    {open_door {gate north}}
+    {kill_walk_path {1n} {darkwiz}}    
+    {close_door {gate south}}
 }
 
 
@@ -668,15 +898,14 @@
 
 #alias {ext_narnia_to_hilltop} {
   zone_extend {kill_walk_path {1s} {narnia}};
-  ext_lamppost_to_hilltop
+  ext_lamppost_to_hilltop;
+  ext_regen_some
 }
 
 #alias {ext_lamppost_to_hilltop} {
   zone_extend
     {kill_walk_path {2s3e1n3e1s1e2s2w2s2w2s1w1n1w1n} {narnia}}
     {group_walk {2u} {At the top of the hill}}
-    {regen_some}
-    {need_pawn pawn_narnia}    
 }
 
 #alias {ext_narnia_wolves} {
@@ -717,17 +946,14 @@
     {group_noscrap}
     {walk_fast {2e1s1e} {The bottom of the tower}}
     {set_target {guard}}
-    {group_walk {2u} {The top of the tower}}
-    {kill_room {guard}}
+    {group_walk_kill {2u} {The top of the tower} {guard}}
     {set_target {giant}}
-    {unlock_door_with_key {hold_narnia_keys} {secret} {store_narnia_keys}} {open_door {secret}}
-    {group_walk {1w1s} {The Hall of the Giants.}}
-    {kill_room {giant}}
-    {group_walk {1e1s} {The Hall of the Giants.}}
-    {kill_room {giant}}
-    {group_walk {1w1s} {The Hall of the Giants.}}
-    {kill_room {giant}}
-    {group_walk {1n1e1n1w1n1e2d} {The bottom of the tower}}
+    {unlock_door_with_key {hold_narnia_keys} {secret} {store_narnia_keys}}
+    {open_door {secret}}
+    {group_walk_kill {1w1s} {The Hall of the Giants.} {giant}}
+    {group_walk_kill {1e1s} {The Hall of the Giants.} {giant}}
+    {group_walk_kill {1w1s} {The Hall of the Giants.} {giant}}
+    {group_walk_kill {1n1e1n1w1n1e2d} {The bottom of the tower}}
     {walk_fast {1w1n2w} {The Northern Courtyard}}
 }
 
@@ -736,16 +962,13 @@
     {group_noscrap}
     {walk_fast {1w2s1w} {The bottom of the tower}}
     {set_target {fenris}}
-    {group_walk {2u} {The top of the tower}}
-    {kill_room {fenris}}
+    {group_walk_kill {2u} {The top of the tower} {fenris}}
     {set_target {giant}}
-    {unlock_door_with_key {hold_narnia_keys} {secret} {store_narnia_keys}} {open_door {secret}}
-    {group_walk {1e1n} {The Hall of the Giants.}}
-    {kill_room {giant}}
-    {group_walk {1w1n} {The Hall of the Giants.}}
-    {kill_room {giant}}
-    {group_walk {1e1n} {The Hall of the Giants.}}
-    {kill_room {giant}}
+    {unlock_door_with_key {hold_narnia_keys} {secret} {store_narnia_keys}}
+    {open_door {secret}}
+    {group_walk_kill {1e1n} {The Hall of the Giants.} {giant}}
+    {group_walk_kill {1w1n} {The Hall of the Giants.} {giant}}
+    {group_walk_kill {1e1n} {The Hall of the Giants.} {giant}}
     {group_walk {1s1w1s1e1s1w2d} {The bottom of the tower}}
     {walk_fast {1e2n1e} {The Northern Courtyard}}
 }
@@ -757,20 +980,29 @@
 
 #alias {zone_despair_nw_walk} {
   ext_despair_walk;
-  ext_despair_nw
+  ext_despair_to_nw;
+  ext_despair_nw;
+  ext_despair_nw_to_iggy;
+  ext_despair_iggy;
+  zone_extend
+    {walk_fast {1n} {Outside the Maze}}  
 }
 
 #alias {zone_despair_sw_walk} {
   ext_despair_walk;
-  zone_extend {walk_fast {10w19s} {Outside the Maze}};  
+  ext_despair_to_sw;
   ext_despair_sw;
-  zone_extend
-    {confirm_room {Southwest Entrance to the Maze}}
-    {walk_fast {1d9n} {A short hairy man covered in scratches}}
-    ;
+  ext_despair_sw_to_iggy;
   ext_despair_iggy;
   zone_extend
-    {walk_fast {1n} {Outside the Maze}}    
+    {walk_fast {1n} {Outside the Maze}}
+}
+
+#alias {zone_despair_se_walk} {
+  ext_despair_walk;
+  ext_despair_to_se;
+  ext_despair_se;
+  ext_despair_se_to_sinon
 }
 
 #alias {zone_despair_walk_sell_basalt} {
@@ -794,28 +1026,16 @@
     {zone_safety on}
 }
 
-#alias {ext_iggy_nw} {walk_fast {9n} {Outside the Maze}}
-#alias {ext_despair_nw} {
+#alias {ext_iggy_to_nw} {zone_extend {walk_fast {9n} {Outside the Maze}}}
+#alias {ext_despair_to_nw} {zone_extend {walk_fast {10w} {Outside the Maze}}}
+#alias {ext_despair_nw_to_iggy} {
   zone_extend
-    {walk_fast {1u} {Northwest Entrance to the Maze}}
-    {group_autoloot no-cursed}
-    {set_target despair}
-    
-    {kill_walk_path {1s} {despair}}
-    {dagger_walk_path {1s} {despair}}
-    {kill_walk_path {3e2w1n1e1n2w} {despair}}
-
-    {kill_walk_path {2s1e1s} {despair}}
-    {dagger_walk_path {3s} {despair}}
-    {kill_walk_path {1e2w1e1s} {despair}}
-    {dagger_walk_path {2e} {despair}}
-    {kill_walk_path {1s3n} {despair}}
-    {dagger_walk_path {1w1n} {despair}}
-    {kill_walk_path {2e2w1n} {despair}}
-    {dagger_walk_path {3e} {despair}}
+    {confirm_room {Northwest Entrance to the Maze}}
+    {walk_fast {1d10s} {A short hairy man covered in scratches}}    
 }
 
-#alias {ext_despair_nw_crazy} {
+#nop 3s3e -- more east would be Kryten
+#alias {ext_despair_nw} {
   zone_extend
     {walk_fast {1u} {Northwest Entrance to the Maze}}
     {group_autoloot no-cursed}
@@ -828,9 +1048,36 @@
     {kill_walk_path {1e2w1e1s2e} {despair}}
     {kill_walk_path {1s3n1w1n} {despair}}
     {kill_walk_path {2e2w1n3e} {despair}}
+    {kill_walk_path {3s3e} {despair}}
+    {kill_walk_path {2w1s1n1w3n} {despair}}
+    {kill_walk_path {1n2e1n1w1e1s2w} {despair}}
+    {kill_walk_path {2n5w} {despair}}
 }
 
-#alias {ext_iggy_to_sw} {walk_fast {10s} {Outside the Maze}}
+#nop 9e1s1w1s2e -- gate to another part of maze
+#nop 9e1s1w1s1e 1w1s2e1s2w1s2e -- Nearing the Center
+#nop 9e1s1w1s1e 1w1s2e1s2w1s5e 3n2w -- gate to another part of maze
+
+#alias {ext_despair_nw_to_center} {
+  zone_extend
+    {kill_walk_path {9e1s1w1s1e} {despair}}
+    {kill_walk_path {1w1s2e1s2w1s5e} {despair}}
+    {kill_walk_path {3n3w1e2s1e1n} {despair}}    
+}
+
+#alias {ext_despair_nw_center_to_kryten} {
+  zone_extend
+    {kill_walk_path {1s1w2n2e3s5w1n2e1n2w2n1e1n4w6s5e} {despair}}
+}
+
+#alias {ext_iggy_to_sw} {zone_extend {walk_fast {10s} {Outside the Maze}}}
+#alias {ext_despair_to_sw} {zone_extend {walk_fast {10w19s} {Outside the Maze}}}
+#alias {ext_despair_sw_to_iggy} {
+  zone_extend
+    {confirm_room {Southwest Entrance to the Maze}}
+    {walk_fast {1d9n} {A short hairy man covered in scratches}}    
+}
+
 #alias {ext_despair_sw} {
   zone_extend
     {walk_fast {1u} {Southwest Entrance to the Maze}}
@@ -848,7 +1095,68 @@
     {kill_walk_path {1n1w1n2e1s1e1s1w1s2w5s} {despair}}
 }
 
+#alias {ext_despair_sw_cinder} {
+  zone_extend
+    {kill_walk_path {5n2e1s1e1n1e3n} {despair}}
+    {set_target {cinder}}
+    {group_imm energy on}
+    {kill_walk_path {1n} {cinder}}
+    {set_target {despair}}
+    {group_imm energy off}
+    {kill_walk_path {4s1w1s1w1n2w5s} {despair}}
+}
 
+
+#alias {ext_despair_to_se} {zone_extend {walk_fast {10e19s} {Outside the Maze}}}
+#alias {ext_despair_se_to_iggy} {
+  zone_extend
+    {confirm_room {Southeast Entrance to the Maze}}
+    {walk_fast {1d20w9n} {A short hairy man covered in scratches}}
+}
+
+#nop 3w1n1w1s5w —> gate crashes
+#nop 4n2w1s1w1s1e1s1e2n2s1w1n1w1n3n —> gate crashes
+#nop instead of "4e1n1e1s3e" going 1w --> gate crashes
+#alias {ext_despair_se} {
+  zone_extend
+    {walk_fast {1u} {Southeast Entrance to the Maze}}
+    {group_autoloot no-cursed}
+    {set_target despair}
+    
+    {kill_walk_path {3w1n1w3n3s} {despair}}
+    {kill_walk_path {1s4w1n3e4n} {despair}}
+    {kill_walk_path {1w1s2w2e2s3w1s1w2n2s1e1n3e1n1e1s1w2s4w4s3w1s} {despair}}    
+    {kill_walk_path {4e1n1e1s3e} {despair}}
+}
+
+#nop sinon is 1w
+#alias {ext_despair_se_to_sinon} {
+  zone_extend
+    {kill_walk_path {4n2w1s1w2n3w3s1n1w1s1w1s4w1s4w} {despair}}    
+}
+
+#alias {ext_despair_se_sinon} {
+  zone_extend
+    {set_target sinon}
+    {group_imm energy on}
+    {kill_walk_path {1w} {sinon}}
+    {set_target despair}
+    {kill_walk_path {1e} {despair}}
+    {group_imm energy off}
+}
+
+#nop sinon is 1w
+#alias {ext_despair_sinon_to_nw_entrance} {
+  zone_extend
+    {kill_walk_path {2e1s4w3n2e2n2w} {despair}}
+    {kill_walk_path {1n1w3n2w1s2n3e3n} {despair}}
+    {kill_walk_path {5w} {despair}}
+}
+
+#alias {ext_despair_se_near_center_to_center} {
+  zone_extend
+    {kill_walk_path {1s4w3n3e3n3e2s} {despair}}
+}
 
 #nop -----------------------------------------
 #nop Red Castle

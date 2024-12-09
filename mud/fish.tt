@@ -10,10 +10,7 @@
   #alias {fish_once_done} {fish_once_end; %2};
   #alias {fish_once_fail} {fish_once_end; %3};
 
-  #var {fish_state} {idle};
-  
   #alias {fish_once_end} {  
-    #var {fish_state} {off};
     hook {on_fight_start} {remove} {fish};
     put all.frozen-fish $fish_container;
     #class {fish_once} {kill}
@@ -23,15 +20,15 @@
 
   #alias {throw_fish} {
     #if {"$combat_status" == "idle"} {
-      #var {fish_state} {throwing};
       throw frozen-fish $fish_target
     } {
-      fish_once_fail {fighting}
+      debug THROW FISH --> fighting queue=@has_labeled_task{global_tasks[items];cmd_get_fish_out};
+      trampoline {throw_fish} {fish_once_fail {fighting}}
     }
   };
 
   #alias {no_fish} {
-    debug NO FISH!!;
+    debug NO FISH!! queue=@has_labeled_task{global_tasks[items];cmd_get_fish_out};
     fish_once_fail {no-dagger}
   };
 
@@ -39,25 +36,20 @@
   #action {You don't see anybody around meeting that description.} {fish_once_fail {no-mob}} {4}; 
 
   #alias {cmd_get_fish_out} {
-    exec_task {cmd_get_fish_out} {get frozen-fish $fish_container} {%%1} {%%2} {
-      #action {You get a frozen fish from} {task_cmd_get_fish_out_done};
-      #action {You do not see a fish in} {task_cmd_get_fish_out_fail}
+    exec_task {cmd_get_fish_out}
+      {debug GET-FISH: START; get frozen-fish $fish_container}
+      {%%1} {debug GET-FISH FAIL (%%%); %%2 %%%0} {
+      
+      #action {You get a frozen fish from} {debug GET-FISH: OK; task_cmd_get_fish_out_done};
+      #action {You do not see a fish in} {debug GET-FISH: NONE; task_cmd_get_fish_out_fail};
+      #alias {task_cmd_get_fish_out_end_hook} {debug GET-FISH: END}
     }
   };
-
-  #alias {on_get_fish} {
-    #if {"$fish_state" == "throwing"} {
-      put all.frozen-fish $fish_container
-    } {
-      recover_fish
-    }
-  };
-
 
   #action {You catch a frozen fish} {throw_fish};
   #action {A frozen fish falls to the ground near you, since you couldn't catch it.} {
     exec {cmd_retrieve_fish} {cmd_retrieve_fish} {throw_fish} {fish_lost}
-  };  
+  };
 
   #alias {fish_lost} {
     debug FISH LOST!!  

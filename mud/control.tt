@@ -53,6 +53,7 @@ task_list {zone_steps} {create} {zone_finish} {zone_recover}
 task_list {zone_steps} {continue-hook-add} {10_zone_loop_stop_hook} {zone_loop_stop_hook}
 task_list {zone_steps} {continue-hook-add} {20_zone_loop_safety_hook} {zone_loop_safety_hook}
 task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zone_loop_continue_when_hook}
+hook {on_fight_start} {add} {10_zone_loop_fight_start_hook} {zone_loop_fight_start_hook}
 hook {on_rip} {add} {10_zone_loop_rip_hook} {zone_loop_rip_hook}
 hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recover_fish_hook}
 
@@ -77,18 +78,21 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
 #alias {zone_loop_safety_hook} {
   #if {"$zone_safety" == "on"} {
     reset_zone_timeout;
-    cmd_presence_check {$robot} {$robot_description} {%1} {zone_loop_safety_presence_fail %2}
+    cmd_presence_check {$robot} {$robot_description} {%1} {zone_loop_safety_presence_fail {%1} {%2}}
   } {
     %1
   }
 }
 
 #alias {zone_loop_safety_presence_fail} {
-  #if {"$zone_state" == "start"} {
-    debug ZONE-PRESENCE-FAIL safety=$zone_safety state=$zone_state --> retry;
-    zone_retry    
-  } {
+  #if {"$combat_status" != "idle"} {
+    debug ZONE-PRESENCE-FAIL safety=$zone_safety state=$zone_state combat=$combat_status --> ignore;
     %1
+  }; #elseif {"$zone_state" == "start"} {    
+    debug ZONE-PRESENCE-FAIL safety=$zone_safety state=$zone_state --> retry;
+    zone_retry
+  }; #else {
+    %2
   }
 }
 
@@ -98,8 +102,15 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
     cmd_group_spellup {#nop} {#nop};
     hook {on_tick} {once} {zone_loop_continue_when_hook} {%1}
   } {
-    %1
+    quick_spellup_continuation {%1}
   }
+}
+
+#alias {zone_loop_fight_start_hook} {
+  #if {"$zone_state" == "start"} {
+    reset_zone_timeout
+  };
+  trampoline {zone_loop_fight_start_hook} {%1}
 }
 
 #alias {zone_loop_rip_hook} {
@@ -117,9 +128,7 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
   }
 }
 
-#alias {reset_zone_timeout} {  
-  #delay {reset_zone_timeout} {zone_timeout} {60}
-}
+#alias {reset_zone_timeout} {#delay {reset_zone_timeout} {zone_timeout} {90}}
 
 #alias {zone_timeout_off} {
   #undelay {reset_zone_timeout}
@@ -213,17 +222,25 @@ hook {on_zone_end} {create}
   #if {$fish_lost <= 0} {
     debug NO FISH LOST --> zone_recover_state=off --> continue;
     #var {zone_recover_state} {off};
-    cmd_group_scrappy {%1} {%1}
+    cmd_group_reset_weapons {%1} {%1}
   };
-  #elseif {"$zone_recover_state" == "off"} {    
+  #elseif {"$zone_recover_state" == "off"} {
     #var {zone_recover_state} {on};
-    zone_rewind;
+    #if {"$zone_state" == "start"} {
+      zone_rewind
+    } {
+      debug FISH LOST --> skip rewind state=$zone_state
+    };
     tell group 'FISH LOST --> zone_recover_state=on --> retry;
     cmd_group_noscrap {%1} {%1}
   };
   #else {
     tell group 'FISH STILL LOST --> halt;
-    #var {zone_state} {stop};
+    #if {"$zone_state" == "start"} {
+      #var {zone_state} {stop}
+    } {
+      debug FISH LOST --> skip halt state=$zone_state
+    };
     %1
   }
 }
@@ -311,18 +328,20 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
 
 #alias {ext_recall_to_inn} {
   zone_extend
-    {zone_safety off}    
     {group_recall}
     {transition_zone_recovery_state}
     {announce {next_zone_announcement} {2.0}}
+    {zone_safety off}
+    {quick_spellup}
     {regen_some}
+    {zone_safety on}    
     {group_repair}
     {group_spellup}
-    {zone_safety on}  
 }
 
 #alias {next_zone_announcement} {tell group 'next-zone: $zones[2]}
 #alias {buy_recall_announcement} {tell group 'buy-recalls}
+#alias {buy_cauldron_announcement} {tell group 'buy-cauldrons}
 
 #alias {ext_visit_town} {
   zone_extend
@@ -330,7 +349,7 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
     ;
   
   ext_buy_recalls;
-  #if {"%1" != "" } {ext_pawn {%1}};
+  #if {"%1" != "" } {ext_greebo; ext_pawn {%1}};
   ext_bank
 }
 
@@ -342,10 +361,19 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
     {walk_fast {1s2e} {Market Square}}  
 }
 
-#alias {ext_pawn} {
+#alias {ext_greebo} {
   zone_extend
+    {walk_fast {$mk_greebo} {Greebo's Occult Bookshoppe}}
+    {announce {buy_cauldron_announcement} {2.0}}
+    {walk_fast {$greebo_mk} {Market Square}}
+}
+
+#alias {ext_pawn} {
+  zone_extend    
     {walk_fast {$mk_pawn} {Slick Willy's Pawn Shop}}
+    {zone_safety off}
     {group_pawn {%1}}
+    {zone_safety on}    
     {walk_fast {$pawn_mk} {Market Square}}
 }
 
@@ -362,12 +390,21 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
 #nop Areas
 #nop --------------------------
 
+#alias {cmd_wait_for_room_without_timeout} {
+  cmd_wait_for_room {%1} {reset_zone_timeout} {%2} {%3}
+}
+
+#alias {cmd_self_imm} {
+  cmd_imm_%1_%2 {%3} {%4}
+}
+
 def_zone_task1 {set_target} {cmd_group_target}
 def_zone_task0 {group_scrappy} {cmd_group_scrappy}
 def_zone_task0 {group_noscrap} {cmd_group_noscrap}
 def_zone_task1 {open_door} {cmd_open_door}
+def_zone_task1 {close_door} {cmd_close_door}
 def_zone_task1 {teleport_room} {cmd_teleport_room}
-def_zone_task1 {wait_for_room} {cmd_wait_for_room}
+def_zone_task1 {wait_for_room} {cmd_wait_for_room_without_timeout}
 def_zone_task1 {wait_for_time} {cmd_wait_for_time}
 def_zone_task1 {confirm_room} {cmd_look_room}
 def_zone_task1 {confirm_exit} {cmd_check_exit}
@@ -389,6 +426,9 @@ def_zone_task0 {group_unagg} {cmd_group_unagg}
 def_zone_task1 {group_cast} {cmd_group_cast}
 def_zone_task0 {group_stand} {cmd_group_stand}
 def_zone_task2 {group_imm} {cmd_group_imm}
+def_zone_task2 {self_imm} {cmd_self_imm}
+def_zone_task0 {quick_spellup} {cmd_quick_spellup}
+def_zone_task0 {reset_weapons} {cmd_group_reset_weapons}
 
 #class {control} {save}
 #class {control} {close}

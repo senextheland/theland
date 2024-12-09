@@ -15,7 +15,10 @@
     #action {Who should the spell be cast upon?} {task_cmd_cast_fail missing-target};
     #action {Your lips do not move, no magic appears.} {task_cmd_cast_fail silent-room};
     #action {Your spell fizzles in failure.} {task_cmd_cast_fail silent-room};
-    #action {Nobody around by that name.} {task_cmd_cast_fail no-target}
+    #action {Nobody around by that name.} {task_cmd_cast_fail no-target};
+    #action {You can't concentrate enough!} {task_cmd_cast_fail fighting} {6};
+    #action {No magic here - kid!} {task_cmd_cast_fail shopkeeper};
+    #action {No funny stuff pal} {task_cmd_cast_fail shopkeeper}
   }
 }
 

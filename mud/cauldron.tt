@@ -1,0 +1,84 @@
+#var {cauldron_container} {hole}
+#var {cauldron_count} {0}
+
+#alias {copy_cauldron_count} {#var {cauldron_count} {$count_container_found}}
+
+#alias {cmd_count_cauldrons} {
+  cmd_count_container {$cauldron_container} {The Black Cauldron..It has a soft glowing aura!}
+    {copy_cauldron_count; %1}
+    {copy_cauldron_count; %2}
+}
+
+#alias {cmd_buy_missing_cauldrons} {
+  #if {$cauldron_count < 9} {
+    exec_task {cmd_buy_missing_cauldrons} {buy 9*cauldron} {%1} {%2} {
+      #action {You now have The Black Cauldron} {
+        debug CAULDRONS --> done;
+	task_cmd_buy_missing_cauldrons_done
+      };
+      
+      #action {Greebo the bookseller tells you 'Pissoff, deadbeat!'} {
+        debug CAULDRONS: not enough money --> fail;
+        task_cmd_buy_missing_cauldrons_fail
+      };
+
+      #action {You can't carry more!} {
+        debug CAULDRONS: carrying too much --> fail;
+        task_cmd_buy_missing_cauldrons_fail      
+      }
+    }
+  } {
+    %1
+  }
+}
+
+#alias {cmd_buy_cauldrons} {
+  cmd_count_cauldrons
+    {cmd_buy_missing_cauldrons {%1} {%2}}
+    {%2}
+}
+
+#alias {cmd_get_cauldron} {
+  exec_task {cmd_get_cauldron} {get cauldron $cauldron_container} {%1} {%2} {
+    #action {You get The Black Cauldron} {task_cmd_get_cauldron_done};
+    
+    #action {You do not see a cauldron} {
+      debug GET-CAULDRON: FAIL -- none;
+      task_cmd_get_cauldron_done
+    };
+    
+    #action {You do not see or have} {
+      debug GET-CAULDRON: FAIL -- no container;
+      cmd_cmd_get_cauldron_fail
+    }
+  }
+}
+
+#alias {cmd_remove_curse_with_cauldron} {
+  exec_task {cmd_remove_curse_with_cauldron} {recite cauldron %1} {%2} {%3} {
+    #action {You recite} {task_cmd_remove_curse_with_cauldron_done};
+    
+    #action {You do not have that item.} {
+      debug REMOVE-CURSE: FAIL -- no cauldron;
+      task_cmd_remove_curse_with_cauldron_fail
+    };
+    
+    #action {No such thing around to recite the scroll on.} {
+      debug REMOVE-CURSE: FAIL -- no {%1};
+      task_cmd_remove_curse_with_cauldron_fail
+    }
+  }
+}
+
+#alias {cmd_remove_curse} {
+  cmd_get_cauldron
+    {cmd_remove_curse_with_cauldron {%1} {%2} {%3}}
+    {%3}
+}
+
+#alias {cmd_pawn_and_count} {
+  put all.cauldron $cauldron_container;
+  cmd_pawn {%1}
+    {cmd_count_cauldrons {%2} {%2}}
+    {cmd_count_cauldrons {%3} {%3}}
+}

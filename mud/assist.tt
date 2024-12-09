@@ -4,7 +4,7 @@ hook {on_remove_para} {create};
 
 #alias {assist_off} {#class {assist} {kill}}
 #alias {assist_on} {
-  #class {autoass_group} {open};
+  #class {assist} {open};
 
   #action {%%1 sees %1, and attacks!} {maybe_assist {%1} {%%1}};
   #action {%1 {$fighting_words} {%%2} with {his|her}} {maybe_assist {%1} {%%2}};
@@ -29,6 +29,6 @@ hook {on_remove_para} {create};
   #action {Noone should need assistance here.} {done_fighting};
   #action {Who do you want to assist?} {done_fighting};
 
-  #class {autoass_group} {save};
-  #class {autoass_group} {close}
+  #class {assist} {save};
+  #class {assist} {close}
 }

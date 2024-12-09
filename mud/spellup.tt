@@ -33,6 +33,10 @@
     #foreach {$need_spells} {spell} {
       cmd_cast_if_needed {$spell} {#nop} {#nop}
     };
+    #if {"$spell_state[poison]" == "up"} {
+      debug SPELLUP: REMOVE POISON!;
+      cmd_cast_me {remove poison} {spell_state_remove {poison}} {#nop}
+    };
     trampoline {diff_need_spells} {spellup_done_continuation}
   };
 
@@ -66,6 +70,35 @@
     #list {temp_spells} {collapse} {;};
     #var {need_spells} {$temp_spells}
   }  
+}
+
+#alias {quick_spellup_continuation} {
+  #local {quick_spellup_need_spells} {false};
+  #local {spell_name} {};
+  
+  #foreach {$need_spells} {spell_name} {
+    #if {"${spell_state[$spell_name]}" == "down"} {
+      debug QUICK-SPELLUP: $spell_name is DOWN;
+      #var {quick_spellup_need_spells} {true}
+    }
+  };
+
+  #if {"$spell_state[poison]" == "up"} {
+    debug QUICK-SPELLUP: POISON!;
+    #var {quick_spellup_need_spells} {true}
+  };
+
+  #if {"$quick_spellup_need_spells" == "true" && "$combat_status" == "idle"} {
+    spellup {%1}
+  } {
+    trampoline {quick_spellup_continuation} {%1}
+  }
+}
+
+#alias {cmd_quick_spellup} {
+  exec_task {cmd_quick_spellup} {#show cmd_quick_spellup} {%1} {%2} {
+    #action {cmd_quick_spellup} {quick_spellup_continuation {task_cmd_quick_spellup_done}}
+  }
 }
 
 #var {mode_spirit_armor} {off}
@@ -113,6 +146,12 @@ hook {spirit_armor_down} {create}
   #var spell_state[%1] {up}
 }
 
+#alias {spell_state_remove} {
+  #if {"$spell_state[%1]" != ""} {
+    #unvar {spell_state[%1]}
+  }
+}
+
 #action {Your protective magic dissipates.} {spell_state_down {sanc}; reset_clock {tick}}
 #action {Evil holds dominion over you again as your warding powers fade.} {
   spell_state_down {protection};
@@ -123,11 +162,14 @@ hook {spirit_armor_down} {create}
 #action {You feel less protected.} {spell_state_down {armor}; reset_clock {tick}}
 #action {Your shield of protection flickers, then disappears.} {spell_state_down {shield}; reset_clock {tick}}
 #action {You sink towards the ground as your magic wears off.} {spell_state_down {fly}; reset_clock {tick}}
-#action {Your holy protection disappears.} {spell_state_down {spirit_armor}}
+#action {Your holy protection disappears.} {spell_state_down {spiritual armor}}
 
-#action {You call on your diety to protect you, and are engulfed in shaft of light.} {spell_state_up {spirit_armor}}
+#action {You call on your diety to protect you, and are engulfed in shaft of light.} {spell_state_up {spiritual armor}}
 #action {You feel the blessing of a diety upon you.} {spell_state_up {bless}}
 #action {You feel someone protecting you.} {spell_state_up {armor}}
+#action {You feel very sick.} {spell_state_up {poison}}
+#action {You feel better.} {spell_state_remove {poison}}
+#action {A warm feeling runs through your body.} {spell_state_remove {poison}}
 
 #class {spellup} {save}
 #class {spellup} {close}

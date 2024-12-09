@@ -30,17 +30,19 @@
   #read {mud/control.tt};
   #read {mud/zones.tt};
   #read {mud/spellup.tt};
+  #read {mud/scary-things.tt};
 
   cmd_score {
     #read {mud/prompt.tt};
     #read {mud/health.tt};
 
-    #var {health_low} {400}    
+    #var {health_low} {450}
   };
 
   hook {bless_down} {add} {$me} {cmd_cast_me {bless} {debug BLESS UP} {debug BLESS FAIL}};
   hook {armor_down} {add} {$me} {cmd_cast_me {armor} {debug ARMOR UP} {debug ARMOR FAIL}};
   need_spell_add {spiritual armor};
+  hook {on_eq_repair} {add} {bless} {bless_eq_item};
 
   set_robot {silk} {Silk};
   protect {$robot_description} {$robot};
@@ -53,36 +55,74 @@
   get_ready
 }
 
-#alias {begin_loop} {
+#alias {bless_eq_item} {
+  cmd_cast {cast 'bless' $eq_item_name}
+    {%1}
+    {debug BLESS-EQ-ITEM: FAIL --> continue anyway; %1}
+}
+
+#alias {load_begin_loop} {
   zone_loop
-    {zone_tridac_walk}
-    {zone_hyrule_walk}    
-    {zone_tridac_walk}
-    {zone_x2_walk}
-    {zone_tridac_walk}
+    {zone_tridac_kill}  
+    {zone_despair_se_walk}    
+    {zone_bryad_walk}
+    {zone_tridac_kill}
+    {zone_x2_kill_with_darkwiz}
+    {zone_tridac_kill}    
     {zone_tzen}
     {zone_tzen_walk_sell_magicite}
-    {zone_bryad_walk}
-  ;
+}
+
+#alias {begin_loop} {
+  load_begin_loop;
+  zone_loop_start
+}
+
+#alias {load_overnight_loop} {
+  zone_loop
+    {zone_tridac_kill}  
+    {zone_despair_se_walk}
+    {zone_despair_walk_sell_basalt}
+    {zone_antipal_kill}    
+    {zone_tridac_kill}
+    {zone_x2_kill_with_darkwiz}
+    {zone_bryad_walk}    
+    {zone_tridac_kill}    
+    {zone_tzen_all}
+    {zone_tzen_walk_sell_magicite}
+}
+
+#alias {overnight_loop} {
+  load_overnight_loop;
   zone_loop_start
 }
 
 #alias {load_test_loop} {
   zone_loop
-    {zone_tridac_kill}  
     {zone_despair_sw_walk}
-    {zone_tridac_kill}
-    {zone_x2_kill}
-    {zone_tridac_kill}
-    {zone_bryad_walk}
-    {zone_antipal_kill}
-    {zone_tridac_kill}
-    {zone_tzen}
-    {zone_tzen_walk_sell_magicite}  
+    {zone_despair_se_walk}
+    {zone_x2_kill_with_darkwiz}
+    {zone_tzen_all}
+    {zone_tzen_walk_sell_magicite}
+    {zone_bryad_walk}        
 }
 
 #alias {test_loop} {
   load_test_loop;
+  zone_loop_start
+}
+
+#alias {load_keys_loop} {
+  zone_loop
+    {zone_despair_sw_walk}
+    {zone_x2_kill_with_castle}
+    {zone_darkwiz_castle}
+    {zone_tzen_all}
+    {zone_tzen_walk_sell_magicite}  
+}
+
+#alias {keys_loop} {
+  load_keys_loop;
   zone_loop_start
 }
 
@@ -120,7 +160,7 @@
 }
 
 #nop Heavy Tower Shield is IMM FIRE
-#var {imm} {{fire}{on} {energy}{off}}
+#var {imm} {{fire}{on} {energy}{off} {poison}{off}}
 
 #alias {imm_energy_on} {
   get spectral-band xanth-bag;
@@ -132,6 +172,18 @@
   get broons-bane xanth-bag;
   rem spectral-band; wear broons-bane;
   put spectral-band xanth-bag
+}
+
+#alias {imm_poison_on} {
+  get grasshopper-skin xanth-bag;
+  rem mane; wear skin neck;
+  put mane xanth-bag;
+}
+
+#alias {imm_poison_off} {
+  get mane xanth-bag;
+  rem grasshopper-skin; wear mane;
+  put grasshopper-skin xanth-bag;
 }
 
 #alias {imm_transition} {
@@ -146,19 +198,20 @@
 #alias {cmd_imm_fire_on} {%1}
 #alias {cmd_imm_fire_off} {%1}
 
-#alias {cmd_imm_transition} {
-  exec_task {cmd_imm_%1_%2} {imm_transition {%1} {%2}} {%4} {%5} {
-    #action {%3} {task_cmd_imm_%1_%2_done};
-    #action {IMM ALREADY %1 --> %2} {task_cmd_imm_%1_%2_done}
-  }
-}
-
 #alias {cmd_imm_energy_on} {
   cmd_imm_transition {energy} {on} {You wear Spectral Band} {%1} {%2}
 }
 
 #alias {cmd_imm_energy_off} {
   cmd_imm_transition {energy} {off} {You wear broons bane} {%1} {%2}
+}
+
+#alias {cmd_imm_poison_on} {
+  cmd_imm_transition {poison} {on} {You wear A Grasshopper's Skin} {%1} {%2}
+}
+
+#alias {cmd_imm_poison_off} {
+  cmd_imm_transition {poison} {off} {You wear the lions mane} {%1} {%2}
 }
 
 #var {weapon_noscrap} {achilles-spear}
@@ -188,7 +241,8 @@
 #alias {cmd_reset_weapon_state} {
   exec_task {cmd_reset_weapon_state} {reset_weapon_state} {%1} {%2} {
     #action {You wield Clangeddin's Fury.} {task_cmd_reset_weapon_state_done};
-    #action {You do not seem to have the} {task_cmd_reset_weapon_state_faill};
+    #action {You wield a massive turkey leg.} {task_cmd_reset_weapon_state_done};
+    #action {You do not seem to have the} {task_cmd_reset_weapon_state_fail};
     #action {You are already wielding something.} {task_cmd_reset_weapon_state_fail}
   }
 }
@@ -233,6 +287,7 @@
     #action {You wield The Holy Avenger.} {task_cmd_scrap_on_done};
     #action {You wield A glowing trident.} {task_cmd_scrap_on_done};
     #action {You wield Clangeddin's Fury.} {task_cmd_scrap_on_done};
+    #action {You wield a massive turkey leg.} {task_cmd_scrap_on_done}; 
     #action {You do not seem to have the} {task_cmd_scrap_on_fail};    
     #action {You are already wielding something.} {task_cmd_scrap_on_fail}
   }
@@ -265,6 +320,7 @@
     #action {You wield The Holy Avenger.} {task_cmd_mob_align_evil_done};
     #action {You wield Achilles' Spear.} {task_cmd_mob_align_evil_done};;
     #action {You wield Clangeddin's Fury.} {task_cmd_mob_align_evil_done};
+    #action {You wield a massive turkey leg.} {task_cmd_mob_align_evil_done};
     #action {You do not seem to have the} {task_cmd_mob_align_evil_fail};    
     #action {You are already wielding something.} {task_cmd_mob_align_evil_fail}
   }
@@ -277,6 +333,7 @@
     #action {You wield The Holy Avenger.} {task_cmd_mob_align_good_done};
     #action {You wield Achilles' Spear.} {task_cmd_mob_align_good_done};
     #action {You wield Clangeddin's Fury.} {task_cmd_mob_align_good_done};
+    #action {You wield a massive turkey leg.} {task_cmd_mob_align_good_done};    
     #action {You do not seem to have the} {task_cmd_mob_align_good_fail};
     #action {You are already wielding something.} {task_cmd_mob_align_good_fail}
   }  
@@ -329,6 +386,12 @@
 
 #class {follow_orders} {open}
 
+#alias {cmd_spirit_armor_down} {
+  debug ORDER: marking spiritual armor --> down;
+  spell_state_down {spiritual armor};
+  quick_spellup_continuation {%1}
+}
+
 #list {allow_orders} {create}
   {Sid}
   {Silk}
@@ -348,14 +411,15 @@
 	  {order_done {%1} {cast %3}}
 	  {order_fail {%1} {cast %3}}
       };
-      #case {"imm"} {order_dispatch {%2} {cmd_imm {%3} {%4}} {%1} {%2}};
+      #case {"imm"} {order_dispatch {%2} {cmd_imm_%3_%4} {%1} {%2}};
       
       #case {"layhands"} {order_dispatch {%2} {cmd_layhands %3} {%1} {%2}};
-      #case {"recall"} {executor {%2} {global_tasks} {clear}; order_dispatch {%2} {cmd_recall} {%1} {%2}};
+      #case {"recall"} {executor {global_tasks} {clear}; order_dispatch {%2} {cmd_recall} {%1} {%2}};
       #case {"noscrap"} {order_dispatch {%2} {cmd_scrap_off} {%1} {%2}};
       #case {"scrap"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};
       #case {"scrappy"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};
       #case {"stand"} {order_dispatch {%2} {cmd_stand} {%1} {%2}};
+      #case {"spiritual armor"} {order_dispatch {spirit_armor} {cmd_spirit_armor_down} {%1} {%2}};
 	
       #default {order_tell {%1} {FAIL: %2 -- unrecognized order}}
     }
@@ -393,6 +457,7 @@
 #action {%1 tells you '{healme|lay|layhands}'} {do_order {%1} {layhands} {%1}}
 #action {%1 tells the group '{healme|lay|layhands}'} {do_order {group} {layhands} {%1}}
 #action {%1 tells the group '{recall|noscrap|scrap|scrappy}'} {do_order {group} {%2}}
+#action {%1 whispers to you, 'down: %2'} {do_order {%1} {%2}}
  
 #class {follow_orders} {save}
 #class {follow_orders} {close}

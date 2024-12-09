@@ -1,0 +1,32 @@
+#alias {leader_state_watch} {
+  #class {leader_state_watch} {open};
+
+  #var last_leader_state {};
+  #var leader_state {};
+
+  #alias {capture_leader_state} {
+    #var {last_leader_state} {$leader_state};
+    #var {leader_state} {}
+  };
+
+  #alias {leader_state} {
+    #var {leader_state[%%1]} {%%2}
+  };
+
+  #alias {analyze_leader_state} {
+    debug LEADER-STATE last=$last_leader_state state=$leader_state;
+    #if {"$last_leader_state[spirit]" == "up" && "$leader_state[spirit]" != "up"} {
+      whisper %1 down: spiritual armor
+    }
+  };
+
+  #action {%1 %%1 is standing here.} {capture_leader_state};
+  #action {%1 glows with a bright light!} {leader_state {sanc} {up}};
+  #action {%1 glows with a red light!} {leader_state {fireshield} {up}};
+  #action {%1 is enveloped by golden bands of holy protection.} {leader_state {protection} {up}};
+  #action {%1 basks in a brilliant holy light.} {leader_state {spirit} {up}};
+  #action {%1 is hovering above the ground.} {analyze_leader_state};
+
+  #class {leader_state_watch} {save};
+  #class {leader_state_watch} {close}
+}

@@ -1,0 +1,7 @@
+#nop DT in the Blizz chasm
+#action {You sink into the snow} {#zap}
+
+#nop accidentally typing "ren" instead of "rent" in the Inn and losing no-rent items
+#alias {ren} {debug type "rent" instead!}
+
+#action {You wish that your wounds would stop} {rec recall-scroll}

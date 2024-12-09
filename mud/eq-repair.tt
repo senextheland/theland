@@ -1,3 +1,7 @@
+#class {repair} {open}
+
+hook {on_eq_repair} {create}
+
 #alias {eq_repair} {
   #class {eq_repair} {open};
 
@@ -32,7 +36,7 @@
     {polyester slacks}{slacks}
     {gorilla gloves}{gloves}
     {A pair of Golden Armlets}{armlets}
-    {A Heavy Tower Shield}{shield}
+    {A Heavy Tower Shield}{hammer-gondolin-shield}
     {a white robe}{white-robe}
     {a cheetah skin}{cheetah-skin}
     {A Flaming Bracelet}{flaming-bracelet}
@@ -77,6 +81,9 @@
     {A swan winged helm}{tuor-swan-helm}
     {A tarnished ring}{???-ring}
     {A bracelet made of stone}{stone-bracelet}
+    {the Skin of the Dark Green Spider}{green-spider-skin-valleyw}
+    {A Grasshopper's Skin}{grasshopper-skin-valleyw}
+    {the Hard Shell of the Shield Bug}{shield-bug}
     ;  
 
   #alias {eq_repair_check} {
@@ -131,6 +138,12 @@
   };
 
   #action {The Super Repair Guy gives you} {
+    hook {on_eq_repair} {exec-each}
+      {on_eq_repair_continue}
+      {on_eq_repair_continue}      
+  };
+
+  #alias {on_eq_repair_continue} {
     wear_again; repair_next_item
   };
 
@@ -139,3 +152,6 @@
 
   eq
 }
+
+#class {repair} {save}
+#class {repair} {close}

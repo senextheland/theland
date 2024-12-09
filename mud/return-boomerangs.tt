@@ -1,0 +1,23 @@
+#class {return_boomerangs} {open}
+
+#var {fish_owner} {}
+
+#action {%1 throws a frozen fish!} {#var {fish_owner} {%1}}
+#action {A long silver fish is here, immortalized in ice} {get all.frozen-fish}
+#action {You get a frozen fish} {
+  #if {"$fish_owner" != ""} {
+    exec {return_boomerangs} {cmd_give_all {frozen-fish} {$fish_owner}}
+      {tell $fish_owner I think I found your fish, just gave it back.}
+      {tell $fish_owner I think I found your fish, you're not here to give it back.}
+  } {
+    put frozen-fish case
+  }
+}
+
+#action {A frozen fish suddenly reverses direction and flies %1!} {
+  debug FISH LOST!!;
+  noscrap
+}
+
+#class {return_boomerangs} {save}
+#class {return_boomerangs} {close}

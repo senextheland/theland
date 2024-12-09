@@ -4,7 +4,7 @@
   {The ogre berserker (Sid)}
   {ogre berserker poly Sid}
   {Puff}
-  {Senex}    
+  {Senex} 
   {Sid}
   {Silk}
   {Zifnab}
@@ -13,6 +13,10 @@
   {Slick Willy}
   {Iggy, the Geologist}
   {The bank teller}
+  {The Super Repair Guy}
+  {An Ebon Apprentice}
+  {Gap Chasm of Xanth.  The Gap Chasm, so it}
+  {The maid}
 
 #list {ignore_messages} {create}
   {'We're happy for ya!'}
@@ -51,6 +55,7 @@
 #action {%1 shouts some bull %2} {log_tell {shout} {%1} {%2}} {9}
 #action {%1 tells the group %2} {log_tell {group} {%1} {%2}} {9}
 #action {%1 shouts an auction %2} {log_tell {auction} {%1} {%2}} {9}
+#action {%1 says %2} {log_tell {say} {%1} {%2}} {9}
   
 #class {logging} {save}
 #class {logging} {close}

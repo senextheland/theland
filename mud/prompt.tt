@@ -40,7 +40,7 @@ hook {on_movement_down} {create}
     
   #if {$movement > $last_movement} {hook {on_movement_up} {fire}};
   #elseif {$movement < $last_movement} {hook {on_movement_down} {fire}};
-  
+
   hook {on_prompt} {fire}
 }
 

@@ -1,0 +1,419 @@
+#var {me} {silk}
+#session $me theland.notroot.com 5000
+#split 0 0
+#config {speedwalk} {on}
+#log {append} {$me.log}
+
+#ticker {fidget} {thinks he's sneaky.} {120}
+
+#alias {get_ready} {
+  #read {mud/logging.tt};
+  #read {mud/task.tt};
+  #read {mud/exec.tt};
+  #read {mud/hook.tt};
+  #read {mud/commands.tt};
+  #read {mud/tick.tt};
+  #read {mud/cast.tt};
+  #read {mud/eq-repair.tt};
+  #read {mud/robot.tt};  
+  #read {mud/fight.tt};
+  #read {mud/assist.tt};
+  #read {mud/dispell-once.tt};
+  #read {mud/zones.tt};
+  #read {mud/spellup.tt};
+  #read {mud/watch-leader.tt};
+  #read {mud/pawn.tt};
+  #read {mud/cauldron.tt};
+  #read {mud/return-boomerangs.tt};
+  #read {mud/scary-things.tt};
+
+  cmd_score {
+    #read {mud/prompt.tt};
+    #read {mud/health.tt};
+
+    #var {health_low} {350}
+  };
+
+  hook {bless_down} {add} {$me} {cmd_cast_me {bless} {debug BLESS UP} {debug BLESS FAIL}};
+  hook {armor_down} {add} {$me} {cmd_cast_me {armor} {debug ARMOR UP} {debug ARMOR FAIL}};
+
+  set_robot {senex} {Senex};
+  assist_on {Senex};
+  leader_state_watch {Senex};
+  reset_weapon_state
+}
+
+#alias {reload} {
+  #read {mud/adapter.tt};
+  #read {silk-test.tt};
+  get_ready
+}
+
+hook {on_rip} {add} {loot_fish}
+#alias {loot_fish} {
+  get all.frozen-fish corpse;
+  get all.frozen-fish dust;
+  %1
+}
+
+#alias {cmd_deposit_self} {
+  cmd_score {cmd_deposit {%1} {%2}}
+}
+
+#action {A pile of gold coins} {get all.coins}
+
+#nop --------------------------
+#nop adapter.tt
+#nop --------------------------
+
+#read {mud/thief.tt}
+
+#alias {cmd_cast_me} {cmd_ask_for_cast {%1} {%2} {%3}}
+#alias {cmd_sneak} {%1}
+#alias {cmd_unsneak} {%1}
+#alias {cmd_agg} {%1}
+#alias {cmd_unagg} {%1}
+
+#var {imm} {{fire}{off} {energy}{off} {poison}{off}}
+
+#alias {imm_energy_on} {
+  get spectral-band case;
+  rem signet; wear spectral-band;
+  put signet case  
+}
+
+#alias {imm_energy_off} {
+  get signet case;
+  rem spectral-band; wear signet;
+  put spectral-band case    
+}
+
+#alias {imm_fire_on} {
+  get burning-wristband case;
+  rem key-band; wear burning-wristband;
+  put key-band case
+}
+
+#alias {imm_fire_off} {
+  get key-band case;
+  rem burning-wristband; wear key-band;
+  put burning-wristband case
+}
+
+#alias {imm_poison_on} {
+  get shield-bug case;
+  rem green-scale; wear shield-bug;
+  put green-scale case  
+}
+
+#alias {imm_poison_off} {
+  get green-scale case;
+  rem shield-bug; wear green-scale;
+  put shield-bug case    
+}
+
+#alias {imm_transition} {
+  #if {"$imm[%1]" != "%2"} {
+    #var {imm[%1]} {%2};
+    imm_%1_%2
+  } {
+    #show IMM ALREADY %1 --> %2    
+  }
+}
+
+#alias {cmd_imm_fire_on} {
+  cmd_imm_transition {fire} {on} {You wear A Burning Wristband} {%1} {%2}
+}
+
+#alias {cmd_imm_fire_off} {
+  cmd_imm_transition {fire} {off} {You wear A golden key shaped into a wristband} {%1} {%2}
+}
+
+#alias {cmd_imm_energy_on} {
+  #if {"$target" != "darkwiz"} {
+    cmd_imm_transition {energy} {on} {You wear Spectral Band} {%1} {%2}
+  } {
+    debug IMM-ENERGY-ON: skipping!;
+    trampoline {cmd_imm_energy_on} {%1}
+  }
+}
+
+#alias {cmd_imm_energy_off} {
+  #if {"$target" != "darkwiz"} {
+    cmd_imm_transition {energy} {off} {You wear the signet ring of Thalos} {%1} {%2}
+  } {
+    debug IMM-ENERGY-OFF: skipping!;
+    trampoline {cmd_imm_energy_off} {%1}
+  }
+}
+
+#alias {cmd_imm_poison_on} {
+  cmd_imm_transition {poison} {on} {You wear the Hard Shell of the Shield Bug} {%1} {%2}
+}
+
+#alias {cmd_imm_poison_off} {
+  cmd_imm_transition {poison} {off} {You wear green scale armor} {%1} {%2}
+}
+
+#var {nodrop_dagger} {Nausicaa-dagger}
+#var {dispell_weapon} {deceiver}
+#var {noscrap_weapon} {assassin-dagger}
+#var {noscrap_held} {strange-knife}
+
+#var {current_weapon} {}
+#var {current_helditem} {}
+
+#var {mode_scrap} {}
+#var {mode_dispell} {}
+#var {mode_backstab} {}
+
+#alias {safe_put} {
+  #if {"%1" != "$nodrop_dagger"} {
+    put %1 %2
+  } {
+    debug I WILL NOT PUT NODROP DAGGER {%1} IN %2
+  }
+}
+
+#alias {reset_weapon_state} {
+  #var {mode_scrap} {on};
+  #var {mode_dispell} {off};
+  #var {mode_backstab} {on};
+  #var {current_weapon} {$noscrap_weapon};
+  #var {current_helditem} {$nodrop_dagger};
+  get $noscrap_weapon case; rem $dispell_weapon; wield $noscrap_weapon; safe_put $dispell_weapon case;
+  rem $noscrap_held; safe_put $noscrap_held case; grab $nodrop_dagger
+}
+
+#alias {cmd_reset_weapon_state} {
+  exec_task {cmd_reset_weapon_state} {reset_weapon_state} {%1} {%2} {
+    #action {You grab Nausicaa's Dagger.} {task_cmd_reset_weapon_state_done};
+    #action {You grab A Rainbow Hued Dagger.} {task_cmd_reset_weapon_state_done};  
+    #action {You do not seem to have the} {task_cmd_reset_weapon_state_fail};
+    #action {You are already wielding something.} {task_cmd_reset_weapon_state_fail}
+  }
+}
+
+#alias {choose_best_weapon} {
+  #local {last_weapon} {$current_weapon};
+  #local {last_held} {$current_helditem};
+  
+  #if {"$mode_dispell" == "on" || "$mode_dispell" == "once"} {
+    #var {current_weapon} {$dispell_weapon}
+  } {
+    #var {current_weapon} {$noscrap_weapon}
+  };
+
+  #if {"$mode_scrap" == "off"} {
+    #var {current_helditem} {$noscrap_held}
+  } {
+    #var {current_helditem} {$nodrop_dagger}
+  };
+
+  #if {"$last_weapon" != "$current_weapon"} {
+    get $current_weapon case;
+    rem $last_weapon;
+    wield $current_weapon;
+    safe_put $last_weapon case
+  } {
+    #show ALREADY WIELDING
+  };
+
+  #if {"$last_held" != "$current_helditem"} {
+    #if {"$current_helditem" != "$nodrop_dagger"} {get $current_helditem case};
+    #if {"$last_held" != ""} {rem $last_held};
+    #if {"$current_helditem" != ""} {grab $current_helditem};
+    safe_put $last_held case
+  } {
+    #show ALREADY HOLDING
+  }
+}
+
+#alias {cmd_dispell_off} {
+  #if {"$mode_dispell" != "off"} {
+    #var {mode_dispell} {off};
+     exec_task {cmd_dispell_off} {choose_best_weapon} {%1} {%2} {
+      #action {ALREADY WIELDING} {task_cmd_dispell_off_done};  
+      #action {You wield the Assassin's Dagger.} {task_cmd_dispell_off_done};
+      #action {You do not seem to have the} {task_cmd_dispell_off_fail};    
+      #action {You are already wielding something.} {task_cmd_dispell_off_fail}
+    }    
+  } {
+    debug DISPELL OFF -- already off;
+    %1
+  }
+}
+
+#alias {cmd_dispell_on} {
+  #if {"$mode_dispell" == "off"} {
+    #if {"%1" == ""} {#var {mode_dispell} {on}} {#var {mode_dispell} {%1}};
+    debug DISPELL ON mode=$mode_dispell arg=%1;
+    exec_task {cmd_dispell_on} {choose_best_weapon} {%2} {%3} {
+      #action {ALREADY HOLDING} {task_cmd_dispell_on_done};
+      #action {You wield The deceiver.} {task_cmd_dispell_on_done};
+      #action {You do not seem to have the} {task_cmd_dispell_on_fail};    
+      #action {You are already wielding something.} {task_cmd_dispell_on_fail}
+    }    
+  } {
+    debug DISPELL ON -- already on;
+    #var {mode_dispell} {on};
+    %2
+  }
+}
+
+#alias {cmd_scrap_off} {
+  #var {mode_scrap} {off};
+  exec_task {cmd_scrap_off} {choose_best_weapon} {%1} {%2} {
+    #action {ALREADY HOLDING} {task_cmd_scrap_off_done};  
+    #action {You grab A strange knife.} {task_cmd_scrap_off_done};
+    #action {You do not seem to have the} {task_cmd_scrap_off_fail};    
+    #action {You are already wielding something.} {task_cmd_scrap_off_fail}
+  }
+}
+
+#alias {cmd_scrap_on} {
+  #var {mode_scrap} {on};
+  exec_task {cmd_scrap_on} {choose_best_weapon} {%1} {%2} {
+    #action {ALREADY HOLDING} {task_cmd_scrap_on_done};
+    #action {You grab Nausicaa's Dagger.} {task_cmd_scrap_on_done};
+    #action {You grab A Rainbow Hued Dagger.} {task_cmd_scrap_on_done};
+    #action {You do not seem to have the} {task_cmd_scrap_on_fail};    
+    #action {You are already wielding something.} {task_cmd_scrap_on_fail}
+  }  
+}
+
+
+#nop --------------------------
+#nop Orders
+#nop --------------------------
+
+#alias {cmd_autoloot_junk} {
+  debug AUTOLOOT-JUNK --> drop all.$autoloot_junk;
+  trampoline {autoloot_junk} {drop all.$autoloot_junk};
+  %1
+}
+
+#alias {autoloot_junk} {
+  #if {"%1" != ""} {
+    #var {autoloot_junk} {%1};
+    hook {on_rip} {add} {autoloot_junk} {cmd_autoloot_junk}
+  } {
+    hook {on_rip} {remove} {autoloot_junk}    
+  }
+}
+
+#function {autoloot_type} {
+  autoloot_junk;
+  #switch {"%1"} {
+    #case {"no-cursed"} {#var {result} {on}};
+    #case {"some-cursed"} {#var {result} {on}};
+    #case {"heavy"} {
+      #if {"$target" == "darkwiz"} {
+        autoloot_junk {darkwiz};
+        #var {result} {on}
+      } {
+        #var {result} {gold}
+      }
+    };    
+    #default {#var {result} {%1}}
+  }
+}
+
+#class {follow_orders} {open}
+
+#alias {cmd_cue_regen} {
+  #switch {"%1"} {
+    #case {"start"} {debug CUE: regen --> start; rest; %2};
+    #case {"done"} {debug CUE: regen --> done; stand; %2};
+    #default {
+      debug ACTION-QUEUE-REGEN: unrecognized command {%1};
+      %3
+    }
+  }
+}
+
+#alias {do_order} {
+  debug DO ORDER {%1} {%2};
+  #if {"%1" != "Senex" && "%1" != "group"} {
+    tell %1 FAIL: %2 -- not allowed
+  } {
+    #switch {"%2"} {
+      #case {"stand"} {order_dispatch {%2} {cmd_stand} {%1} {%2}};
+      #case {"sneak"} {order_dispatch {%2} {cmd_noop} {%1} {%2}};
+      #case {"unsneak"} {order_dispatch {%2} {cmd_noop} {%1} {%2}};
+      #case {"agg"} {order_dispatch {%2} {cmd_noop} {%1} {%2}};
+      #case {"unagg"} {order_dispatch {%2} {cmd_noop} {%1} {%2}};	
+      #case {"dispell"} {order_dispatch {%2} {cmd_dispell_on} {%1} {%2}};
+      #case {"nodispell"} {order_dispatch {%2} {cmd_dispell_off} {%1} {%2}};
+      #case {"noscrap"} {order_dispatch {%2} {cmd_scrap_off} {%1} {%2}};
+      #case {"scrappy"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};
+      #case {"scrap"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};
+      #case {"repair-eq"} {order_dispatch {%2} {eq_repair} {%1} {%2}};
+      #case {"deposit"} {order_dispatch {%2} {cmd_deposit_self} {%1} {%2}};
+      #case {"spellup"} {spellup {#nop}; order_dispatch_done {%1} {%2}};
+      #case {"buy-cauldrons"} {order_dispatch {%2} {cmd_buy_missing_cauldrons} {%1} {%2}};
+      #case {"reset-weapons"} {order_dispatch {%2} {cmd_reset_weapon_state} {%1} {%2}};
+      #case {"recall"} {executor {global_tasks} {clear}; order_dispatch {%2} {cmd_recall} {%1} {%2}};
+      #case {"wait-here"} {order_dispatch {%2} {cmd_wait_here} {%1} {%2}};
+	
+      #case {"pawn"} {order_dispatch {%2} {cmd_pawn_and_count {%3}} {%1} {%2: %3}};
+      #case {"imm"} {order_dispatch {cmd_imm_%3_%4} {cmd_imm_%3_%4} {%1} {%2: %3 %4}};
+      #case {"autoloot"} {order_dispatch {%2} {cmd_autoloot {@autoloot_type{%3}}} {%1} {%2: %3}};
+      #case {"target"} {order_dispatch {%2} {cmd_set_target {%3}} {%1} {%2: %3}};
+      #case {"teleport-room"} {order_dispatch {%2} {cmd_set_target {%3}} {%1} {%2: %3}};
+      #case {"drop-all"} {order_dispatch {%2} {cmd_drop_all {%3}} {%1} {%2: %3}};
+      #case {"pick"} {order_dispatch {%2} {cmd_pick {%3}} {%1} {%2 %3}};
+      #case {"give-all"} {order_dispatch {%2} {cmd_give_all {%3} {%1}} {%1} {%2: %3}};
+      #case {"walk"} {order_dispatch {%2} {cmd_walk {%3} {%4}} {%1} {%2}};
+		
+      #case {"regen"} do_group_cue {%2} {cmd_cue_regen {%3}};
+      
+      #default {tell %1 FAIL: %2 -- unrecognized order}
+    }
+  }
+}
+
+#alias {order_dispatch} {
+  debug ORDER-DISPATCH %1 %2 %3;
+  exec {order_%1} {%2} {order_dispatch_done {%3} {%4}} {order_dispatch_fail {%3} {%4}}
+}
+
+#alias {order_tell} {
+  #if {"%1" == "group"} {
+    tell group '%2
+  } {
+    tell %1 %2
+  }  
+}
+
+#alias {order_dispatch_done} {
+  order_tell {%1} {OK: %2}
+}
+
+#alias {order_dispatch_fail} {
+  #if {"%3" == ""} {
+    order_tell {%1} {FAIL: %2}
+  } {
+    order_tell {%1} {FAIL: %2 -- %3}
+  }
+}
+
+#alias {do_group_cue} {
+  debug GROUP QUEUE %1;
+  exec {cue_%1} {%2} {debug GROUP QUEUE: %2 --> DONE} {debug GROUP QUEUE: %2 --> FAIL}
+}
+
+#action {%1 tells you 'order: %2'} {do_order {%1} {%2}}
+#action {%1 tells you 'order: {pick|give-all|autoloot} %3'} {do_order {%1} {%2} {%3}} {4}
+#action {tells the group 'order: {pick|give-all|autoloot} %2'} {do_order {group} {%1} {%2}} {4}
+#action {tells the group '{stand|noscrap|scrap|scrappy|go-home|recall|repair-eq|deposit|spellup|sneak|unsneak|agg|unagg|buy-cauldrons|reset-weapons}'} {
+  do_order {group} {%1}
+}
+#action {tells the group '{autoloot|pawn|teleport-room|target|drop-all}: %2'} {do_order {group} {%1} {%2}}
+#action {tells the group 'FISH RECOVERED: scrappy'} {do_order {group} {scrappy}}
+#action {tells the group 'walk: %1 -- "%2"'} {do_order {group} {walk} {%1} {%2}}
+#action {tells the group 'imm: {fire|energy|poison} {on|off}'} {do_order {group} {imm} {%1} {%2}}
+#action {tells the group 'REGEN --> {start|done}} {do_order {group} {regen} {%1}}
+ 
+#class {follow_orders} {save}
+#class {follow_orders} {close}

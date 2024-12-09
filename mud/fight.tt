@@ -2,21 +2,23 @@
 
 hook {on_rip} {create}
 hook {on_fight_start} {create}
-#alias {do_fight_assist} {assist %1}
 
 #class {fight} {open}
 
 #var {combat_status} {idle}
 #var {currently_fighting} {}
   
-#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|crushes|decimates|demolishes|devastates|ethereally touches|grapples with|hits|hoofs|leaps upon|massacres|misses|mutilates|obliterates|pierces|pulverizes|punches|rocks|saws|smashes|stuns|tangles|thrashes|vanquishes|whips}
-#var {you_fighting_words} {annihilate|atomize|beat the ever living shit out of|bite|channel|claw|cleave|crushes|decimate|demolish|devastate|grapple with|hit|leap upon|massacre|mutilate|obliterate|pierce|pulverize|punch|rock|thrash|stun|vanquish|whip}
+#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|Claws|crushes|decimates|demolishes|devastates|ethereally touches|gashes|grapples with|hits|hoofs|leaps upon|massacres|misses|mutilates|obliterates|pierces|pulverizes|punches|rocks|saws|smashes|stings|stuns|tangles|thrashes|vanquishes|whips}
+#var {you_fighting_words} {annihilate|atomize|bite|channel|claw|cleave|crushes|decimate|demolish|devastate|grapple with|gash|hit|leap upon|massacre|mutilate|obliterate|pierce|pulverize|punch|rock|thrash|sting|stun|vanquish|whip}
+#var {you_beat_words} {beat the ever-living shit out of}
 
 #action {You {$you_fighting_words} %2 with} {update_fight {%2}}
+#action {You {$you_beat_words} %2.} {update_fight {%2}}
 #action {%1 {$fighting_words} you} {update_fight {%1}}
 #action {%1 sees you, and attacks!} {update_fight {%1}}
 #action {You dodge %1's} {update_fight {%1}}
 #action {Your fire shield flares about %1 and you have} {update_fight {%1}}
+#action {You are pissed and attack %1!} {update_fight {%1}} {9}
 
 #action {in the back of %1, resulting in several strange noises and some blood.} {update_fight {%1}}
 #action {in the back of %1, who suddenly slumps to the ground, spastically shaking before stiffening as a lifeless corpse.} {update_fight {%1}}
@@ -24,6 +26,13 @@ hook {on_fight_start} {create}
 #action {You intentionally collide with %1 and send him sprawling to the ground.} {update_fight {%1}}
 #action {As %1 avoids your bash, you topple over and fall to the ground.} {update_fight {%1}; stand}
 #action {Maybe you should get on your feet first?} {stand}
+#action {You can't do this sitting!} {stand}
+
+#action {%1 leaps to your rescue, you are confused!} {
+  #var {combat_status} {idle};
+  maybe_assist {%1} {$currently_fighting}
+}
+
 #action {You are rescued by %1, you are confused!} {
   #var {combat_status} {idle};
   maybe_assist {%1} {$currently_fighting}

@@ -97,6 +97,7 @@
     #switch {"%%1"} {
       #case {"here"} {dagger_walk_kill_room};
       #case {"not-found"} {step};
+      #case {"fighting"} {dagger_walk_kill_room};
       #default {debug dagger_walk_farlook_fail UNRECOGNIZED COMMAND {%%1}}
     }    
   };
@@ -153,9 +154,10 @@
   #alias {dagger_nearby_farlook_fail} {
     debug DAGGER-NEARBY-FARLOOK-FAIL --> %%1;
     #switch {"%%1"} {
-      #case {"here"} {dagger_walk_kill_room};
+      #case {"here"} {dagger_nearby_kill_room};
       #case {"not-found"} {dagger_nearby_done};
       #case {"not-nearby"} {dagger_nearby_done};
+      #case {"fighting"} {dagger_nearby_kill_room};
       #default {debug dagger_nearby_farlook_fail UNRECOGNIZED COMMAND {%%1}}
     }  
   };
@@ -212,6 +214,18 @@
   #class {dagger_nearby} {close};
 
   dagger_nearby_farlook
+}
+
+#alias {collect_lost_fish} {
+  cmd_check_container {$fish_container} {$expect_fish}
+    {%3}
+    {kill_walk_path {%1} {%2} {%3} {%4}}
+}
+
+#alias {dagger_walk_recollect} {
+  dagger_walk_path {%1} {%2}
+    {collect_lost_fish {%1} {%2} {%3} {%4}}
+    {%4}
 }
 
 #class {dagger} {save}
