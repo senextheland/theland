@@ -30,7 +30,7 @@
 
   #alias {kill_room_hands_full} {
     debug KILL-ROOM: hands full --> reset zone timeout;
-    reset_zone_timeout
+    update_fight {}
   };
 
   #action {They aren't here.} {kill_room_next_target};

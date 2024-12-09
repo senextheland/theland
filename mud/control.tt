@@ -333,6 +333,7 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
     {announce {next_zone_announcement} {2.0}}
     {zone_safety off}
     {quick_spellup}
+    {mode_bash off}    
     {regen_some}
     {zone_safety on}    
     {group_repair}
@@ -390,13 +391,44 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
 #nop Areas
 #nop --------------------------
 
+#nop This variant of wait_for_room is useful for very long transition rooms where
+#nop progress through the room is guaranteed but might exceed the zone timeout. For
+#nop example, the Sleep and Whirlpool on the way to darkwiz. In general, the game
+#nop guarantees progress through rooms like this so it's safe to use everywhere
+#nop that rooms automatically transition from start to end.
+
+def_zone_task1 {wait_for_room} {cmd_wait_for_room_without_timeout}
 #alias {cmd_wait_for_room_without_timeout} {
   cmd_wait_for_room {%1} {reset_zone_timeout} {%2} {%3}
 }
 
+#nop This variant changing an immunity mode only applies to this player, not the
+#nop entire group. This is a bit of a hack to workaround shortcomings of the
+#nop thalos-ring being crucial for FLY, WB, and move regen on thief vs other rings
+#nop like spectral-band that provide IMM ENERGY, etc. There is some risk that the
+#nop group is vulnerable to attacks this player is immune from.
+
+def_zone_task2 {self_imm} {cmd_self_imm}
 #alias {cmd_self_imm} {
   cmd_imm_%1_%2 {%3} {%4}
 }
+
+#nop This variant of giving coins never fails. Use it to optimistically offload
+#nop coins without failing the overall action if it doesn't work.
+
+def_zone_task2 {try_give_coins} {cmd_try_give_coins}
+#alias {cmd_try_give_coins} {
+  cmd_give_coins {%1} {%2} {%3} {%3}
+}
+
+#nop Automatically bashing interferes with the ability to rescue and heal. Use
+#nop `mode_bash=on` when daggering or on bosses. Keep if off when kill-walking
+#nop where there may be ground of agg mobs that gang up on followers.
+
+def_zone_task1 {mode_bash} {cmd_mode_bash}
+
+
+#nop ... Commands ...
 
 def_zone_task1 {set_target} {cmd_group_target}
 def_zone_task0 {group_scrappy} {cmd_group_scrappy}
@@ -404,7 +436,6 @@ def_zone_task0 {group_noscrap} {cmd_group_noscrap}
 def_zone_task1 {open_door} {cmd_open_door}
 def_zone_task1 {close_door} {cmd_close_door}
 def_zone_task1 {teleport_room} {cmd_teleport_room}
-def_zone_task1 {wait_for_room} {cmd_wait_for_room_without_timeout}
 def_zone_task1 {wait_for_time} {cmd_wait_for_time}
 def_zone_task1 {confirm_room} {cmd_look_room}
 def_zone_task1 {confirm_exit} {cmd_check_exit}
@@ -426,9 +457,9 @@ def_zone_task0 {group_unagg} {cmd_group_unagg}
 def_zone_task1 {group_cast} {cmd_group_cast}
 def_zone_task0 {group_stand} {cmd_group_stand}
 def_zone_task2 {group_imm} {cmd_group_imm}
-def_zone_task2 {self_imm} {cmd_self_imm}
 def_zone_task0 {quick_spellup} {cmd_quick_spellup}
 def_zone_task0 {reset_weapons} {cmd_group_reset_weapons}
+def_zone_task2 {give_coins} {cmd_give_coins}
 
 #class {control} {save}
 #class {control} {close}

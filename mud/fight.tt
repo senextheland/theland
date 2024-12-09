@@ -7,9 +7,10 @@ hook {on_fight_start} {create}
 
 #var {combat_status} {idle}
 #var {currently_fighting} {}
+#var {currently_assisting} {}
   
-#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|Claws|crushes|decimates|demolishes|devastates|ethereally touches|gashes|grapples with|hits|hoofs|leaps upon|massacres|misses|mutilates|obliterates|pierces|pulverizes|punches|rocks|saws|smashes|stings|stuns|tangles|thrashes|vanquishes|whips}
-#var {you_fighting_words} {annihilate|atomize|bite|channel|claw|cleave|crushes|decimate|demolish|devastate|grapple with|gash|hit|leap upon|massacre|mutilate|obliterate|pierce|pulverize|punch|rock|thrash|sting|stun|vanquish|whip}
+#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|Claws|crushes|decimates|demolishes|devastates|ethereally touches|gashes|grapples with|hits|hoofs|leaps upon|massacres|misses|mutilates|obliterates|pierces|pinches|pulverizes|punches|rocks|saws|smashes|stings|stuns|tangles|thrashes|vanquishes|whips}
+#var {you_fighting_words} {annihilate|atomize|bite|channel|claw|cleave|crushes|decimate|demolish|devastate|grapple with|gash|hit|leap upon|massacre|mutilate|obliterate|pierce|pinch|pulverize|punch|rock|thrash|sting|stun|vanquish|whip}
 #var {you_beat_words} {beat the ever-living shit out of}
 
 #action {You {$you_fighting_words} %2 with} {update_fight {%2}}
@@ -23,8 +24,6 @@ hook {on_fight_start} {create}
 #action {in the back of %1, resulting in several strange noises and some blood.} {update_fight {%1}}
 #action {in the back of %1, who suddenly slumps to the ground, spastically shaking before stiffening as a lifeless corpse.} {update_fight {%1}}
 
-#action {You intentionally collide with %1 and send him sprawling to the ground.} {update_fight {%1}}
-#action {As %1 avoids your bash, you topple over and fall to the ground.} {update_fight {%1}; stand}
 #action {Maybe you should get on your feet first?} {stand}
 #action {You can't do this sitting!} {stand}
 
@@ -76,6 +75,7 @@ hook {on_fight_start} {create}
     debug BEGIN ASSIST {%1} {%2};
     #var {combat_status} {fighting};
     #var {currently_fighting} {%2};
+    #var {currently_assisting} {%1};
     do_fight_assist {%1} {%2}
   }
 }
@@ -85,6 +85,7 @@ hook {on_fight_start} {create}
   #if {"$combat_status" == "fighting"} {
     #var {combat_status} {idle};
     #var {currently_fighting} {};
+    #var {currently_assisting} {};
     debug END FIGHT will emit RIP after short delay;
     #undelay {fighting_timeout};
     #delay {fighting_timeout} {

@@ -1,9 +1,12 @@
+#class {thief} {open}
+
 #alias {cmd_heal_me} {
   cmd_ask_for_heal {%1} {%2}
 }
 
 #alias {do_fight_assist} {
   debug ASSIST {%1} {%2};
+  
   
   #if {"$target" != ""} {
     debug TRY BACKSTAB {$target};
@@ -13,12 +16,6 @@
   #nop in case backstab failed;
   assist %1;
   
-  #list {sanced_mobs} {find} {%2} {probe};
-  #if {"$probe" != "0"} {
-    debug SANC MOB: {%2};
-    dispell_once
-  };
-
   debug ASSIST --> circle_loop;
   circle_loop
 }
@@ -29,11 +26,21 @@
   #class {circle_loop} {open};
 
   #var {circle_state} {idle};
+  #var {circle_miss} {0};
+
+  #alias {circle_miss_inc} {
+    #math {circle_miss} {$circle_miss + 1};
+    debug CIRCLE-LOOP missed --> $circle_miss
+  };
+
+  #alias {circle_miss_reset} {
+    #var {circle_miss} {0}
+  };
 
   #alias {circle_loop_done} {
     debug CIRCLE-LOOP: done;
     hook {on_rip} {remove} {circle_loop};
-    task_cmd_circle_done;
+    task_cmd_circle_end;
     #class {circle_loop} {kill}
   };
 
@@ -51,6 +58,7 @@
 
   #alias {circle_hit} {  
     debug CIRCLE-HIT --> debounce again;
+    circle_miss_reset;
     reset_fight_timer;
     circle_debounce {hit} {circle_once}
   };
@@ -61,7 +69,8 @@
     #switch {"%%1"} {
       #case {"no-fight"} {circle_debounce {done} {circle_loop_done}};
       #case {"not-assisting"} {circle_debounce {done} {circle_loop_maybe_assist}};
-      #case {"missed"} {circle_debounce {miss} {circle_once}};
+      #case {"missed"} {circle_miss_inc; circle_debounce {miss} {circle_once}};
+      #case {"noticed"} {circle_debounce {noticed} {circle_once}};      
       #default {
         debug CIRCLE-FAIL: unrecognized error code {%%1}
       }
@@ -77,6 +86,11 @@
       #var {circle_state} {done};
       #delay {circle_debounce} {%%2} {0.1}
     };
+    #elseif {"%%1" == "miss" && $circle_miss >= 2} {
+      debug CIRCLE-LOOP: too many misses --> re-assist;    
+      #var {circle_state} {done};
+      #delay {circle_debounce} {circle_loop_maybe_assist} {0.1}
+    };
     #else {
       #delay {circle_debounce} {%%2} {0.1}
     }    
@@ -85,8 +99,8 @@
   #alias {circle_loop_maybe_assist} {
     circle_loop_done;    
     #if {"$combat_status" != "idle"} {
-      debug CIRCLE-LOOP: maybe asist combat_status=$combat_status --> assist
-      do_fight_assist
+      debug CIRCLE-LOOP: maybe asist combat_status=$combat_status --> assist;
+      do_fight_assist {$currently_assisting}
     } {
        debug CIRCLE-LOOP: maybe asist combat_status=$combat_status --> ignore
     }
@@ -114,12 +128,10 @@
     };
     
     #action {You tried to sneak around him, but he noticed you!} {
-      debug CIRCLE-NOT-MISSED;
-      task_cmd_circle_fail {missed}      
+      task_cmd_circle_fail {noticed}
     } {4};
     
     #action {nimbly avoids your backstab, and you nearly cut your finger.} {
-      debug CIRCLE-NOT-MISSED;    
       task_cmd_circle_fail {missed}
     } {4};
     
@@ -140,3 +152,6 @@
     } {4}
   }
 }
+
+#class {thief} {save}
+#class {thief} {close}

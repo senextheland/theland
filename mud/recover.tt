@@ -1,5 +1,6 @@
 #class {recover} {open}
 
+#var {fish_state} {idle}
 #var {fish_lost} {0}
 #var {fish_container} {golden-case}
 #var {expect_fish} {a frozen fish{.*}[4]}
@@ -31,8 +32,12 @@
 
 #alias {fish_recovered_store} {
   exec {cmd_store_fish} {cmd_store_fish}
-    {on_fish_recovered_scrappy {1}}
-    {on_fish_recovered_scrappy {1}}
+    {on_fish_recovered_scrappy {1}
+      {debug FISH-RECOVERED - store OK}
+      {debug FISH-RECOVERED - store FAIL}}
+    {on_fish_recovered_scrappy {1}
+      {debug FISH-RECOVERED - store FAILED --> recover}
+      {debug FISH-RECOVERED - store FAILED --> scrappy failed}}
 }
 
 #alias {cmd_store_fish} {
@@ -51,8 +56,11 @@
   };
   
   #if {$fish_lost <= 0} {
-    tell group 'FISH RECOVERED: scrappy;
-    scrapon
+    debug FISH-RECOVERED --> scrappy;
+    exec {on_fish_recovered_scrappy} {cmd_group_scrappy} {%2} {%3}
+  } {
+    debug FISH-RECOVERED -- still missing lost=$fish_lost;
+    trampoline {on_fish_recovered_scrappy} {%2}
   }
 }
 
@@ -61,8 +69,9 @@
   #math {fish_lost} {$fish_lost + 1};
   tell group 'FISH LOST $direction -- total_lost=$fish_lost;
   #if {"$mode_scrap" != "off"} {
-    tell group 'noscrap;
-    noscrap
+    exec {on_fish_lost} {cmd_group_noscrap} {%2} {%3}
+  } {
+    trampoline {on_fish_lost} {%2}
   }
 }
 
@@ -75,7 +84,7 @@
 #alias {recover_fish_check_container_hook} {
   #if {$fish_lost > 0} {
     cmd_check_fish
-      {on_fish_recovered_scrappy; %1}      
+      {on_fish_recovered_scrappy {0} {%1}}
       {debug RECOVER-FISH -- still missing lost=$fish_lost; %1}
    } {
     %1

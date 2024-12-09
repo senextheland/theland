@@ -528,6 +528,7 @@
   zone_extend
     {walk_fast {1e1s} {The Alchemy}}
     {zone_safety off}
+    {try_give_coins {500000} {$robot}}
     {pawn_all_from_bag {magicite} {xanth-bag}}
     {zone_safety on}
 }
@@ -555,6 +556,7 @@
 #alias {ext_tzen_floor_two} {
   zone_extend
     {group_autoloot some-cursed}
+    {mode_bash on}
     {walk_fast {1u} {You climb the beautiful staircase to the second floor.}}
     {dagger_nearby {feline} {Immediately}}
     {kill_walk_path {1n} {feline}}
@@ -568,7 +570,8 @@
 
 #alias {ext_tzen_floor_three} {
   zone_extend
-    {group_autoloot some-cursed}  
+    {group_autoloot some-cursed}
+    {mode_bash on}    
     {walk_fast {2u} {You arrive at the third floor of the palace}}
     {dagger_nearby {feline} {Immediately}}
     {kill_walk_path {1n} {feline}}
@@ -582,7 +585,8 @@
 
 #alias {ext_tzen_floor_four} {
   zone_extend
-    {group_autoloot some-cursed}  
+    {group_autoloot some-cursed}
+    {mode_bash on}    
     {walk_fast {3u} {You climb to the fourth floor.}}
     {group_imm poison on}
     {dagger_nearby {feline} {Immediately}}
@@ -598,7 +602,8 @@
 
 #alias {ext_tzen_floor_five} {
   zone_extend
-    {group_autoloot some-cursed}  
+    {group_autoloot some-cursed}
+    {mode_bash on}    
     {walk_fast {4u} {You arrive at the fifth floor of the palace}}
     {dagger_nearby {feline} {Immediately}}
     {kill_walk_path {1n} {feline}}
@@ -612,7 +617,8 @@
 
 #alias {ext_tzen_floor_six} {
   zone_extend
-    {group_autoloot some-cursed}  
+    {group_autoloot some-cursed}
+    {mode_bash on}    
     {walk_fast {5u} {You continue to climb the stairs and come to the sixth floor}}
     {dagger_nearby {feline} {Immediately}}
     {kill_walk_path {1n} {feline}}
@@ -627,14 +633,14 @@
 
 #alias {ext_tzen_floor_seven} {
   zone_extend
-    {group_autoloot some-cursed}  
+    {group_autoloot some-cursed}
+    {mode_bash on}    
     {walk_fast {6u} {you arrive at the seventh}}
     {dagger_nearby {feline} {Immediately}}
     {kill_walk_path {1n} {feline}}
     {group_spellup}
     {dagger_walk_recollect {1n2u1e1u1w1e2u1e1w3d1w2d1s} {feline}}
     {group_spellup}
-    {group_cast {remove poison}}
     {kill_walk_path {1s} {feline}}    
     {walk_fast {6d} {The Opal Stairs}}
     {group_drop_all magicite}    
@@ -643,6 +649,7 @@
 #alias {ext_tzen_floor_top} {
   zone_extend
     {group_autoloot some-cursed}
+    {mode_bash on}    
     {walk_fast {7u} {You climb to the very top of the magnificent staircase.}}
     {dagger_nearby {feline} {Immediately}}
     {kill_walk_path {1n} {feline}}
@@ -762,6 +769,7 @@
     {group_scrappy}  
     {group_imm energy on}
     {group_autoloot heavy}
+    {mode_bash on}
     {unlock_door_with_key {get all.key;get all.key xanth} {gate north} {store_darkwiz_keys}}
     {open_door {gate north}}
     {kill_walk_path {1n} {darkwiz}}    

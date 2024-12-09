@@ -182,7 +182,7 @@ hook {on_rip} {add} {loot_fish}
   #var {current_weapon} {$noscrap_weapon};
   #var {current_helditem} {$nodrop_dagger};
   get $noscrap_weapon case; rem $dispell_weapon; wield $noscrap_weapon; safe_put $dispell_weapon case;
-  rem $noscrap_held; safe_put $noscrap_held case; grab $nodrop_dagger
+  rem $noscrap_held; safe_put $noscrap_held case; rem $nodrop_dagger; grab $nodrop_dagger
 }
 
 #alias {cmd_reset_weapon_state} {

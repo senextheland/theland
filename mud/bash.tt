@@ -1,0 +1,44 @@
+#class {bash} {open}
+
+#var {mode_bash} {off}
+hook {on_fight_start} {add} {bash} {do_fight_bash}
+
+#alias {cmd_mode_bash} {
+  exec_sync_task1 {cmd_mode_bash} {%2} {%3} {
+    debug mode bash --> %1;
+    #var {mode_bash} {%1}
+  }
+}
+
+#alias {do_fight_bash} {
+  #if {"$mode_bash" == "on"} {
+    trampoline {do_fight_bash} {bash}
+  }
+}
+
+#alias {do_bash_stands_up} {
+  debug BASH -- stands up;
+  update_fight {%1};
+  do_fight_bash
+}
+
+#action {You intentionally collide with %1 and send him sprawling to the ground.} {
+  debug BASH -- success;
+  update_fight {%1}
+}
+
+#action {As %1 avoids your bash, you topple over and fall to the ground.} {
+  debug BASH fail;
+  update_fight {%1};
+  stand;
+  do_fight_bash
+}
+
+#action {No need to bash} {debug BASH -- success}
+#action {Bash who?} {debug BASH -- not fighting}
+#action {%1 slowly stands up.} {do_bash_stands_up {%1}}
+#action {%1 gets to %2 feet very slowly.} {do_bash_stands_up {%1}}
+#action {%1 quickly stands up.} {do_bash_stands_up {%1}}
+
+#class {bash} {save}
+#class {bash} {close}

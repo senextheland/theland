@@ -112,9 +112,19 @@
   debug ACTION-WALK {%1} -- {%2};
   exec_task {cmd_walk} {%1} {%3} {%4} {
     #action {Alas, you cannot go that way...} {task_cmd_walk_fail};
-    #action {Sorry, there is no room to get in there.} {task_cmd_walk_attempt};
+    
+    #action {Sorry, there is no room to get in there.} {
+      tell group 'WALK: no room, trying again in a moment;
+      #delay {cmd_walk_wait} {task_cmd_walk_attempt} {2.0}
+    };
+    
     #action {%2} {debug WALK-FAST DONE; task_cmd_walk_done};
-    #action {Nah... You feel too relaxed to do that..} {stand; task_cmd_walk_attempt}    
+    
+    #action {Nah... You feel too relaxed to do that..} {stand; task_cmd_walk_attempt};
+
+    #alias {task_cmd_walk_end_hook} {
+      #undelay {cmd_walk_wait}
+    }
   }
 }
 
@@ -138,6 +148,16 @@
   exec_task {cmd_give_all} {give all.%1 %2} {%3} {%4} {
     #action {You do not seem to have anything like that.} {task_cmd_give_all_fail};
     #action {You give} {task_cmd_give_all_done}
+  }
+}
+
+#alias {cmd_give_coins} {
+  exec_task {cmd_give_coins} {give %1 coins %2} {%3} {%4} {
+    #action {You do not seem to have anything like that.} {task_cmd_give_coins_fail};
+    #action {You haven't got that many coins!} {task_cmd_give_coins_fail};
+    #action {can not possibly carry any more coins!} {task_cmd_give_coins_fail};
+    #action {They aren't here.} {task_cmd_give_coins_fail};
+    #action {Ok.} {task_cmd_give_coins_done}
   }
 }
 

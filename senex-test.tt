@@ -17,6 +17,7 @@
   #read {mud/eq-repair.tt};
   #read {mud/robot.tt};
   #read {mud/fight.tt};
+  #read {mud/bash.tt};
   #read {mud/protect.tt};
   #read {mud/assist.tt};
   #read {mud/walk.tt};

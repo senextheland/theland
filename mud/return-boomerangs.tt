@@ -19,5 +19,13 @@
   noscrap
 }
 
+
+#nop capture this action to avoid `{%%1 {$fighting_words} %1}` triggering an assist
+#nop in assist.tt.
+
+#action {A frozen fish from the north narrowly misses %1!} {
+  debug FISH THROWN BACK
+} {4}
+
 #class {return_boomerangs} {save}
 #class {return_boomerangs} {close}

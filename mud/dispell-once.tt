@@ -1,4 +1,8 @@
-#nop -- grep 'The white glow around' silk.log | sort | uniq | perl -pe 's/The white glow around (.*)'\''s body fades./{\u$1}/g' | sort >> sanced-mobs.txt
+#class {dispell_once} {open}
+
+#nop To generate this list of mobs from log files, run the following command from a terminal:
+#nop grep 'The white glow around' silk.log | sort | uniq | perl -pe 's/The white glow around (.*)'\''s body fades./{\u$1}/g' | sort >> sanced-mobs.txt
+
 #list {sanced_mobs} {create}
 {A Blood Beast}
 {A Captain of the Guard}
@@ -141,26 +145,38 @@
 {Tuscant of Tzen}
 {The Mystic Battlemaster}
 
-#alias {dispell_once_off} {#class {dispell_once} {kill}; #var {dispell_once_mutex} {}}
-#var {dispell_once_mutex} {}
-
-#alias {dispell_once} {
-  #class {dispell_once} {open};
-
-  #alias {once_disoff} {
-    #if {"$mode_dispell" == "once"} {
-      disoff
-    };
-    dispell_once_off 
-  };
-
-  #action {The white glow around %%1 body fades.} {once_disoff};
-
-  #var {dispell_once_mutex} {on};
-  hook {on_rip} {once} {dispell_once} {once_disoff};
-  
-  #class {dispell_once} {save};
-  #class {dispell_once} {close};
-
-  exec {dispell_once} {cmd_dispell_on {once}} {#nop} {#nop}
+#function {is_sanced_mob} {
+  #list {sanced_mobs} {find} {%1} {result}
 }
+
+#alias {dispell_once_on} {
+  #if {"$mode_dispell" == "off"} {
+    exec {dispell_once_fight} {cmd_dispell_on {once}}
+      {debug DISPELL-ONCE fight --> OK}
+      {debug DISPELL-ONCE fight --> FAIL}
+  } {
+    debug DISPELL-ONCE mode=$mode_dispell --> ignore
+  }
+}
+
+#alias {dispell_once_fight} {
+  #if {@is_sanced_mob{$currently_fighting} != 0} {
+    debug SANCED MOB {$currently_fighting} --> dispell once;
+    dispell_once_on
+  }
+}
+
+#alias {dispell_once_off} {
+  #if {"$mode_dispell" == "once"} {
+    exec {dispell_once_rip} {cmd_dispell_off}
+      {debug DISPELL-ONCE off --> OK}
+      {debug DISPELL-ONCE off --> FAIL}    
+  }
+}
+
+hook {on_fight_start} {add} {dispell_once} {dispell_once_fight}
+hook {on_rip} {add} {dispell_once} {dispell_once_off}
+#action {The white glow around %1 body fades.} {dispell_once_off};
+
+#class {dispell_once} {save}
+#class {dispell_once} {close}
