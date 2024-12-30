@@ -1,6 +1,7 @@
 #class {dagger} {open}
 
-#alias {dagger_mode} {fish}
+#alias {dagger_mode} {fish_once}
+#alias {dagger_mode_end} {fish_once_end}
 
 #alias {dagger_all_end} {#nop}
 #alias {dagger_all} {
@@ -13,7 +14,7 @@
   #var {dagger_all_current_target} {};
   #alias {dagger_all_end} {
     hook {on_rip} {remove} {dagger_all};
-    fish_end;
+    dagger_mode_end;
     #class {dagger_all} {kill}
   };
 
@@ -40,7 +41,7 @@
 
   #alias {dagger_all_fighting} {
     debug DAGGER-ALL: fighting --> nop;
-    fish_end
+    dagger_mode_end    
   };
 
   hook {on_rip} {add} {dagger_all} {
@@ -131,40 +132,40 @@
   #class {dagger_nearby} {open};
 
   #var {dagger_nearby_target} {%1};
-  #var {dagger_nearby_range} {%2};
-  #alias {dagger_nearby_done} {dagger_nearby_end; %3};
-  #alias {dagger_nearby_fail} {dagger_nearby_end; %4};
+  #var {dagger_nearby_direction} {%2};
+  #var {dagger_nearby_range} {%3};
+  #alias {dagger_nearby_done} {dagger_nearby_end; %4};
+  #alias {dagger_nearby_fail} {dagger_nearby_end; %5};
 
   #alias {dagger_nearby_end} {
     hook {on_rip} {remove} {dagger_nearby};
     #class {dagger_nearby} {kill}    
   };
 
-  #alias {dagger_nearby_farlook} {
-    exec {dagger_nearby_farlook} {cmd_farlook $dagger_nearby_target {$dagger_nearby_range}}
-      {dagger_nearby_farlook_found}
-      dagger_nearby_farlook_fail  
+  #alias {dagger_nearby_scan} {
+    debug DAGGER-NEARBY-SCAN: {$dagger_nearby_direction} {$dagger_nearby_range};
+    exec {dagger_nearby_scan} {cmd_scan_dir {$dagger_nearby_direction} {$dagger_nearby_range}}
+      {dagger_nearby_scan_found}
+      dagger_nearby_scan_fail  
   };
 
-  #alias {dagger_nearby_farlook_found} {
-    debug DAGGER-NEARBY-FARLOOK-FOUND;
+  #alias {dagger_nearby_scan_found} {
+    debug DAGGER-NEARBY-SCAN-FOUND;
     dagger_nearby_attack
   };
 
-  #alias {dagger_nearby_farlook_fail} {
-    debug DAGGER-NEARBY-FARLOOK-FAIL --> %%1;
+  #alias {dagger_nearby_scan_fail} {
+    debug DAGGER-NEARBY-SCAN-FAIL --> %%1;
     #switch {"%%1"} {
-      #case {"here"} {dagger_nearby_kill_room};
       #case {"not-found"} {dagger_nearby_done};
-      #case {"not-nearby"} {dagger_nearby_done};
       #case {"fighting"} {dagger_nearby_kill_room};
-      #default {debug dagger_nearby_farlook_fail UNRECOGNIZED COMMAND {%%1}}
+      #default {debug dagger_nearby_scan_fail UNRECOGNIZED COMMAND {%%1}}
     }  
   };
 
   #alias {dagger_nearby_kill_room} {
     kill_room {$dagger_nearby_target}
-      {dagger_nearby_farlook}
+      {dagger_nearby_scan}
   };
 
   #alias {dagger_nearby_throw_done} {
@@ -186,7 +187,7 @@
 
   #alias {dagger_nearby_attack_after_continuation} {
     dagger_mode {$dagger_nearby_target}
-      {trampoline {dagger_nearby_attack} {dagger_nearby_farlook}}
+      {trampoline {dagger_nearby_attack} {dagger_nearby_scan}}
       {dagger_nearby_attack_fail}
   };
 
@@ -202,18 +203,18 @@
 
   #alias {dagger_nearby_fighting} {
     debug DAGGER-NEARBY: fighting --> nop;
-    fish_end
+    dagger_mode_end
   };
 
   hook {on_rip} {add} {dagger_nearby} {
-    trampoline {dagger_nearby} {debug TRAMPOLINE --> farlook; dagger_nearby_farlook};
+    trampoline {dagger_nearby} {debug TRAMPOLINE --> scan; dagger_nearby_scan};
     %%1
   };
 
   #class {dagger_nearby} {save};
   #class {dagger_nearby} {close};
 
-  dagger_nearby_farlook
+  dagger_nearby_scan
 }
 
 #alias {collect_lost_fish} {

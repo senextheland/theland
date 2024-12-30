@@ -128,6 +128,15 @@
   }
 }
 
+#alias {cmd_run} {
+  debug ACTION-RUN {%1} -- {%2};
+  exec_task {cmd_run} {run %1} {%3} {%4} {
+    #action {Do you like to run into things doofus?} {task_cmd_run_fail};    
+    #action {%2} {debug CMD-RUN DONE; task_cmd_run_done};    
+    #action {Nah... You feel too relaxed to do that..} {stand; task_cmd_run_attempt};
+  }
+}
+
 #alias {cmd_autoloot} {
   exec_task {cmd_autoloot} {autoloot %1} {%2} {%3} {
     #action {Autoloot what?!} {task_cmd_autoloot_fail};
@@ -178,13 +187,13 @@
   #class {score} {close};
 
   exec_task {cmd_score} {score} {%2} {%3} {
-    #action {You have %%%d(%%%d) hit, %%%d(%%%d) mana and %%%d(%%%d) movement points.} {  
+    #action {You have %%%+(%%%+) hit, %%%+(%%%+) mana and %%%+(%%%+) movement points.} {  
       #var {health} {%%%1}; #var {score_max_hit} {%%%2}; #var {max_hp} {%%%2};
       #var {mana} {%%%3}; #var {score_max_mana} {%%%4}; #var {max_mana} {%%%4};
       #var {movement} {%%%5}; #var {score_max_movement} {%%%6}; #var {max_refresh} {%%%6}
     };
 
-    #action {Your alignment (-1000 : +1000): %%%d.} {
+    #action {Your alignment (-1000 : +1000): %%%+.} {
       #var {score_alignment} {%%%1}
     };
 
@@ -194,6 +203,31 @@
 
     #action {You have been playing for} {%1; task_cmd_score_done}
   }
+}
+
+#alias {cmd_group_stats} {
+  #class {group} {open};
+
+  #var {group_stats} {};
+ 
+  #class {group} {save};
+  #class {group} {close};
+  
+  exec_task {cmd_group_stats} {group} {%1} {%2} {
+    #action {Your group consists of:} {
+      hook {on_prompt} {once} {cmd_group_stats} {
+        trampoline {cmd_group_stats} {task_cmd_group_stats_done}
+      }
+    };
+
+    #action {%%%w%%%s[%%%d,%%%d,%%%d]} {
+      #var {group_stats[%%%1]} {{hit}{%%%3}{mana}{%%%4}{move}{%%%5}}
+    }
+  }
+}
+
+#alias {cmd_group_score} {
+  cmd_score {trampoline {cmd_group_score} {cmd_group_stats {%1} {%2}}}
 }
 
 #alias {cmd_wait_for_room} {
@@ -234,7 +268,8 @@
   exec_task {cmd_layhands} {lay %1} {%2} {%3} {
     #action {You never did get First Aid Merit Badge did you?} {task_cmd_layhands_fail};
     #action {You lay hands on} {task_cmd_layhands_done};
-    #action {Don't try to heal what ain't hurt!} {task_cmd_layhands_done};    
+    #action {Don't try to heal what ain't hurt!} {task_cmd_layhands_done};
+    #action {You don't seem to be up to healing at the moment.} {task_cmd_layhands_fail};
     #nop TODO -- not enough mana
   } {15}
 }
@@ -306,14 +341,20 @@
 #alias {cmd_deposit} {
   exec_task {cmd_deposit} {#show GIVE-DEPOSIT} {%1} {%2} {
     #var {deposit_coins} {0};
+    #var {withdraw_coins} {0};
+    #var {target_coins} {600000};
     
     #action {GIVE-DEPOSIT} {
-      #math {deposit_coins} {$score_gold_coins - 600000};
+      #math {deposit_coins} {$score_gold_coins - $target_coins};
+      #math {withdraw_coins} {$target_coins - $score_gold_coins};
       #if {$deposit_coins > 0} {
         debug DEPOSIT (ok) deposit=$deposit_coins total=$score_gold_coins;
         deposit $deposit_coins
-      } {        
-        debug DEPOSIT (gold-low) deposit=$deposit_coins total=$score_gold_coins;
+      }; #elseif {$withdraw_coins > 0} {
+        debug WITHDRAW (ok) withdraw=$withdraw_coins total=$score_gold_coins;
+	withdraw $withdraw_coins
+      }; #else {        
+        debug SKIP BANK deposit=$deposit_coins withdraw=$withdraw_coins total=$score_gold_coins;
 	task_cmd_deposit_done
       }
     };
@@ -336,6 +377,38 @@
     #action {You peer around, but can't find anyone of that description.} {task_cmd_farlook_fail {not-found}};
     #action {You see %%%1 right here.} {task_cmd_farlook_fail {here}};
     #action {No way! You are fighting for your life!} {task_cmd_farlook_fail {fighting}} {4}
+  }
+}
+
+#var {scan_dir} {0}
+#alias {scan_dir_add} {#math {scan_dir} {$scan_dir + 1}}
+#alias {cmd_scan_dir} {
+  exec_task {cmd_scan_dir} {scan %1} {%3} {%4} {
+    #action {You peer intently} {scan_dir_begin};    
+
+    #if {"%2" == "Immediately"} {
+      #action {%%%1 : {immediately} {to the|upwards|downwards}} {scan_dir_add {%%%1} {%%%2}};
+    }; #elseif {"%2" == "Nearby"} {
+      #action {%%%1 : {immediately|nearby} {to the|upwards|downwards}} {scan_dir_add {%%%1} {%%%2}};
+    }; #else {
+      #action {%%%1 : {immediately|nearby|a ways} {to the|upwards|downwards}} {scan_dir_add {%%%1} {%%%2}};
+    };
+
+    #action {No way! You are fighting for your life!} {task_cmd_scan_dir_fail {fighting}} {4};
+
+    #alias {scan_dir_begin} { 
+      #var {scan_dir} {0};
+      hook {on_prompt} {once} {scan_dir_begin} {scan_dir_end}
+    };
+
+    #alias {scan_dir_end} {
+      #if {$$scan_dir > 0} {
+        debug SCAN-DIR found=$$scan_dir;
+        task_cmd_scan_dir_done
+      } {
+        task_cmd_scan_dir_fail {not-found}
+      }
+    }    
   }
 }
 

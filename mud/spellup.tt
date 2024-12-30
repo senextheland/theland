@@ -139,7 +139,7 @@ hook {spirit_armor_down} {create}
 
 #var spell_state {}
 #alias {spell_state_down} {
-  #var spell_state[%1] {down};
+  #var {spell_state[%1]} {down};
   hook {%1_down} {fire}
 }
 

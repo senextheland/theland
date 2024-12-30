@@ -22,10 +22,16 @@
 #alias {cmd_pick_lock} {%3}
 #alias {cmd_imm_fire_on} {%2}
 #alias {cmd_imm_fire_off} {%1}
+#alias {cmd_imm_cold_on} {%2}
+#alias {cmd_imm_cold_off} {%1}
 #alias {cmd_imm_energy_on} {%2}
 #alias {cmd_imm_energy_off} {%1}
 #alias {cmd_imm_poison_on} {%2}
 #alias {cmd_imm_poison_off} {%1}
+#alias {cmd_imm_electric_on} {%2}
+#alias {cmd_imm_electric_off} {%1}
+#alias {cmd_imm_water_on} {%2}
+#alias {cmd_imm_water_off} {%1}
 
 #alias {cmd_heal_me} {debug UNIMPLEMENTED: cmd_heal_me}
 #alias {cmd_remove_curse} {exec_cast {remove curse} {%1} {%2} {%3}}

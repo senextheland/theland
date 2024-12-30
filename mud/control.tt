@@ -33,6 +33,7 @@ task_list {zone_steps} {create} {zone_finish} {zone_recover}
 #alias {zone_loop_start} {
   #var {zone_state} {start};
   #var {zone_recover_state} {off};
+  #var {zone_current} {};
   zone_rewind;
   zone_finish
 }
@@ -128,23 +129,27 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
   }
 }
 
-#alias {reset_zone_timeout} {#delay {reset_zone_timeout} {zone_timeout} {90}}
+#alias {reset_zone_timeout} {
+  debug_time {ZONE-TIMEOUT --> reset};
+  #delay {reset_zone_timeout} {zone_timeout} {90}
+}
 
 #alias {zone_timeout_off} {
+  debug_time {ZONE-TIMEOUT --> off};
   #undelay {reset_zone_timeout}
 }
 
 #alias {zone_timeout} {
   #if {"$combat_status" != "idle"} {
-    debug ZONE-TIMEOUT!! combat_status=$combat_status --> reset;
+    debug_time ZONE-TIMEOUT!! combat_status=$combat_status --> reset;
     reset_zone_timeout  
   };
   #elseif {"$zone_safety" == "on" && "$zone_state" == "start"} {
-    debug ZONE-TIMEOUT!!! safety=$zone_safety state=$zone_state --> retry;
+    debug_time ZONE-TIMEOUT!!! safety=$zone_safety state=$zone_state --> retry;
     zone_retry
   };
   #else {
-    debug ZONE-TIMEOUT!!! safety=$zone_safety state=$zone_state --> ignore
+    debug_time ZONE-TIMEOUT!!! safety=$zone_safety state=$zone_state --> ignore
   }
 }
 
@@ -161,6 +166,8 @@ hook {on_zone_end} {create}
 }
 
 #alias {zone_finish} {#show ZONE-FINISH: $zone_current}
+
+#alias {zone_interlude} {zone_interlude_fairy}
 
 #action {ZONE-FINISH} {
   task_list {zone_steps} {clear};
@@ -208,13 +215,21 @@ hook {on_zone_end} {create}
 }
 
 #alias {zone_retry_all_fishes} {
-  zone_rewind;
+  #if {"$zone_current" == "zone_interlude"} {
+    #var {zone_current} {}
+  } {
+    zone_rewind
+  };
   zone_finish
 }
 
 #alias {zone_retry_fishes_missing} {
   #nop revert the recover state to "off" so it's set back to "on" + rewind;
-  #var {zone_recover_state} {off};
+  #if {"$zone_current" == "zone_interlude"} {
+    #var {zone_current} {}
+  } {
+    #var {zone_recover_state} {off}
+  };
   zone_finish
 }
 
@@ -290,6 +305,7 @@ def_zone_task0 {group_recall} {cmd_group_recall}
 def_zone_task0 {regen_some} {cmd_regen_some}
 def_zone_task0 {group_repair} {cmd_group_repair}
 def_zone_task0 {capture_score} {cmd_score {#nop}}
+def_zone_task0 {capture_group_score} {cmd_group_score}
 def_zone_task1 {buy_recalls} {cmd_buy_recalls}
 def_zone_task1 {group_pawn} {cmd_group_pawn}
 def_zone_task0 {group_deposit} {cmd_group_deposit}
@@ -319,25 +335,72 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
   }
 }
 
-#alias {zone_interlude} {  
+#alias {zone_interlude_regen} {
   ext_recall_to_inn;
   ext_visit_town {$need_pawn};
   zone_extend
     {need_pawn {}}
 }
 
+#alias {zone_interlude_fairy} {
+  ext_recall_and_repair;
+  zone_extend
+    {capture_group_score}
+    {sync_command ext_maybe_town_with_fairy}
+}
+
+#alias {ext_maybe_town_with_fairy} {
+  #if {@regen_needed{}} {
+    ext_town_with_fairy {$need_pawn}
+  } {
+    ext_visit_town {$need_pawn}
+  }
+}
+
 #alias {ext_recall_to_inn} {
   zone_extend
     {group_recall}
+    {zone_safety off}    
     {transition_zone_recovery_state}
     {announce {next_zone_announcement} {2.0}}
-    {zone_safety off}
     {quick_spellup}
     {mode_bash off}    
     {regen_some}
-    {zone_safety on}    
     {group_repair}
     {group_spellup}
+    {zone_safety on}  
+}
+
+#alias {ext_recall_and_repair} {
+  zone_extend
+    {group_recall}
+    {mode_bash off}
+    {group_repair}
+    {group_spellup}
+    {reset_weapons}    
+}
+
+#alias {ext_town_with_fairy} {
+  zone_extend
+    {walk_fast {$inn_mk} {Market Square}}
+    {walk_fast {2w1n} {The Magic Shop}}
+    {announce {buy_recall_announcement} {2.0}}
+    {buy_recalls 4}
+    {walk_fast {1s2e} {Market Square}}
+    ;
+    
+  #if {"%1" != "" } {ext_greebo; ext_pawn {%1}};
+  zone_extend;
+    {need_pawn {}}
+    ;
+    
+  ext_bank;
+  zone_fairy_kill;
+  ext_recall_and_repair;
+  zone_extend
+    {walk_fast {$inn_mk} {Market Square}}
+    {}
+    ;
 }
 
 #alias {next_zone_announcement} {tell group 'next-zone: $zones[2]}
@@ -381,7 +444,7 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
 #alias {ext_bank} {
   zone_extend
     {walk_fast {$mk_bank} {Midgaard Bank}}
-    {capture_score}    
+    {capture_score}
     {group_deposit}
     {walk_fast {$bank_mk} {Market Square}}
 }
@@ -447,6 +510,7 @@ def_zone_task2 {unlock_door} {cmd_unlock_door}
 def_zone_task3 {unlock_door_with_key} {cmd_unlock_door_with_key}
 def_zone_task2 {group_walk} {cmd_group_walk}
 def_zone_task3 {group_walk_kill} {cmd_group_walk_kill}
+def_zone_task3 {group_run_kill} {cmd_group_run_kill}
 def_zone_task1 {group_teleport_room} {cmd_group_teleport_room}
 def_zone_task1 {group_autoloot} {cmd_group_autoloot}
 def_zone_task1 {group_drop_all} {cmd_group_drop_all}
@@ -460,6 +524,7 @@ def_zone_task2 {group_imm} {cmd_group_imm}
 def_zone_task0 {quick_spellup} {cmd_quick_spellup}
 def_zone_task0 {reset_weapons} {cmd_group_reset_weapons}
 def_zone_task2 {give_coins} {cmd_give_coins}
+def_zone_task0 {group_regen_fairy} {cmd_group_regen_fairy}
 
 #class {control} {save}
 #class {control} {close}

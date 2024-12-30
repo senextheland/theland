@@ -23,6 +23,7 @@
   #read {mud/spellup.tt};
   #read {mud/watch-leader.tt};
   #read {mud/pawn.tt};
+  #read {mud/regen.tt};
   #read {mud/cauldron.tt};
   #read {mud/return-boomerangs.tt};
   #read {mud/scary-things.tt};
@@ -34,8 +35,14 @@
     #var {health_low} {350}
   };
 
+  #alias {cmd_regen_fairy} {
+    cmd_regen_fairy_until {-1} {150} {%%1} {%%2}
+  };
+
   hook {bless_down} {add} {$me} {cmd_cast_me {bless} {debug BLESS UP} {debug BLESS FAIL}};
   hook {armor_down} {add} {$me} {cmd_cast_me {armor} {debug ARMOR UP} {debug ARMOR FAIL}};
+
+  #var {cauldron_count} {10};
 
   set_robot {senex} {Senex};
   assist_on {Senex};
@@ -74,42 +81,94 @@ hook {on_rip} {add} {loot_fish}
 #alias {cmd_agg} {%1}
 #alias {cmd_unagg} {%1}
 
-#var {imm} {{fire}{off} {energy}{off} {poison}{off}}
+#alias {regen} {
+  rest;
+  get fey case; rem mane; rem despair-token; wear fey 
+}
+
+#alias {unregen} {
+  stand;
+  rem fey; put fey case; wear despair-token; wear mane;
+}
+
+#var {imm} {{fire}{off} {energy}{off} {poison}{off} {electric}{off} {water}{on} {cold}{off}}
 
 #alias {imm_energy_on} {
   get spectral-band case;
-  rem signet; wear spectral-band;
-  put signet case  
+  rem signet; rem $nodrop_ring; wear spectral-band;
+  safe_put signet case  
 }
 
 #alias {imm_energy_off} {
-  get signet case;
-  rem spectral-band; wear signet;
-  put spectral-band case    
+  rem spectral-band;
+  #if {"$imm[water]" == "on"} {
+    get signet case; wear signet;    
+  } {
+    wear $nodrop_ring
+  };
+  safe_put spectral-band case    
 }
 
 #alias {imm_fire_on} {
   get burning-wristband case;
   rem key-band; wear burning-wristband;
-  put key-band case
+  safe_put key-band case
 }
 
 #alias {imm_fire_off} {
   get key-band case;
   rem burning-wristband; wear key-band;
-  put burning-wristband case
+  safe_put burning-wristband case
+}
+
+#alias {imm_cold_on} {
+  get abdomen case; rem black-flame; grab abdomen;
+  get bearskin hole; rem green-scale; wear bearskin;
+  safe_put black-flame case; safe_put green-scale case
+}
+
+#alias {imm_cold_off} {
+  get black-flame case; rem abdomen; grab black-flame;
+  get green-scale case; rem bearskin; wear green-scale;
+  safe_put abdomen case; safe_put bearskin hole
 }
 
 #alias {imm_poison_on} {
-  get shield-bug case;
-  rem green-scale; wear shield-bug;
-  put green-scale case  
+  get grasshopper-skin case;
+  rem mane; wear skin neck;
+  safe_put mane case
 }
 
 #alias {imm_poison_off} {
-  get green-scale case;
-  rem shield-bug; wear green-scale;
-  put shield-bug case    
+  get mane case;
+  rem grasshopper-skin; wear mane;
+  safe_put grasshopper-skin case
+}
+
+#alias {imm_water_on} {
+  get thalos case; get green-scale case;
+  rem $nodrop_ring; rem doublet;
+  wear thalos; wear green-scale;
+  safe_put doublet case
+}
+
+#alias {imm_water_off} {
+  get doublet case;
+  rem thalos; rem green-scale;
+  wear $nodrop_ring; wear doublet;
+  safe_put thalos case; safe_put green-scale case
+}
+
+#alias {imm_electric_on} {
+  get blue-cloak case;
+  rem mane; wear blue-cloak;
+  put mane case
+}
+
+#alias {imm_electric_off} {
+  get mane case;
+  rem blue-cloak; wear mane;
+  put blue-cloak case
 }
 
 #alias {imm_transition} {
@@ -129,6 +188,14 @@ hook {on_rip} {add} {loot_fish}
   cmd_imm_transition {fire} {off} {You wear A golden key shaped into a wristband} {%1} {%2}
 }
 
+#alias {cmd_imm_cold_on} {
+  cmd_imm_transition {cold} {on} {You light A firefly abdomen} {%1} {%2}
+}
+
+#alias {cmd_imm_cold_off} {
+  cmd_imm_transition {cold} {off} {You light An Inky Black Flame} {%1} {%2}
+}
+
 #alias {cmd_imm_energy_on} {
   #if {"$target" != "darkwiz"} {
     cmd_imm_transition {energy} {on} {You wear Spectral Band} {%1} {%2}
@@ -140,7 +207,7 @@ hook {on_rip} {add} {loot_fish}
 
 #alias {cmd_imm_energy_off} {
   #if {"$target" != "darkwiz"} {
-    cmd_imm_transition {energy} {off} {You wear the signet ring of Thalos} {%1} {%2}
+    cmd_imm_transition {energy} {off} {You wear the {signet ring of Thalos|ring of the wind}} {%1} {%2}
   } {
     debug IMM-ENERGY-OFF: skipping!;
     trampoline {cmd_imm_energy_off} {%1}
@@ -148,17 +215,38 @@ hook {on_rip} {add} {loot_fish}
 }
 
 #alias {cmd_imm_poison_on} {
-  cmd_imm_transition {poison} {on} {You wear the Hard Shell of the Shield Bug} {%1} {%2}
+  cmd_imm_transition {poison} {on} {You wear A Grasshopper's Skin} {%1} {%2}
 }
 
 #alias {cmd_imm_poison_off} {
-  cmd_imm_transition {poison} {off} {You wear green scale armor} {%1} {%2}
+  cmd_imm_transition {poison} {off} {You wear the lions mane} {%1} {%2}
 }
 
+#alias {cmd_imm_electric_on} {
+  cmd_imm_transition {electric} {on} {You wear A pile of blue silk} {%1} {%2}
+}
+
+#alias {cmd_imm_electric_off} {
+  cmd_imm_transition {electric} {off} {You wear the lions mane} {%1} {%2}
+}
+
+#alias {cmd_imm_water_on} {
+  cmd_imm_transition {water} {on} {You wear the signet ring of Thalos} {%1} {%2}
+}
+
+#alias {cmd_imm_water_off} {
+  cmd_imm_transition {water} {off} {You wear the ring of the wind} {%1} {%2}
+}
+
+#alias {cmd_imm_water_on} {%1}
+#alias {cmd_imm_water_off} {%1}
+
+#var {nodrop_ring} {wind-ring}
 #var {nodrop_dagger} {Nausicaa-dagger}
 #var {dispell_weapon} {deceiver}
 #var {noscrap_weapon} {assassin-dagger}
 #var {noscrap_held} {strange-knife}
+#var {lifeprot_weapon} {stiletto}
 
 #var {current_weapon} {}
 #var {current_helditem} {}
@@ -166,12 +254,14 @@ hook {on_rip} {add} {loot_fish}
 #var {mode_scrap} {}
 #var {mode_dispell} {}
 #var {mode_backstab} {}
+#var {mode_lifeprot} {}
+#var {mode_scary_eq} {on}
 
 #alias {safe_put} {
-  #if {"%1" != "$nodrop_dagger"} {
+  #if {"%1" != "$nodrop_dagger" && "%1" != "$nodrop_ring"} {
     put %1 %2
   } {
-    debug I WILL NOT PUT NODROP DAGGER {%1} IN %2
+    debug I WILL NOT PUT NODROP ITEM {%1} IN %2
   }
 }
 
@@ -179,17 +269,18 @@ hook {on_rip} {add} {loot_fish}
   #var {mode_scrap} {on};
   #var {mode_dispell} {off};
   #var {mode_backstab} {on};
+  #var {mode_lifeprot} {off};
   #var {current_weapon} {$noscrap_weapon};
   #var {current_helditem} {$nodrop_dagger};
   get $noscrap_weapon case; rem $dispell_weapon; wield $noscrap_weapon; safe_put $dispell_weapon case;
-  rem $noscrap_held; safe_put $noscrap_held case; rem $nodrop_dagger; grab $nodrop_dagger
+  rem $noscrap_held; safe_put $noscrap_held case;
+  rem $nodrop_dagger; grab $nodrop_dagger; scary_eq_on
 }
 
 #alias {cmd_reset_weapon_state} {
   exec_task {cmd_reset_weapon_state} {reset_weapon_state} {%1} {%2} {
     #action {You grab Nausicaa's Dagger.} {task_cmd_reset_weapon_state_done};
-    #action {You grab A Rainbow Hued Dagger.} {task_cmd_reset_weapon_state_done};  
-    #action {You do not seem to have the} {task_cmd_reset_weapon_state_fail};
+    #action {You grab A Rainbow Hued Dagger.} {task_cmd_reset_weapon_state_done};
     #action {You are already wielding something.} {task_cmd_reset_weapon_state_fail}
   }
 }
@@ -222,10 +313,29 @@ hook {on_rip} {add} {loot_fish}
   #if {"$last_held" != "$current_helditem"} {
     #if {"$current_helditem" != "$nodrop_dagger"} {get $current_helditem case};
     #if {"$last_held" != ""} {rem $last_held};
-    #if {"$current_helditem" != ""} {grab $current_helditem};
+    #if {"$current_helditem" != ""} {
+      grab $current_helditem;
+      #if {"$current_helditem" == "$nodrop_dagger"} {
+        scary_eq_on
+      } {
+        scary_eq_off
+      }
+    };
     safe_put $last_held case
   } {
     #show ALREADY HOLDING
+  }
+}
+
+#action {You shiver and shake as your lifeforce seeps out of your body.} {scary_eq_off}
+
+#alias {scary_eq_off} {
+  rem despair-token; get key-band case; wear key-band; put despair-token case
+}
+
+#alias {scary_eq_on} {
+  #if {"$mode_scary_eq" == "on"} {
+    get despair-token case; rem key-band; wear despair-token wrist; put key-band case
   }
 }
 
@@ -235,6 +345,7 @@ hook {on_rip} {add} {loot_fish}
      exec_task {cmd_dispell_off} {choose_best_weapon} {%1} {%2} {
       #action {ALREADY WIELDING} {task_cmd_dispell_off_done};  
       #action {You wield the Assassin's Dagger.} {task_cmd_dispell_off_done};
+      #action {You wield a blackened stiletto.} {task_cmd_dispell_off_done};
       #action {You do not seem to have the} {task_cmd_dispell_off_fail};    
       #action {You are already wielding something.} {task_cmd_dispell_off_fail}
     }    
@@ -308,8 +419,8 @@ hook {on_rip} {add} {loot_fish}
     #case {"no-cursed"} {#var {result} {on}};
     #case {"some-cursed"} {#var {result} {on}};
     #case {"heavy"} {
-      #if {"$target" == "darkwiz"} {
-        autoloot_junk {darkwiz};
+      #if {"$target" == "darkwiz" || "$target" == "undersea"} {
+        autoloot_junk {$target};
         #var {result} {on}
       } {
         #var {result} {gold}
@@ -323,8 +434,8 @@ hook {on_rip} {add} {loot_fish}
 
 #alias {cmd_cue_regen} {
   #switch {"%1"} {
-    #case {"start"} {debug CUE: regen --> start; rest; %2};
-    #case {"done"} {debug CUE: regen --> done; stand; %2};
+    #case {"start"} {debug CUE: regen --> start; regen; %2};
+    #case {"done"} {debug CUE: regen --> done; unregen; %2};
     #default {
       debug ACTION-QUEUE-REGEN: unrecognized command {%1};
       %3
@@ -354,7 +465,8 @@ hook {on_rip} {add} {loot_fish}
       #case {"buy-cauldrons"} {order_dispatch {%2} {cmd_buy_missing_cauldrons} {%1} {%2}};
       #case {"reset-weapons"} {order_dispatch {%2} {cmd_reset_weapon_state} {%1} {%2}};
       #case {"recall"} {executor {global_tasks} {clear}; order_dispatch {%2} {cmd_recall} {%1} {%2}};
-      #case {"wait-here"} {order_dispatch {%2} {cmd_wait_here} {%1} {%2}};
+      #case {"wait-here"} {order_dispatch {%2} {cmd_wait_here} {%1} {%2}}; 
+      #case {"regen-fairy"} {order_dispatch {%2} {cmd_regen_fairy} {%1} {%2}};
 	
       #case {"pawn"} {order_dispatch {%2} {cmd_pawn_and_count {%3}} {%1} {%2: %3}};
       #case {"imm"} {order_dispatch {cmd_imm_%3_%4} {cmd_imm_%3_%4} {%1} {%2: %3 %4}};
@@ -364,7 +476,9 @@ hook {on_rip} {add} {loot_fish}
       #case {"drop-all"} {order_dispatch {%2} {cmd_drop_all {%3}} {%1} {%2: %3}};
       #case {"pick"} {order_dispatch {%2} {cmd_pick {%3}} {%1} {%2 %3}};
       #case {"give-all"} {order_dispatch {%2} {cmd_give_all {%3} {%1}} {%1} {%2: %3}};
+      
       #case {"walk"} {order_dispatch {%2} {cmd_walk {%3} {%4}} {%1} {%2}};
+      #case {"run"} {order_dispatch {%2} {cmd_run {%3} {%4}} {%1} {%2}};
 		
       #case {"regen"} do_group_cue {%2} {cmd_cue_regen {%3}};
       
@@ -406,13 +520,13 @@ hook {on_rip} {add} {loot_fish}
 #action {%1 tells you 'order: %2'} {do_order {%1} {%2}}
 #action {%1 tells you 'order: {pick|give-all|autoloot} %3'} {do_order {%1} {%2} {%3}} {4}
 #action {tells the group 'order: {pick|give-all|autoloot} %2'} {do_order {group} {%1} {%2}} {4}
-#action {tells the group '{stand|noscrap|scrap|scrappy|go-home|recall|repair-eq|deposit|spellup|sneak|unsneak|agg|unagg|buy-cauldrons|reset-weapons}'} {
+#action {tells the group '{stand|noscrap|scrap|scrappy|go-home|recall|repair-eq|deposit|spellup|sneak|unsneak|agg|unagg|buy-cauldrons|reset-weapons|regen-fairy}'} {
   do_order {group} {%1}
 }
 #action {tells the group '{autoloot|pawn|teleport-room|target|drop-all}: %2'} {do_order {group} {%1} {%2}}
 #action {tells the group 'FISH RECOVERED: scrappy'} {do_order {group} {scrappy}}
-#action {tells the group 'walk: %1 -- "%2"'} {do_order {group} {walk} {%1} {%2}}
-#action {tells the group 'imm: {fire|energy|poison} {on|off}'} {do_order {group} {imm} {%1} {%2}}
+#action {tells the group '{walk|run}: %2 -- "%3"'} {do_order {group} {%1} {%2} {%3}}
+#action {tells the group 'imm: {fire|energy|poison|electric|water|cold} {on|off}'} {do_order {group} {imm} {%1} {%2}}
 #action {tells the group 'REGEN --> {start|done}} {do_order {group} {regen} {%1}}
  
 #class {follow_orders} {save}

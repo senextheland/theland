@@ -2,6 +2,10 @@
   #line ignore #show %0
 }
 
+#alias {debug_time} {
+  #line ignore #show @log_time{} %0
+}
+
 #alias {def_task} {
   #nop 1: name;
   #nop 2: body;

@@ -1,6 +1,7 @@
 #class {return_boomerangs} {open}
 
 #var {fish_owner} {}
+#var {kunai_owner} {}
 
 #action {%1 throws a frozen fish!} {#var {fish_owner} {%1}}
 #action {A long silver fish is here, immortalized in ice} {get all.frozen-fish}
@@ -11,6 +12,16 @@
       {tell $fish_owner I think I found your fish, you're not here to give it back.}
   } {
     put frozen-fish case
+  }
+}
+
+#action {You get a kunai} {
+  #if {"$kunai_owner" != ""} {
+    exec {return_boomerangs} {cmd_give_all {kunai} {$kunai_owner}}
+      {tell $kunai_owner I think I found your kunai, just gave it back.}
+      {tell $kunai_owner I think I found your kunai, you're not here to give it back.}
+  } {
+    put kunai case
   }
 }
 

@@ -18,6 +18,7 @@
   {Gap Chasm of Xanth.  The Gap Chasm, so it}
   {The maid}
   {The old man}
+  {A magical fairy}
 
 #list {ignore_messages} {create}
   {'We're happy for ya!'}
@@ -51,7 +52,7 @@
 
 #action {%1 is crushed.} {log_event %0}
 #action {%1 is rended} {log_event %0}
-#action {The supernatural protection of %1 fades noticeably.} {log_event %0}
+#action {The supernatural protection of %1 fades noticeably.} {eq_needs_bless {%1}; log_event %0}
 #action {%1 tells you %2} {log_tell {tell} {%1} {%2}} {9}
 #action {%1 shouts some bull %2} {log_tell {shout} {%1} {%2}} {9}
 #action {%1 tells the group %2} {log_tell {group} {%1} {%2}} {9}

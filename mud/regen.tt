@@ -1,5 +1,46 @@
 #class {regen} {open}
 
+#var {regen_default_mana_threshold} {450}
+#var {regen_default_move_threshold} {150}
+
+#function {regen_mana_diff} {
+  #math {result} {$max_mana - %1}
+}
+
+#function {regen_move_diff} {
+  #math {result} {$max_refresh - %1}
+}
+
+#function {regen_robot_needs_regen} {
+  debug REGEN robot-needs-regen? $group_stats[Silk][move];
+  #math {result} {$group_stats[Silk][move] < 1100}
+}
+
+#function {regen_needed} {
+  #math {result} {
+    $mana < @regen_mana_diff{$regen_default_mana_threshold}
+    || $movement < @regen_move_diff{$regen_default_move_threshold}
+    || @regen_robot_needs_regen{} == 1
+  }
+}
+
+#function {is_regen_done} {
+  debug IS-REGEN-DONE? m:$mana --> @regen_mana_diff{%1} v:$movement --> @regen_move_diff{%2} r:@regen_robot_needs_regen{};
+  #math {result} {
+    $mana >= @regen_mana_diff{%1}
+    && $movement >= @regen_move_diff{%2}
+    && @regen_robot_needs_regen{} != 1
+  }
+}
+
+#alias {cmd_regen_some} {
+  cmd_regen {$regen_default_mana_threshold} {$regen_default_move_threshold} {%1} {%2}
+}
+
+#alias {cmd_regen_fairy} {
+  cmd_regen_fairy_until {150} {150} {%1} {%2}
+}
+
 #alias {cmd_regen} {
   #class {cmd_regen} {open};
 
@@ -9,35 +50,36 @@
   #alias {on_regen_fail} {regen_off; %4};
   #var {regen_state} {off};
 
-  #function {regen_need_mana} {
-    #math {result} {$max_mana - $regen_mana_threshold}
-  };
-
-  #function {regen_need_move} {
-    #math {result} {$max_refresh - $regen_move_threshold}
-  };
-
-  #function {is_regen_done} {
-    #math {result} {$mana >= @regen_need_mana{} && $movement >= @regen_need_move{}}
-  };
-
   #alias {regen_mana_hook} {
-    debug REGEN MANA UP: mana=$mana goal=@regen_need_mana{} max=$score_max_mana;
-    #if {@is_regen_done{} == 1} {
+    debug REGEN MANA UP;
+    #if {@is_regen_done{$regen_mana_threshold;$regen_move_threshold} == 1} {
       debounce_regen_done
     }  
   };
 
   #alias {regen_move_hook} {
-    debug REGEN MOVE UP: move=$movement goal=@regen_need_move{} max=$score_max_movement;
-    #if {@is_regen_done{} == 1} {
+    debug REGEN MOVE UP;
+    #if {@is_regen_done{$regen_mana_threshold;$regen_move_threshold} == 1} {
+      debounce_regen_done
+    }  
+  };
+
+  #alias {regen_tick_hook} {
+    debug REGEN TICK HOOK: $group_stats;
+    #if {@regen_robot_needs_regen{} == 1} {
+      cmd_group_stats {regen_robot_hook}
+    }
+  };
+
+  #alias {regen_robot_hook} {
+    #if {@is_regen_done{$regen_mana_threshold;$regen_move_threshold} == 1} {
       debounce_regen_done
     }  
   };
 
   #alias {debounce_regen_done} {
     #undelay {debounce_regen_done};
-    #delay {debounce_regen_done} {debounced_regen_done} {0.1}
+    #delay {debounce_regen_done} {debounced_regen_done} {0.2}
   };
 
   #alias {debounced_regen_done} {
@@ -48,25 +90,32 @@
   #alias {regen_off} {
     hook {on_mana_up} {remove} {cmd_regen};
     hook {on_movement_up} {remove} {cmd_regen};
+    hook {on_tick} {remove} {cmd_regen};
     #if {"$regen_state" == "on"} {unregen};
     #class {cmd_regen} {kill}
   };
 
-  hook {on_mana_up} {add} {cmd_regen} {regen_mana_hook};
-  hook {on_movement_up} {add} {cmd_regen} {regen_move_hook};
+  hook {on_mana_up} {add} {cmd_regen} {trampoline {regen_on_mana_up} {regen_mana_hook}};
+  hook {on_movement_up} {add} {cmd_regen} {trampoline {regen_on_movement_up} {regen_move_hook}};
+  hook {on_tick} {add} {cmd_regen} {regen_tick_hook};
+
+  #alias {regen_with_score} {
+    debug REGEN CHECK mana=$mana max=$score_max_mana;
+    debug REGEN GROUP? $group_stats;
+    #if {@is_regen_done{$regen_mana_threshold;$regen_move_threshold} == 1} {
+      debug REGEN --> skip;
+      on_regen_done
+    } {
+      tell group 'REGEN --> start (m:$mana to @regen_mana_diff{$regen_mana_threshold} v:$movement to @regen_move_diff{$regen_move_threshold});
+      #var {regen_state} {on};
+      regen
+    }  
+  };
 
   #class {cmd_regen} {save};
   #class {cmd_regen} {close};
 
-  debug REGEN CHECK mana=$mana max=$score_max_mana;
-  #if {@is_regen_done{} == 1} {
-    debug REGEN --> skip;
-    on_regen_done
-  } {
-    tell group 'REGEN --> start (m:$mana v:$movement target m:@regen_need_mana{} v:@regen_need_move{});
-    #var {regen_state} {on};
-    regen
-  }
+  cmd_group_score {regen_with_score}
 }
 
 #alias {cmd_regen_fairy_until} {
@@ -84,7 +133,7 @@
 
   #alias {regen_fairy_mana_up} {
     debug REGEN-FAIRY MANA UP: mana=$mana max=$score_max_mana threshold=$regen_mana_threshold;
-    #if {$mana > ($score_max_mana - $regen_mana_threshold)} {
+    #if {$regen_mana_threshold == -1 || $mana > ($score_max_mana - $regen_mana_threshold)} {
       debug REGEN-FAIRY-DONE;
       regen_fairy_done
     } {
@@ -119,18 +168,6 @@
     };
     trampoline {cmd_regen_fairy_until} {regen_fairy_mana_up}
   }
-}
-
-#alias {cmd_regen_max} {  
-  cmd_regen {50} {0} {%1} {%2}
-}
-
-#alias {cmd_regen_some} {
-  cmd_regen {150} {150} {%1} {%2}
-}
-
-#alias {cmd_regen_fairy} {
-  cmd_regen_fairy_until {150} {150} {%1} {%2}
 }
 
 #class {regen} {save}

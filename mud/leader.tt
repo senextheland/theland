@@ -45,6 +45,7 @@ def_group_task0 {cmd_group_unagg} {unagg} {cmd_unagg}
 def_group_task0 {cmd_group_stand} {stand} {cmd_stand}
 def_group_task2 {cmd_group_imm} {imm: %1 %2} {cmd_imm_%1_%2}
 def_group_task0 {cmd_group_reset_weapons} {reset-weapons} {cmd_reset_weapon_state}
+def_group_task0 {cmd_group_regen_fairy} {regen-fairy} {cmd_regen_fairy}
 
 #alias {cmd_presence_check} {
   exec_task {cmd_presence_check} {farlook %1} {%3} {%4} {
@@ -69,7 +70,8 @@ def_group_task0 {cmd_group_reset_weapons} {reset-weapons} {cmd_reset_weapon_stat
 
 #alias {cmd_buy_recalls} {
   exec_task {cmd_buy_recalls} {buy %1*recall} {%2} {%3} {
-    #action {You now have a scroll of recall} {give recall $robot};
+    #function {half_quantity} {#math {result} {%1 / 2}};
+    #action {You now have a scroll of recall} {give @half_quantity{}*recall $robot};
     #action {You give a scroll of recall} {task_cmd_buy_recalls_done};
     #action {Zifnab pukes on your clothes!} {task_cmd_buy_recalls_fail};
     #action {Sorry, I haven't got exactly that item.} {task_cmd_buy_recalls_fail}
@@ -97,6 +99,21 @@ def_group_task0 {cmd_group_reset_weapons} {reset-weapons} {cmd_reset_weapon_stat
       };
       tell group 'walk: %1 -- "%2";
       task_cmd_group_walk_kill_done
+    }
+  }
+}
+
+#alias {cmd_group_run_kill} {
+  exec_task {cmd_group_run_kill} {run %1} {%4} {%5} {
+    #action {%2} {
+      #if {"%3" != ""} {
+        debug GROUP-RUN DONE --> kill %3;
+        kill %3;
+      } {
+        debug GROUP-RUN DONE
+      };
+      tell group 'run: %1 -- "%2";
+      task_cmd_group_run_kill_done
     }
   }
 }

@@ -12,10 +12,12 @@
   #alias {fish_once_done} {fish_once_end; %2};
   #alias {fish_once_fail} {fish_once_end; %3};
 
-  #alias {fish_once_end} {  
+  #alias {fish_once_end} {
+    debug FISH-ONCE-END!!!;
     hook {on_fight_start} {remove} {fish};
     put all.frozen-fish $fish_container;        
     #class {fish_once} {kill};
+    #alias {fish_once_end} {#nop};
     #var {fish_state} {idle}
   };
 

@@ -1,6 +1,19 @@
 #class {repair} {open}
 
 hook {on_eq_repair} {create}
+hook {on_eq_bless_unrepairable} {create}
+
+#var {eq_needs_bless} {}
+
+#alias {eq_needs_bless} {
+  #var {eq_needs_bless[%1]} {true}
+}
+
+#alias {on_eq_blessed} {
+  #if {"$eq_item_title" != ""} {
+    #unvar {eq_needs_bless[$eq_item_title]}
+  }
+}
 
 #alias {eq_repair} {
   #class {eq_repair} {open};
@@ -79,12 +92,23 @@ hook {on_eq_repair} {create}
     {A firefly abdomen}{abdomen}
     {Silver Elven Armor}{tuor-armor}
     {A swan winged helm}{tuor-swan-helm}
-    {A tarnished ring}{???-ring}
+    {A tarnished ring}{despair-hero}
     {A bracelet made of stone}{stone-bracelet}
     {the Skin of the Dark Green Spider}{green-spider-skin-valleyw}
     {A Grasshopper's Skin}{grasshopper-skin-valleyw}
     {the Hard Shell of the Shield Bug}{shield-bug}
-    ;  
+    {The Mystic Armband}{mystic-armband}
+    {the ring of the wind(invisible)}{ring-wind}
+    {A pair of red trousers with white fur cuffs}{red-trousers-santa}
+    {tshirt: "Paladins ARE Wussies!!}{tshirt}
+    {the signet ring of Thalos}{thalos-signet}
+    {Demonic Gloves}{aethyr-gloves-demonic}
+    {A Rick Astley fan club ring}{ring-trollquest-klias}
+    {Buffalo Hide}{hide-buffalo-fruban}
+    {A Fallen God's Token of War}{despair-token}
+    {Thorned Shackles}{aethyr-shackles}
+    {the Sash of Lasting Warmth}{sash-warmth}
+    ;
 
   #alias {eq_repair_check} {
     repair_next_item
@@ -97,7 +121,14 @@ hook {on_eq_repair} {create}
       #list {current_eq_list_item} {explode} {:};
       rem $current_eq_list_item[1]
     } {
-      on_repair_done
+      #if {"$eq_needs_bless" != ""} {
+        debug EQ-BLESS-UNREPAIRABLE;
+        hook {on_eq_bless_unrepairable} {exec-each}
+	  {on_repair_done}
+	  {on_repair_done}
+      } {
+        on_repair_done
+      }
     }
   };
 
@@ -127,9 +158,10 @@ hook {on_eq_repair} {create}
   };
 
   #action {You stop using %%1.} {
+    #var {eq_item_title} {%%1};
     #list {eq_map} {find} {%%1} {eq_item_index};
     #if {$eq_item_index != 0} {    
-      #math {eq_item_index} {$eq_item_index + 1};
+      #math {eq_item_index} {$eq_item_index + 1};      
       #var {eq_item_name} $eq_map[$eq_item_index];
       repair_item
     } {

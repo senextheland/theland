@@ -10,10 +10,10 @@ hook {on_fight_start} {create}
 #var {currently_assisting} {}
   
 #var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|Claws|crushes|decimates|demolishes|devastates|ethereally touches|gashes|grapples with|hits|hoofs|leaps upon|massacres|misses|mutilates|obliterates|pierces|pinches|pulverizes|punches|rocks|saws|smashes|stings|stuns|tangles|thrashes|vanquishes|whips}
-#var {you_fighting_words} {annihilate|atomize|bite|channel|claw|cleave|crushes|decimate|demolish|devastate|grapple with|gash|hit|leap upon|massacre|mutilate|obliterate|pierce|pinch|pulverize|punch|rock|thrash|sting|stun|vanquish|whip}
+#var {you_fighting_words} {annihilate|atomize|bite|channel|claw|cleave|crushe|decimate|demolish|devastate|grapple with|gash|hit|leap upon|massacre|mutilate|obliterate|pierce|pinch|pulverize|punch|rock|thrash|sting|stun|vanquish|whip}
 #var {you_beat_words} {beat the ever-living shit out of}
 
-#action {You {$you_fighting_words} %2 with} {update_fight {%2}}
+#action {You {$you_fighting_words} %2 {with|hard|very}} {update_fight {%2}}
 #action {You {$you_beat_words} %2.} {update_fight {%2}}
 #action {%1 {$fighting_words} you} {update_fight {%1}}
 #action {%1 sees you, and attacks!} {update_fight {%1}}

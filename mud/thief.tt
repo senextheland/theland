@@ -1,156 +1,189 @@
 #class {thief} {open}
 
+#nop --------------------------------
+#nop Adapter
+#nop --------------------------------
+
 #alias {cmd_heal_me} {
   cmd_ask_for_heal {%1} {%2}
 }
 
 #alias {do_fight_assist} {
-  debug ASSIST {%1} {%2};
-  
-  
-  #if {"$target" != ""} {
-    debug TRY BACKSTAB {$target};
-    backstab $target
-  };
-
-  #nop in case backstab failed;
-  assist %1;
-  
-  debug ASSIST --> circle_loop;
-  circle_loop
+  debug ASSIST {%1} {%2};    
+  #if {"$target" != "" && "$target" != "null"} {
+    backstab_assist {$target}
+  } {
+    assist %1;
+    circle
+  }  
 }
 
-#nop NOTE -- when both dual-wield circle stabs fail, it seems like thief can fall out of assist
-#nop         so be sure to end_fight to reset fighting status so assist triggers again.
-#alias {circle_loop} {
-  #class {circle_loop} {open};
 
-  #var {circle_state} {idle};
-  #var {circle_miss} {0};
+#nop --------------------------------
+#nop Backstab
+#nop --------------------------------
 
-  #alias {circle_miss_inc} {
-    #math {circle_miss} {$circle_miss + 1};
-    debug CIRCLE-LOOP missed --> $circle_miss
-  };
+#var {thief_state} {idle}
+#var {thief_miss} {0}
+#var {thief_stab} {0}
+#var {thief_fail} {0}
 
-  #alias {circle_miss_reset} {
-    #var {circle_miss} {0}
-  };
-
-  #alias {circle_loop_done} {
-    debug CIRCLE-LOOP: done;
-    hook {on_rip} {remove} {circle_loop};
-    task_cmd_circle_end;
-    #class {circle_loop} {kill}
-  };
-
-  #alias {circle_once} {
-    debug CIRCLE-LOOP: once;
-    #nop deliberately avoiding execution queue so other commands don't interfere;
-    cmd_circle {circle_hit} {circle_fail}
-  };
-
-  #alias {circle_loop_rip} {
-    debug CIRCLE-LOOP: rip --> done;
-    circle_loop_done;
-    %%1  
-  };
-
-  #alias {circle_hit} {  
-    debug CIRCLE-HIT --> debounce again;
-    circle_miss_reset;
-    reset_fight_timer;
-    circle_debounce {hit} {circle_once}
-  };
-  
-  #alias {circle_fail} {
-    debug CIRCLE-FAIL: {%%1};
-    reset_fight_timer;
-    #switch {"%%1"} {
-      #case {"no-fight"} {circle_debounce {done} {circle_loop_done}};
-      #case {"not-assisting"} {circle_debounce {done} {circle_loop_maybe_assist}};
-      #case {"missed"} {circle_miss_inc; circle_debounce {miss} {circle_once}};
-      #case {"noticed"} {circle_debounce {noticed} {circle_once}};      
-      #default {
-        debug CIRCLE-FAIL: unrecognized error code {%%1}
-      }
-    }
-  };
-
-  #alias {circle_debounce} {
-    debug DEBOUNCE-CIRCLE state=$circle_state;
-    #if {"$circle_state" == "done"} {
-      debug DEBOUNCE-CIRCLE: already done --> ignore
-    };
-    #elseif {"%%1" == "done"} {
-      #var {circle_state} {done};
-      #delay {circle_debounce} {%%2} {0.1}
-    };
-    #elseif {"%%1" == "miss" && $circle_miss >= 2} {
-      debug CIRCLE-LOOP: too many misses --> re-assist;    
-      #var {circle_state} {done};
-      #delay {circle_debounce} {circle_loop_maybe_assist} {0.1}
-    };
-    #else {
-      #delay {circle_debounce} {%%2} {0.1}
-    }    
-  };
-
-  #alias {circle_loop_maybe_assist} {
-    circle_loop_done;    
-    #if {"$combat_status" != "idle"} {
-      debug CIRCLE-LOOP: maybe asist combat_status=$combat_status --> assist;
-      do_fight_assist {$currently_assisting}
-    } {
-       debug CIRCLE-LOOP: maybe asist combat_status=$combat_status --> ignore
-    }
-  };
-
-  hook {on_rip} {add} {circle_loop} {circle_loop_rip};
-
-  #class {circle_loop} {save};
-  #class {circle_loop} {close};
-
-  debug CIRCLE: initial attempt;
-  circle_once
+#alias {thief_log} {
+  debug THIEF state=$thief_state combat=$combat_status miss=$thief_miss stab=$thief_stab fail=$thief_fail -- %0
 }
 
-#alias {cmd_circle} {
-  exec_task {cmd_circle} {circle} {%1} {%2} {
-    #action {You need to be fighting before you can circle around to the back of your opponent.} {
-      debug CIRCLE-NO-FIGHT;
-      task_cmd_circle_fail {no-fight}
-    };
-    
-    #action {Circle around back, are you crazy they are hitting you!} {
-      debug CIRCLE-NOT-ASSIST;
-      task_cmd_circle_fail {not-assisting}
-    };
-    
-    #action {You tried to sneak around him, but he noticed you!} {
-      task_cmd_circle_fail {noticed}
-    } {4};
-    
-    #action {nimbly avoids your backstab, and you nearly cut your finger.} {
-      task_cmd_circle_fail {missed}
-    } {4};
-    
-    #action {makes a strange sound, as you place} {
-      task_cmd_circle_done
-    } {4};
-    
-    #action {makes a strange sound but is suddenly very silent, as you place} {
-      task_cmd_circle_done
-    } {4};
+#alias {thief_miss_inc} {
+  #math {thief_miss} {$thief_miss + 1};
+  thief_log miss
+}
 
-    #action {A cataclysmic feline's limbs go rigid} {
-      task_cmd_circle_done
+#alias {thief_stab_inc} {
+  #math {thief_stab} {$thief_stab + 1};
+  thief_log stab
+}
+
+#alias {thief_fail_inc} {
+  #math {thief_fail} {$thief_fail + 1};
+  debug fail
+}
+
+#alias {thief_count_reset} {
+  #var {thief_miss} {0};
+  #var {thief_stab} {0};
+  #var {thief_fail} {0}  
+}
+
+#alias {backstab_assist} {
+  debug TRY BACKSTAB {%1};
+  #var {thief_mode} {backstab};
+  backstab %1
+}
+
+#alias {backstab_assist_fallback} {
+  thief_log BACKSTAB-ASSIST-FALLBACK;
+  thief_transition {assist} {thief_do_assist}
+}
+
+#alias {thief_to_assist} {
+  assist {$currently_assisting}
+}
+
+#alias {backstab_assist_retry} {
+  thief_log BACKSTAB-ASSIST-RETRY;
+  thief_transition {idle} {thief_do_retry}
+}
+
+#alias {thief_do_retry} {
+  do_fight_assist {$currently_assisting}
+}
+
+#alias {backstab_assist_give_up} {
+  thief_log BACKSTAB-ASSIST-GIVE-UP;
+  thief_transition {idle} {#nop}
+}
+
+#alias {backstab_assist_fighting} {
+  thief_transition {circle} {circle_once}
+}
+
+hook {on_rip} {add} {thief} {thief_rip}
+#action {nimbly avoids your backstab, and you nearly cut your finger.} {debounce_backstab miss} {4}
+#action {makes a strange sound, as you place} {debounce_backstab hit} {4}
+#action {makes a strange sound but is suddenly very silent, as you place} {debounce_backstab hit} {4}
+#action {limbs go rigid} {debounce_backstab hit} {4}
+#action {You miss %1.} {debounce_backstab miss} {4}
+#action {Backstab who?} {backstab_assist_fallback}
+#action {No way! You are fighting for your life!} {backstab_assist_fighting} {6}
+
+#alias {thief_rip} {
+  #undelay {debounce_backstab};
+  thief_transition {idle} {%1}
+}
+
+#alias {debounce_backstab} {
+  #switch {"%1"} {
+    #case {"hit"} {
+      #var {thief_state} {circle};
+      thief_stab_inc;
+      reset_debounced_backstab
     };
-    
-    #action {You miss %%%1.} {
-      task_cmd_circle_fail {missed}
-    } {4}
+    #case {"miss"} {
+      thief_miss_inc;
+      reset_debounced_backstab
+    };
+    #case {"fail"} {
+      thief_fail_inc;
+      reset_debounced_backstab
+    };
+    #default {
+      debug DEBOUNCE-BACKSTAB: unrecognized command {%1}
+    }
   }
+}
+
+#alias {reset_debounced_backstab} {#delay {debounce_backstab} {dispatch_debounced_backstab} {0.1}}
+
+#nop When both dual-wield circle stabs fail, it seems like thief can fall out of assist
+#nop so be sure to end_fight to reset fighting status so assist triggers again.
+
+#alias {dispatch_debounced_backstab} {
+  #if {$thief_stab > 0 || $thief_fail > 0} {
+    thief_log debounced-backstab --> circle;
+    thief_transition {circle} {circle_once}
+  };
+  #elseif {$thief_miss > 0} {
+    #if {"$thief_state" == "backstab"} {
+      thief_log debounced-backstab: all-misses --> assist;
+      backstab_assist_fallback
+    } {
+      thief_log debounced-backstab: all-misses --> do_fight_assist;
+      backstab_assist_retry      
+    }
+  };
+  #else {
+    thief_log debounced-backstab: hmm, nothing --> circle;
+    thief_transition {circle} {circle_once}
+  }
+}
+
+#alias {thief_transition} {
+  thief_count_reset;
+  #if {$movement < 100} {
+    debug THIEF LOW MOVEMENT --> no circle, just assist;
+    #var {thief_state} {assist};
+    %2
+  } {
+    #var {thief_state} {%1};
+    %2
+  }
+}
+
+
+#nop --------------------------------
+#nop Circle
+#nop --------------------------------
+
+#alias {circle_once} {circle}
+
+#action {You are too exhausted to try something that complicated} {
+  debug CIRCLE-EXHAUSTED;  
+  debounce_backstab fail
+}
+
+#action {You tried to sneak around him, but he noticed you!} {debounce_backstab fail} {4}
+
+#action {You need to be fighting before you can circle around to the back of your opponent.} {
+  #if {"$thief_state" == "circle" && "$combat_status" == "fighting"} {
+    thief_log CIRCLE-NO-FIGHT --> idle;
+    backstab_assist_give_up
+  } {
+    thief_log CIRCLE-NO-FIGHT --> ignore
+  }
+}
+    
+#action {Circle around back, are you crazy they are hitting you!} {
+  debug CIRCLE-NOT-ASSISTING --> do nothing;
+  backstab_assist_give_up
 }
 
 #class {thief} {save}

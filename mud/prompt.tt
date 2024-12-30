@@ -44,14 +44,40 @@ hook {on_movement_down} {create}
   hook {on_prompt} {fire}
 }
 
-#action {^H:%d M:%d V:%d >} {set_health {%1}; set_mana {%2}; set_move {%3}; trigger_prompt} {4}
-#action {^H:%d M:%d >} {set_health {%1}; set_mana {%2}; set_move {$score_max_movement}; trigger_prompt} {4}
-#action {^H:%d V:%d >} {set_health {%1}; set_mana {$score_max_mana}; set_move {%2}; trigger_prompt} {4}
-#action {^M:%d V:%d >} {set_health {$score_max_hit}; set_mana {%1}; set_move {%2}; trigger_prompt} {4}
-#action {^H:%d >} {set_health {%1}; set_mana {$score_max_mana}; set_move {$score_max_movement}; trigger_prompt}
-#action {^M:%d >} {set_health {$score_max_hit}; set_mana {%1}; set_move {$score_max_movement}; trigger_prompt}
-#action {^V:%d >} {set_health {$score_max_hit}; set_mana {$score_max_mana};  set_move {%1}; trigger_prompt}
-#action {^>} {set_health {$score_max_hit}; set_mana {$score_max_mana}; set_move {$score_max_movement}; trigger_prompt}
+#action {^H:%S M:%S V:%S%!{( PKILL)?} >} {
+  set_health {%1}; set_mana {%2}; set_move {%3}; trigger_prompt
+} {4}
+
+#action {^H:%S M:%S%!{( PKILL)?} >} {
+  set_health {%1}; set_mana {%2}; set_move {$score_max_movement}; trigger_prompt
+} {4}
+
+#action {^H:%S V:%S%!{( PKILL)?} >} {
+  set_health {%1}; set_mana {$score_max_mana}; set_move {%2}; trigger_prompt
+} {4}
+
+#action {^M:%S V:%S%!{( PKILL)?} >} {
+  set_health {$score_max_hit}; set_mana {%1}; set_move {%2}; trigger_prompt
+} {4}
+
+#action {^H:%S%!{( PKILL)?} >} {
+  set_health {%1}; set_mana {$score_max_mana}; set_move {$score_max_movement}; trigger_prompt
+}
+
+#action {^M:%S%!{( PKILL)?} >} {
+  set_health {$score_max_hit}; set_mana {%1}; set_move {$score_max_movement}; trigger_prompt
+}
+
+#action {^V:%S%!{( PKILL)?} >} {
+  set_health {$score_max_hit}; set_mana {$score_max_mana};  set_move {%1}; trigger_prompt
+}
+
+#action {^%!{(PKILL )?}>} {
+  set_health {$score_max_hit};
+  set_mana {$score_max_mana};
+  set_move {$score_max_movement};
+  trigger_prompt
+}
 
 #class {event} {save}
 #class {event} {close}
