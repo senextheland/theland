@@ -35,6 +35,8 @@
 #alias {protect} {
   #class {protect} {open};
 
+  #action {%1 slowly fades into existence.} {fight_hint {%2}};
+
   #action {sees The %1, and attacks!} {try_rescue %2};
   #action {sees %1, and attacks!} {try_rescue %2};
   #action {The %1 {dodges|screams}} {try_rescue %2};
@@ -50,6 +52,7 @@
   #action {You can't get close enough to them to rescue!} {try_hrescue};
   #action {But who would need to be rescued in such a peaceful place?} {rescue_no_fight};
   #action {But there is no battle here!?!?} {rescue_no_fight};
+  #action {You try to plow your way to the front} {rescue_fail};
 
   #class {protect} {save};
   #class {protect} {close}

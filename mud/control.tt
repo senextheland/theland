@@ -354,7 +354,9 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
     ext_town_with_fairy {$need_pawn}
   } {
     ext_visit_town {$need_pawn}
-  }
+  };
+  zone_extend
+    {need_pawn {}}  
 }
 
 #alias {ext_recall_to_inn} {

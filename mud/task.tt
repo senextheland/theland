@@ -60,7 +60,11 @@
   };
 
   #alias {task_%1_reset_timeout} {
-    #delay {task_%1_timeout} {task_%1_fail {timeout}} {$task_%1[timeout]}
+    #delay {task_%1_timeout} {task_%1_timeout} {$task_%1[timeout]}
+  };
+
+  #alias {task_%1_timeout} {
+    task_%1_fail {timeout}
   };
 
   #alias {task_%1_end} {

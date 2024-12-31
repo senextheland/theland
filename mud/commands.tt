@@ -48,10 +48,16 @@
 
 #alias {cmd_unlock_door_with_key} {
  exec_task {cmd_unlock_door_with_key} {%1; unlock %2; %3} {%4} {%5} { 
-   #action {You do not have the proper key for that.} {task_cmd_unlock_door_with_key_fail};
+   #action {You do not have the proper key for that.} {
+     #delay {unlock_door_with_key} {task_cmd_unlock_door_with_key_attempt} {1.0}
+   };
    #action {*click*} {task_cmd_unlock_door_with_key_done};
    #action {It's already unlocked, it seems.} {task_cmd_unlock_door_with_key_done};
-   #action {Heck.. it ain't even closed!} {task_cmd_unlock_door_with_key_done}
+   #action {Heck.. it ain't even closed!} {task_cmd_unlock_door_with_key_done};
+
+   #alias {task_cmd_unlock_door_with_key_end_hook} {
+     #undelay {unlock_door_with_key}
+   }
  }  
 }
 

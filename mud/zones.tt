@@ -607,13 +607,15 @@
 
 #alias {ext_tzen_leave} {
   ext_tzen_get_magicite;
-  zone_extend {need_pawn pawn_tzen}  
+  zone_extend
+    {need_pawn pawn_tzen}
+    {walk_fast {1u1n} {The Hall of Nature}}
 }
 
 #alias {tzen_palace_announcement} {tell group 'dothis: tagiimec2palace}
 #alias {ext_walk_tzen_palace} {
   zone_extend
-    {announce {tzen_palace_announcement} {5.0}}  
+    {announce {tzen_palace_announcement} {10.0}}
     {walk_fast {2n} {Before the gates of the Palace of Tzen}}
     {unlock_door {tzen-key} {gate}}
     {open_door {gate}}
@@ -829,6 +831,15 @@
     {zone_safety off}
     {group_imm water off}
     {walk_fast {1e3n2e2n1w1n} {The end of the path.}}
+}
+
+#alias {ext_darkwiz_test_fall} {
+  zone_extend
+    {walk_fast {1w} {You fall!}}
+    {zone_safety off}
+    {announce {fall_to_ravine_announcement} {5.0}}
+    {group_walk {1d1e} {The bottom of the ravine.}}
+    {zone_safety on}
 }
 
 #alias {ext_darkwiz_forest_to_castle_kill} {
@@ -1094,30 +1105,94 @@
   ext_despair_maze
 }
 
+#alias {zone_despair_north} {
+  ext_despair_walk;
+  ext_despair_north
+}
+
+#alias {zone_despair_south} {
+  ext_despair_walk;
+  ext_despair_south
+}
+
 #alias {ext_despair_maze} {
   ext_despair_to_nw;
   ext_despair_nw;
   ext_despair_nw_to_kryten;
   ext_despair_kryten;
   ext_despair_kryten_to_nw;
+  zone_extend
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {xanth-bag}}
+    ;  
 
   ext_despair_nw_to_sw;
   ext_despair_sw;
   ext_despair_sw_to_cinder;
   ext_despair_cinder;
   ext_despair_cinder_to_sw;
-
+  zone_extend
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {xanth-bag}}
+    ;
+  
   ext_despair_sw_to_ne;
   ext_despair_ne;
   ext_despair_ne_to_shasta;
   ext_despair_shasta;
   ext_despair_shasta_to_ne;
+  zone_extend
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {xanth-bag}}
+    ;  
 
   ext_despair_ne_to_se;
   ext_despair_se;
   ext_despair_se_to_sinon;
   ext_despair_sinon;
-  ext_despair_sinon_to_center
+  ext_despair_sinon_to_center;
+  zone_extend
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {xanth-bag}}
+    ;  
+}
+
+#alias {ext_despair_north} {
+  ext_despair_to_nw;
+  ext_despair_nw;
+  ext_despair_nw_to_kryten;
+  ext_despair_kryten_to_nw;
+  zone_extend
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {xanth-bag}}
+    ;
+
+  ext_despair_nw_to_ne;
+  ext_despair_ne;
+  ext_despair_ne_to_shasta;
+  ext_despair_shasta_to_ne;
+  zone_extend
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {xanth-bag}}      
+}
+
+#alias {ext_despair_south} {
+  ext_despair_to_sw;
+  ext_despair_sw;
+  ext_despair_sw_to_cinder;
+  ext_despair_cinder_to_sw;
+  zone_extend
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {xanth-bag}}
+    ;  
+
+  ext_despair_sw_to_se;
+  ext_despair_se;
+  ext_despair_se_to_sinon;
+  ext_despair_sinon_to_center;
+  zone_extend
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {xanth-bag}}      
 }
 
 #alias {zone_despair_nw_walk} {
@@ -1269,6 +1344,7 @@
     {kill_walk_path {3s1w1s1w4s2w} {despair}}
 }
 
+#alias {ext_despair_nw_to_ne} {zone_extend {walk_fast {1d20e} {Outside the Maze}}}
 #alias {ext_despair_sw_to_ne} {zone_extend {walk_fast {1d20e19n} {Outside the Maze}}}
 #alias {ext_despair_ne} {
   zone_extend
@@ -1299,6 +1375,7 @@
     {kill_walk_path {3e1n2e4n2e5n4w1n8e} {despair}}
 }
 
+#alias {ext_despair_sw_to_se} {zone_extend {walk_fast {1d20e} {Outside the Maze}}}
 #alias {ext_despair_ne_to_se} {zone_extend {walk_fast {1d19s} {Outside the Maze}}}
 #alias {ext_despair_to_se} {zone_extend {walk_fast {10e19s} {Outside the Maze}}}
 #alias {ext_despair_se_to_iggy} {

@@ -6,6 +6,7 @@ hook {on_fight_start} {create}
 #class {fight} {open}
 
 #var {combat_status} {idle}
+#var {combat_hint} {}
 #var {currently_fighting} {}
 #var {currently_assisting} {}
   
@@ -29,11 +30,13 @@ hook {on_fight_start} {create}
 
 #action {%1 leaps to your rescue, you are confused!} {
   #var {combat_status} {idle};
+  #var {combat_hint} {};
   maybe_assist {%1} {$currently_fighting}
 }
 
 #action {You are rescued by %1, you are confused!} {
   #var {combat_status} {idle};
+  #var {combat_hint} {};
   maybe_assist {%1} {$currently_fighting}
 }
 
@@ -56,8 +59,12 @@ hook {on_fight_start} {create}
 
 #alias {reset_fight_timer} {
   #undelay {fighting_timeout};
-  #delay {fighting_timeout} {fighting_timed_out} {5}    
+  #delay {fighting_timeout} {fighting_timed_out} {5}
 }
+
+#alias {fight_hint} {
+  #var {combat_hint} {assisted}
+};
 
 #alias {update_fight} {
   reset_fight_timer;
@@ -74,6 +81,7 @@ hook {on_fight_start} {create}
   #if {"$combat_status" == "idle"} {
     debug BEGIN ASSIST {%1} {%2};
     #var {combat_status} {fighting};
+    #var {combat_hint} {};
     #var {currently_fighting} {%2};
     #var {currently_assisting} {%1};
     do_fight_assist {%1} {%2}
@@ -81,9 +89,10 @@ hook {on_fight_start} {create}
 }
 
 #alias {end_fight} {
-  debug END FIGHT status=$combat_status;
-  #if {"$combat_status" == "fighting"} {
+  debug END FIGHT status=$combat_status hint=$combat_hint;
+  #if {"$combat_status" == "fighting" || "$combat_hint" != ""} {
     #var {combat_status} {idle};
+    #var {combat_hint} {};
     #var {currently_fighting} {};
     #var {currently_assisting} {};
     debug END FIGHT will emit RIP after short delay;

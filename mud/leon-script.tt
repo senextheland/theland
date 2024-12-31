@@ -1,0 +1,36 @@
+#class {leon_script} {open}
+
+#action {Zifnab wanders behind the counter, talking to himself} {
+  #if {"$me" == "senex"} {
+    #2 {buy 5*recall};
+    give 5*recall silk
+  }
+}
+
+#action {Walkscript: Repair your eq.} {
+  eq_repair {score_with_spellup} {score_with_spellup}
+}
+
+#action {Walkscript: Deposit your gold.} {
+  cmd_deposit {#nop} {#nop}
+}
+
+#alias {score_with_spellup} {
+  cmd_score
+    {spellup {#nop}}
+    {spellup {#nop}}
+}
+
+hook {on_tick_soon} {add} {leon_script} {leon_script_on_tick_soon}
+
+#alias {leon_script_on_tick_soon} {
+  quick_spellup_continuation {#nop}
+}
+
+#alias {leon_script_off} {
+  hook {on_tick_soon} {remove} {leon_script};
+  #class {leon_script} {kill}
+}
+
+#class {leon_script} {save}
+#class {leon_script} {close}

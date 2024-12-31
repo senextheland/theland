@@ -10,6 +10,9 @@
 #var {mode_life_protect} {}
 #var {imm} {{fire}{off} {energy}{off}}
 
+#alias {invis_on} {}
+#alias {invis_off} {}
+
 #alias {cmd_reset_weapon_state} {%1}
 #alias {cmd_dispell_on} {%2}
 #alias {cmd_dispell_off} {%1}
