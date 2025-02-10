@@ -7,6 +7,7 @@
   {Senex} 
   {Sid}
   {Silk}
+  {Soren}
   {Zifnab}
   {the Alchemist}
   {The DM}
@@ -19,6 +20,10 @@
   {The maid}
   {The old man}
   {A magical fairy}
+  {A red bearded dwarf starts walking your way and}
+  {The Strange Plant}
+  {The cook}
+  {Allah}
 
 #list {ignore_messages} {create}
   {'We're happy for ya!'}
@@ -44,14 +49,22 @@
   #line log {$me-crushed.log} {@log_time{} %0}
 }
 
+#alias {log_crushed} {
+  on_eq_hit {%1};
+  log_event %2
+}
+
 #alias {log_tell} {
   #if {@ignore_user{%2} == 0 && @ignore_message{%3} == 0} {
     #line log {$me-tells.log} {@log_time{} %1 %2: %3}
   }
 }
 
-#action {%1 is crushed.} {log_event %0}
-#action {%1 is rended} {log_event %0}
+#action {%1 is crushed.} {log_crushed {%1} {%0}}
+#action {%1 is rended} {log_crushed {%1} {%0}}
+#action {%1 is shredded} {log_crushed {%1} {%0}}
+#action {%1 is burned} {log_crushed {%1} {%0}}
+#action {%1 falls apart into scraps} {log_event %0}
 #action {The supernatural protection of %1 fades noticeably.} {eq_needs_bless {%1}; log_event %0}
 #action {%1 tells you %2} {log_tell {tell} {%1} {%2}} {9}
 #action {%1 shouts some bull %2} {log_tell {shout} {%1} {%2}} {9}

@@ -136,11 +136,17 @@ hook {armor_down} {create}
 hook {shield_down} {create}
 hook {fly_down} {create}
 hook {spirit_armor_down} {create}
+hook {true_sight_down} {create}
+hook {detect_magic_down} {create}
 
 #var spell_state {}
 #alias {spell_state_down} {
   #var {spell_state[%1]} {down};
-  hook {%1_down} {fire}
+  #if {"%2" != ""} {
+    hook {%2_down} {fire}
+  } {
+    hook {%1_down} {fire}
+  }
 }
 
 #alias {spell_state_up} {
@@ -163,7 +169,9 @@ hook {spirit_armor_down} {create}
 #action {You feel less protected.} {spell_state_down {armor}; reset_clock {tick}}
 #action {Your shield of protection flickers, then disappears.} {spell_state_down {shield}; reset_clock {tick}}
 #action {You sink towards the ground as your magic wears off.} {spell_state_down {fly}; reset_clock {tick}}
-#action {Your holy protection disappears.} {spell_state_down {spiritual armor}}
+#action {Your holy protection disappears.} {spell_state_down {spiritual armor} {spirit_armor}}
+#action {The detect magic wears off.} {spell_state_down {detect magic} {detect_magic}; reset_clock {tick}}
+#action {Your clarity of vision dissapears} {spell_state_down {true sight} {true_sight}; reset_clock {tick}}
 
 #action {You call on your diety to protect you, and are engulfed in shaft of light.} {spell_state_up {spiritual armor}}
 #action {You feel the blessing of a diety upon you.} {spell_state_up {bless}}

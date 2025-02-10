@@ -7,6 +7,7 @@
 #ticker {fidget} {emote glances around.} {120}
 
 #alias {get_ready} {
+  #read {mud/utils.tt};
   #read {mud/logging.tt};
   #read {mud/task.tt};
   #read {mud/exec.tt};
@@ -25,30 +26,63 @@
   #read {mud/regen.tt};
   #read {mud/recover.tt};
   #read {mud/kill.tt};
-  #read {mud/fish.tt};
+  #read {mud/fish-test.tt};
   #read {mud/dagger.tt}; 
   #read {mud/leader.tt};
   #read {mud/control.tt};
   #read {mud/zones.tt};
   #read {mud/spellup.tt};
   #read {mud/scary-things.tt};
+  #read {mud/follow-orders.tt};
+  #read {mud/gim-commands.tt}
 
   cmd_score {
     #read {mud/prompt.tt};
     #read {mud/health.tt};
 
-    #var {health_low} {450}
+    #var {health_low} {2000}
   };
 
+  #function {deposit_target_coins} {
+    #if {@regen_needed{}} {
+      #var {result} {1500000}    
+    } {
+      #var {result} {600000}
+    }
+  };
+
+  need_spell_add {spiritual armor};
   hook {bless_down} {add} {$me} {cmd_cast_me {bless} {debug BLESS UP} {debug BLESS FAIL}};
   hook {armor_down} {add} {$me} {cmd_cast_me {armor} {debug ARMOR UP} {debug ARMOR FAIL}};
-  need_spell_add {spiritual armor};
+  hook {spirit_armor_down} {add} {$me} {cmd_cast_me {spiritual armor} {debug SPIRIT ARMOR UP} {debug SPIRIT ARMOR FAIL}};
   hook {on_eq_repair} {add} {bless} {bless_eq_item};
   hook {on_eq_bless_unrepairable} {add} {bless} {bless_all_unrepairable};
 
-  set_robot {silk} {Silk};
+  #nop set_robot {silk} {Silk};
+  set_robot {soren} {Soren};
   protect {$robot_description} {$robot};
   reset_weapon_state
+}
+
+#alias {cmd_deposit_self} {
+  cmd_score {cmd_deposit {%1} {%2}}
+}
+
+#action {A pile of gold coins} {get all.coins}
+
+#action {You can't see a damn thing, you're blinded!} {
+  tell group 'oops: i'm blind;
+  whisper polgara unblind
+}
+
+#action {Silk gives you Aethyrian Body Armor.} {unstash_silk}
+
+#alias {stash_silk} {
+  get aethyr-armor xanth; give aethyr-armor silk  
+}
+
+#alias {unstash_silk} {
+  put aethyr-armor xanth
 }
 
 #alias {reload} {
@@ -78,12 +112,13 @@
 
 #alias {load_begin_loop} {
   zone_loop
-    {zone_tridac_kill}  
-    {zone_despair_se_walk}    
-    {zone_bryad_walk}
     {zone_tridac_kill}
-    {zone_x2_kill_with_darkwiz}
-    {zone_tridac_kill}    
+    {zone_antipal_kill}
+    {zone_blizz_kill}
+    {zone_tridac_kill}
+    {zone_x2_kill}
+    {zone_darkwiz_castle_quick}
+    {zone_tridac_kill}
     {zone_tzen}
     {zone_tzen_walk_sell_magicite}
 }
@@ -95,16 +130,15 @@
 
 #alias {load_overnight_loop} {
   zone_loop
-    {zone_tridac_kill}  
-    {zone_despair_se_walk}
-    {zone_despair_walk_sell_basalt}
-    {zone_antipal_kill}    
+    {zone_tridac_kill}
+    {zone_despair_south_west}
+    {zone_despair_south_east}    
+    {zone_antipal_kill}
+    {zone_tridac_kill}
     {zone_x2_kill}
-    {zone_tridac_kill}    
-    {zone_despair_sw_walk}
+    {zone_darkwiz_castle_quick} 
     {zone_tzen_all}
     {zone_tzen_walk_sell_magicite}
-    {zone_bryad_walk}    
 }
 
 #alias {overnight_loop} {
@@ -114,50 +148,65 @@
 
 #alias {load_gim_loop} {
   protect Gim;
+  protect Soren;
+  protect Felice;
+  protect Helper;
+  protect Morrigan;
+  protect Amon;
+  protect Polgara;
   zone_loop
-    {zone_tridac_kill}  
-    {zone_despair_maze}
-    {zone_despair_walk_sell_basalt}    
-    {zone_antipal_kill}    
+    {zone_tridac_kill}
+    {zone_despair_south}
+    {zone_despair_north}
+    {zone_despair_walk_sell_basalt}
+    {zone_felgor_to_door_walk}
+    {zone_tridac_kill}    
     {zone_x2_kill_through_darkwiz_quick}
     {zone_tridac_kill}
     {zone_tzen_all}
     {zone_tzen_walk_sell_magicite}
-    {zone_bryad_walk}
+    {zone_antipal_kill}
 }
 
-#alias {overnight_loop} {
-  load_overnight_loop;
-  zone_loop_start
+#alias {load_gim_at_keys_loop} {
+  protect Gim;
+  protect Soren;
+  protect Felice;
+  protect Helper;
+  protect Morrigan;
+  protect Amon;
+  protect Polgara;
+  zone_loop
+    {zone_bryad_with_air_walk}
+    {zone_despair_south}
+    {zone_despair_north}
+    {zone_despair_walk_sell_basalt}
+    {zone_bryad_with_air_walk}
+    {zone_x2_kill}
+    {zone_darkwiz_castle_quick}
+    {zone_tzen_all}
+    {zone_tzen_walk_sell_magicite}
+    {zone_bryad_with_air_walk}
+    {zone_tridac_kill}
+    {zone_achilles}
+    {zone_felgor_to_door_walk}
 }
 
 #alias {load_test_loop} {
   zone_loop
-    {zone_despair_sw_walk}
-    {zone_despair_se_walk}
-    {zone_x2_kill_with_darkwiz}
-    {zone_tzen_all}
+    {zone_despair_south}
+    {zone_despair_north}
+    {zone_tridac_kill}
+    {zone_tzen_noregen}
     {zone_tzen_walk_sell_magicite}
-    {zone_bryad_walk}        
-}
-
-#alias {test_loop} {
-  load_test_loop;
-  zone_loop_start
-}
-
-#alias {load_keys_loop} {
-  zone_loop
-    {zone_despair_sw_walk}
-    {zone_x2_kill_with_castle}
-    {zone_darkwiz_castle}
-    {zone_tzen_all}
-    {zone_tzen_walk_sell_magicite}  
-}
-
-#alias {keys_loop} {
-  load_keys_loop;
-  zone_loop_start
+    {zone_felgor15}
+    {zone_despair_south}
+    {zone_despair_north}
+    {zone_tridac_kill}
+    {zone_x2_kill}
+    {zone_darkwiz_castle_quick}
+    {zone_felgor35}
+    {zone_tridac_kill}
 }
 
 #nop --------------------------
@@ -168,62 +217,75 @@
   cmd_layhands {$me} {%1} {%2}
 }
 
-#var regen_bag {xanth-bag}
+#var regen_bag {shoe-box}
 #alias {regen} {
   rest;
-  get stars-cloak $regen_bag; rem mane; wear stars-cloak neck;
-  get purple-cape $regen_bag; rem lionskin-suit; wear purple-cape;
-  get mithril-helmet $regen_bag; rem tuor-helm; wear mithril-helmet;
-  get all.locust-skin $regen_bag; rem trousers; wear skin legs;
-  get sapphire-ring $regen_bag; rem holiday-ring; wear sapphire-ring
+  #if {"$regen_bag" != ""} {
+    get stars-cloak $regen_bag; rem mane; wear stars-cloak neck;
+    get tabbard $regen_bag; rem lionskin-suit; wear tabbard;
+    get mithril-helmet $regen_bag; rem tuor-helm; rem war-crown; wear mithril-helmet;
+    get all.locust-skin $regen_bag; rem $item_legs; wear skin legs;
+    rem $item_waist; wear skin waist;
+    get sapphire-ring $regen_bag; rem holiday-ring; wear sapphire-ring
+  }
 }
  
 #alias {unregen} {
   stand;
-  rem sapphire-ring; wear holiday-ring; safe_put sapphire-ring $regen_bag;
-  rem mithril-helmet; wear tuor-helm; safe_put mithril-helmet $regen_bag;
-  rem stars-cloak; safe_put stars-cloak $regen_bag; wear mane;  
-  rem purple-cape; wear lionskin-suit; safe_put purple-cape $regen_bag;
-  rem locust-skin; safe_put all.locust-skin $regen_bag; wear trousers
+  #if {"$regen_bag" != ""} {
+    rem sapphire-ring; wear holiday-ring; safe_put sapphire-ring $regen_bag;
+    rem mithril-helmet; wear tuor-helm; wear war-crown; safe_put mithril-helmet $regen_bag;
+    rem stars-cloak; safe_put stars-cloak $regen_bag; wear mane;  
+    rem tabbard; wear lionskin-suit; safe_put tabbard $regen_bag;
+    rem locust-skin; rem locust-skin; safe_put all.locust-skin $regen_bag;
+    wear $item_legs; wear $item_waist
+  }
 }
 
-#nop Heavy Tower Shield is IMM FIRE
-#var {imm} {{fire}{on} {energy}{on} {poison}{off} {water}{on}}
+#alias {invis_on} {wear warder}
+#alias {invis_off} {rem warder}
 
-#alias {_imm_energy_on} {
-  get spectral-band xanth-bag;
-  rem broons-bane; wear spectral-band;
-  safe_put broons-bane xanth-bag
+#alias {set_default_imms} {
+  #var {imm} {{fire}{on} {energy}{off} {poison}{off} {water}{on} {electric}{off} {cold}{on} {acid}{on}}
+}
+set_default_imms
+
+#var {imm_bag} {case}
+
+#alias {imm_energy_on} {
+  get mithril-gauntlets $imm_bag;
+  rem ucardi-gauntlets; wear mithril-gauntlets;
+  safe_put ucardi-gauntlets $imm_bag
 }
 
-#alias {_imm_energy_off} {
-  get broons-bane xanth-bag;
-  rem spectral-band; wear broons-bane;
-  safe_put spectral-band xanth-bag
+#alias {imm_energy_off} {
+  get ucardi-gauntlets $imm_bag;
+  rem mithril-gauntlets; wear ucardi-gauntlets;
+  safe_put mithril-gauntlets $imm_bag
 }
 
 #alias {imm_poison_on} {
-  get grasshopper-skin xanth-bag;
+  get grasshopper-skin $imm_bag;
   rem mane; wear skin neck;
-  safe_put mane xanth-bag
+  safe_put mane $imm_bag
 }
 
 #alias {imm_poison_off} {
-  get mane xanth-bag;
+  get mane $imm_bag;
   rem grasshopper-skin; wear mane;
-  safe_put grasshopper-skin xanth-bag
+  safe_put grasshopper-skin $imm_bag
 }
 
 #alias {imm_electric_on} {
-  get bloom xanth-bag;
-  rem shard; grab bloom;
-  safe_put shard xanth-bag
+  get bloom $imm_bag;
+  rem $item_held; grab bloom;
+  safe_put $item_held $imm_bag
 }
 
 #alias {imm_electric_off} {
-  get shard xanth-bag;
-  rem bloom; grab shard;
-  safe_put bloom xanth-bag
+  get $item_held $imm_bag;
+  rem bloom; grab $item_held;
+  safe_put bloom $imm_bag
 }
 
 #alias {imm_transition} {
@@ -241,15 +303,15 @@
 #alias {cmd_imm_cold_off} {%1}
 #alias {cmd_imm_water_on} {%1}
 #alias {cmd_imm_water_off} {%1}
-#alias {cmd_imm_energy_on} {%1}
-#alias {cmd_imm_energy_off} {%1}
+#alias {cmd_imm_acid_on} {%1}
+#alias {cmd_imm_acid_off} {%1}
 
-#alias {_cmd_imm_energy_on} {
-  cmd_imm_transition {energy} {on} {You wear Spectral Band} {%1} {%2}
+#alias {cmd_imm_energy_on} {
+  cmd_imm_transition {energy} {on} {You wear a pair of mithril gauntlets} {%1} {%2}
 }
 
-#alias {_cmd_imm_energy_off} {
-  cmd_imm_transition {energy} {off} {You wear broons bane} {%1} {%2}
+#alias {cmd_imm_energy_off} {
+  cmd_imm_transition {energy} {off} {You wear A pair of glowing gauntlets} {%1} {%2}
 }
 
 #alias {cmd_imm_poison_on} {
@@ -265,13 +327,13 @@
 }
 
 #alias {cmd_imm_electric_off} {
-  cmd_imm_transition {electric} {off} {You grab A Purple Shard.} {%1} {%2}
+  cmd_imm_transition {electric} {off} {You grab {A Purple Shard|a dwarven holy symbol}.} {%1} {%2}
 }
 
 #var {nodrop_ring} {wind-ring}
 #var {weapon_nodrop} {wind-sword}
 #var {weapon_noscrap} {achilles-spear}
-#var {weapon_align_evil} {fury}
+#var {weapon_align_evil} {avenger}
 #var {weapon_align_good} {fury}
 #var {weapon_life_protect} {claw}
 #var {current_weapon} {}
@@ -292,21 +354,44 @@
   #var {mode_align} {evil};
   #var {mode_scrap} {on};
   #var {mode_life_protect} {off};
-  #var {current_weapon} {$weapon_align_evil};
 
-  get $weapon_align_evil case; 
   rem $weapon_noscrap; safe_put $weapon_noscrap case;
-  rem $weapon_align_good; safe_put $weapon_noscrap case;
-  rem $weapon_life_protect; safe_put $weapon_life_protect case;
+
+  #if {"$mode_life_protect" == "on"} {
+    #var {current_weapon} {$weapon_life_protect}  
+  } {
+    #var {current_weapon} {$weapon_align_evil}
+  };
+
+  get $current_weapon case;
+  rem $weapon_align_good;
+  rem $weapon_align_evil;
+  rem $weapon_life_protect;
+
+  #if {"$weapon_align_good" != "$current_weapon"} {
+    safe_put $weapon_align_good case
+  };
+
+  #if {"$weapon_align_evil" != "$current_weapon" && "$weapon_align_evil" != "$weapon_align_good"} {
+    rem $weapon_align_evil; safe_put $weapon_align_evil case
+  };
+
+  #if {"$weapon_life_protect" != "$current_weapon"} {
+    rem $weapon_life_protect; safe_put $weapon_life_protect case
+  };
   
-  wield $current_weapon
+  wield $current_weapon;
+
+  #if {"$imm[energy]" == "on"} {imm_energy_off};
+  #if {"$imm[poison]" == "on"} {imm_poison_off};
+  #if {"$imm[electric]" == "on"} {imm_electric_off};
+
+  set_default_imms
 }
 
 #alias {cmd_reset_weapon_state} {
   exec_task {cmd_reset_weapon_state} {reset_weapon_state} {%1} {%2} {
-    #action {You wield the sword of the wind.} {task_cmd_reset_weapon_state_done};
-    #action {You wield Clangeddin's Fury.} {task_cmd_reset_weapon_state_done};
-    #action {You wield a massive turkey leg.} {task_cmd_reset_weapon_state_done};
+    #action {You wield} {task_cmd_reset_weapon_state_done};    
     #action {You do not seem to have the} {task_cmd_reset_weapon_state_fail};
     #action {You are already wielding something.} {task_cmd_reset_weapon_state_fail}
   }
@@ -335,11 +420,21 @@
   }
 }
 
+
+#nop --------------------------
+#nop Overrides
+#nop --------------------------
+
+#var {item_held} {symbol}
+#var {item_waist} {waistband}
+#var {item_legs} {plates}
+
 #alias {cmd_scrap_off} {
   #var {mode_scrap} {off};
   exec_task {cmd_scrap_off} {choose_best_weapon} {%1} {%2} {
     #action {ALREADY WIELDING} {task_cmd_scrap_off_done};
     #action {You wield Achilles' Spear.} {task_cmd_scrap_off_done};
+    #action {a Fremen fighting knife} {task_cmd_scrap_off_done};
     #action {You do not seem to have the} {task_cmd_scrap_off_fail};    
     #action {You are already wielding something.} {task_cmd_scrap_off_fail}
   }
@@ -352,8 +447,10 @@
     #action {You wield The Holy Avenger.} {task_cmd_scrap_on_done};
     #action {You wield A glowing trident.} {task_cmd_scrap_on_done};
     #action {You wield Clangeddin's Fury.} {task_cmd_scrap_on_done};
+    #action {a Fremen fighting knife} {task_cmd_scrap_on_done};    
+    #action {You wield A Golden Tentacle.} {task_cmd_scrap_on_done};    
     #action {You wield the sword of the wind.} {task_cmd_scrap_on_done};
-    #action {You wield a massive turkey leg.} {task_cmd_scrap_on_done}; 
+    #action {You wield Claw of The Toucan.} {task_cmd_scrap_on_done};    
     #action {You do not seem to have the} {task_cmd_scrap_on_fail};    
     #action {You are already wielding something.} {task_cmd_scrap_on_fail}
   }
@@ -386,7 +483,9 @@
     #action {You wield the sword of the wind.} {task_cmd_mob_align_evil_done};
     #action {You wield The Holy Avenger.} {task_cmd_mob_align_evil_done};
     #action {You wield Achilles' Spear.} {task_cmd_mob_align_evil_done};;
+    #action {a Fremen fighting knife} {task_cmd_mob_align_evil_done};    
     #action {You wield Clangeddin's Fury.} {task_cmd_mob_align_evil_done};
+    #action {You wield A Golden Tentacle.} {task_cmd_mob_align_evil_done};    
     #action {You wield a massive turkey leg.} {task_cmd_mob_align_evil_done};
     #action {You do not seem to have the} {task_cmd_mob_align_evil_fail};    
     #action {You are already wielding something.} {task_cmd_mob_align_evil_fail}
@@ -400,60 +499,21 @@
     #action {You wield the sword of the wind.} {task_cmd_mob_align_good_done};    
     #action {You wield The Holy Avenger.} {task_cmd_mob_align_good_done};
     #action {You wield Achilles' Spear.} {task_cmd_mob_align_good_done};
+    #action {a Fremen fighting knife} {task_cmd_mob_align_good_done};        
     #action {You wield Clangeddin's Fury.} {task_cmd_mob_align_good_done};
+    #action {You wield A Golden Tentacle.} {task_cmd_mob_align_good_done};    
     #action {You wield a massive turkey leg.} {task_cmd_mob_align_good_done};    
     #action {You do not seem to have the} {task_cmd_mob_align_good_fail};
     #action {You are already wielding something.} {task_cmd_mob_align_good_fail}
   }  
 }
 
-#alias {cmd_pick_lock} {
-  cmd_issue_order {pick %1} {%2} {%3}
-}
-
-#alias {cmd_autoloot_junk} {
-  debug AUTOLOOT-JUNK --> drop all.$autoloot_junk;
-  trampoline {autoloot_junk} {drop all.$autoloot_junk};
-  %1
-}
-
-#alias {autoloot_junk} {
-  #if {"%1" != ""} {
-    #var {autoloot_junk} {%1};
-    hook {on_rip} {add} {autoloot_junk} {cmd_autoloot_junk}
-  } {
-    hook {on_rip} {remove} {autoloot_junk}    
-  }
-}
-
-#function {autoloot_type} {
-  autoloot_junk;
-  #switch {"%1"} {
-    #case {"no-cursed"} {#var {result} {on}};
-    #case {"some-cursed"} {#var {result} {on}};
-    #case {"heavy"} {
-      #if {"$target" == "darkwiz" || "$target" == "undersea"} {
-        autoloot_junk {$target};
-        #var {result} {on}
-      } {
-        #var {result} {gold}
-      }
-    };    
-    #default {#var {result} {%1}}
-  }
-}
-
-
-#nop --------------------------
-#nop Overrides
-#nop --------------------------
-
 #alias {sneak} {
-  get pelt case; rem waistband; wear pelt; safe_put waistband case
+  get pelt case; rem $item_waist; wear pelt; safe_put $item_waist case
 }
 
 #alias {unsneak} {
-  rem pelt; safe_put pelt case; get waistband case; wear waistband
+  get $item_waist case; rem pelt; safe_put pelt case; wear $item_waist
 }
 
 #alias {cmd_sneak} {
@@ -466,89 +526,7 @@
 #alias {cmd_unsneak} {
   exec_task {cmd_unsneak} {unsneak} {%1} {%2} {
     #action {You wear Mystic Ruby Waistband about your waist.} {task_cmd_unsneak_done};
+    #action {You wear a small mithril girdle about your waist.} {task_cmd_unsneak_done};    
     #action {You are not using it.} {task_cmd_unsneak_done}
   }
 }
-
-
-#nop --------------------------
-#nop Follow orders
-#nop --------------------------
-
-#class {follow_orders} {open}
-
-#alias {cmd_spirit_armor_down} {
-  debug ORDER: marking spiritual armor --> down;
-  spell_state_down {spiritual armor};
-  quick_spellup_continuation {%1}
-}
-
-#list {allow_orders} {create}
-  {Sid}
-  {Silk}
-  {group}
-
-#alias {do_order} {
-  #local {allow} {0};
-  #list {allow_orders} {find} {%1} {allow};
-  debug DO ORDER {%1} {%2} allow=$allow;
-  
-  #if {"$allow" == "0"} {
-    order_tell {%1} {FAIL: %2 -- not allowed}
-  } {
-    #switch {"%2"} {
-      #case {"cast"} {
-        exec_cast {%3} {%4}
-	  {order_done {%1} {cast %3}}
-	  {order_fail {%1} {cast %3}}
-      };
-      #case {"imm"} {order_dispatch {%2} {cmd_imm_%3_%4} {%1} {%2}};
-      
-      #case {"layhands"} {order_dispatch {%2} {cmd_layhands %3} {%1} {%2}};
-      #case {"recall"} {executor {global_tasks} {clear}; order_dispatch {%2} {cmd_recall} {%1} {%2}};
-      #case {"noscrap"} {order_dispatch {%2} {cmd_scrap_off} {%1} {%2}};
-      #case {"scrap"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};
-      #case {"scrappy"} {order_dispatch {%2} {cmd_scrap_on} {%1} {%2}};
-      #case {"stand"} {order_dispatch {%2} {cmd_stand} {%1} {%2}};
-      #case {"spiritual armor"} {order_dispatch {spirit_armor} {cmd_spirit_armor_down} {%1} {%2}};
-	
-      #default {order_tell {%1} {FAIL: %2 -- unrecognized order}}
-    }
-  }
-}
-	
-#alias {order_dispatch} {
-  debug ORDER-DISPATCH %1 %2 %3;
-  exec {order_%1} {%2} {order_done {%3} {%4}} {order_fail {%3} {%4}}
-}
-
-#alias {order_tell} {
-  #if {"%1" == "group"} {
-    tell group '%2
-  } {
-    tell %1 %2
-  }  
-}
-
-#alias {order_done} {
-  order_tell {%1} {OK: %2}
-}
-
-#alias {order_fail} {
-  #if {"%3" == ""} {
-    order_tell {%1} {FAIL: %2}
-  } {
-    order_tell {%1} {FAIL: %2 -- %3}
-  }
-}
-
-#action {%1 tells the group 'cast {armor|bless|cure blind}'} {do_order {group} {cast} {%2} {%1}}
-#action {%1 tells the group 'imm: {fire|energy|poison|electric|water} {on|off}'} {do_order {group} {imm} {%2} {%3}}
-#action {%1 tells you 'cast {armor|bless}'} {do_order {%1} {cast} {%2} {%1}}
-#action {%1 tells you '{healme|lay|layhands}'} {do_order {%1} {layhands} {%1}}
-#action {%1 tells the group '{healme|lay|layhands}'} {do_order {group} {layhands} {%1}}
-#action {%1 tells the group '{recall|noscrap|scrap|scrappy}'} {do_order {group} {%2}}
-#action {%1 whispers to you, 'down: %2'} {do_order {%1} {%2}}
- 
-#class {follow_orders} {save}
-#class {follow_orders} {close}

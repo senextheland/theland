@@ -6,6 +6,7 @@ hook {on_remove_para} {create};
 #alias {assist_on} {
   #class {assist} {open};
 
+  #action {%1 attacks %%1 for no reason at all!} {maybe_assist {%1} {%%1}};
   #action {%%1 sees %1, and attacks!} {maybe_assist {%1} {%%1}};
   #action {%1 {$fighting_words} {%%2} with {his|her}} {maybe_assist {%1} {%%2}};
   #action {%1 grins evilly as his fireshield burns {%%1}} {maybe_assist {%1} {%%1}};
@@ -15,6 +16,7 @@ hook {on_remove_para} {create};
   #action {%1 tries to backstab %%1, but nearly cuts her own finger.} {#nop};
   #action {%1 places %%1 in the back of %%2, resulting in several strange noises and some blood.} {maybe_assist {%1} {%%2}};
   #action {%1 sends a ball of silvery energy spinning at %%1, which hits.} {maybe_assist {%1} {%%1}};
+  #action {%1 touches %%1, who is sent reeling} {maybe_assist {%1} {%%1}};
   #action {%1 devastates %%1 with {his|her} double damage attack!} {maybe_assist {%1} {%%1}};
   #action {%1 beats the shit out of %%1.} {maybe_assist {%1} {%%1}};
   #action {%1 blocks %%1's blow.} {maybe_assist {%1} {%%1}};

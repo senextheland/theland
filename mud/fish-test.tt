@@ -1,0 +1,104 @@
+#class {fish} {open}
+
+#var {fish_container} {golden-case}
+
+#var {fish_target} {}
+#var {fish_state} {idle}
+
+#alias {fish_once_end} {#nop}
+#alias {fish_once_done} {#nop}
+#alias {fish_once_fail} {#nop}
+
+#alias {fish} {fish_once}
+#alias {fish_once} {
+  #var {fish_target} {%1};
+  #alias {fish_once_done} {fish_once_end; %2};
+  #alias {fish_once_fail} {fish_once_end; %3};
+
+  hook {on_fight_start} {once} {fish} {fish_once_end};
+
+  #alias {fish_once_end} {
+    debug FISH-ONCE-END!!!;
+    hook {on_fight_start} {remove} {fish};
+    get all.frozen-fish;
+    put all.frozen-fish $fish_container;     
+    #alias {fish_once_end} {#nop};
+    #var {fish_state} {idle};
+    #var {fish_target} {}
+  };
+
+  get_fish_and_throw
+}
+
+#alias {get_fish_and_throw} {
+  #if {"$fish_target" != ""} {
+    #var {fish_state} {idle};
+    exec {get_fish_and_throw}
+      {cmd_throw_dagger_from_container {frozen-fish} {$fish_target} {$fish_container} {frozen fish}}
+      {throw_fish_success}
+      {throw_fish_fail}
+  } {
+    throw_fish_fail {no-target}
+  }
+}
+
+#alias {throw_fish_success} {#nop}
+
+#alias {throw_fish_fail} {
+  debug FISH: throw-fail reason=%1;
+  #switch {"%1"} {
+    #case {"fighting"} {fish_once_end};
+    #case {"no-container"} {fish_once_fail {%1}};
+    #case {"no-dagger"} {fish_once_fail {%1}};
+    #case {"no-mob"} {fish_once_fail {%1}};
+    #case {"timeout"} {fish_once_fail {%1}};
+    #case {"too-many-attempts"} {fish_once_fail {%1}};
+    #case {"no-target"} {
+      #if {"$combat_status" != "idle"} {
+        #nop
+      } {
+        fish_once_fail {%1}
+      }
+    };
+    #default {
+      debug THROW-FISH-FAIL: unrecognized reason code=%1; 
+      fish_once_fail {%1}
+    }
+  }
+}
+
+#action {You catch a frozen fish} {
+  get_fish_and_throw
+}
+
+#action {A frozen fish falls to the ground near you, since you couldn't catch it.} {
+  get_fish_and_throw
+}
+
+#action {A frozen fish suddenly reverses direction and flies %1!} {
+  debounce_fish_lost {%1}
+};
+  
+#action {caught a frozen fish right out of the air, and its coming straight for you!} {
+  debounce_fish_lost {}
+};
+  
+#action {You see a frozen fish hit a wall up ahead before it can return to your hand.} {
+  debounce_fish_lost {}  
+}
+
+#nop There are often a few related triggers for losing a fish. Temporarily set
+#nop the `fish_state` to `lost` to prevent multiple triggers for the same logical
+#nop event. Throwing a new fish transitions the state back to `throw` then `idle`.
+  
+#alias {debounce_fish_lost} {
+  #if {"$fish_state" != "lost"} {
+    #var {fish_state} {lost};
+    on_fish_lost {%1} {get_fish_and_throw} {get_fish_and_throw}
+  } {
+    debug DEBOUNCE-FISH-LOST -- ignore
+  }
+}
+
+#class {fish} {save}
+#class {fish} {close}

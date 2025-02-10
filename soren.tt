@@ -1,0 +1,256 @@
+#var {me} {soren}
+#session $me theland.notroot.com 5000
+#split 0 0
+#config {speedwalk} {on}
+#log {append} {$me.log}
+
+#ticker {fidget} {blunders around.} {120}
+
+#alias {get_ready} {
+  #read {mud/utils.tt};
+  #read {mud/logging.tt};
+  #read {mud/task.tt};
+  #read {mud/exec.tt};
+  #read {mud/hook.tt};
+  #read {mud/commands.tt};
+  #read {mud/tick.tt};
+  #read {mud/cast.tt};
+  #read {mud/eq-repair.tt};
+  #read {mud/robot.tt};  
+  #read {mud/fight.tt};
+  #read {mud/assist.tt};
+  #read {mud/dispell-once.tt};
+  #read {mud/zones.tt};
+  #read {mud/spellup.tt};
+  #read {mud/watch-leader.tt};
+  #read {mud/pawn.tt};
+  #read {mud/regen.tt};
+  #read {mud/cauldron.tt};
+  #read {mud/return-boomerangs.tt};
+  #read {mud/scary-things.tt};
+  #read {mud/follow-orders.tt};
+
+  cmd_score {
+    #read {mud/prompt.tt};
+    #read {mud/health.tt};
+
+    #var {health_low} {450}
+  };
+
+  #function {deposit_target_coins} {
+    #if {@regen_needed{}} {
+      #var {result} {1500000}    
+    } {
+      #var {result} {600000}
+    }
+  };
+
+  #alias {cmd_regen_fairy} {
+    cmd_regen_fairy_until {250} {150} {%%1} {%%2}
+  };
+
+  hook {bless_down} {add} {$me} {cmd_cast_me {bless} {debug BLESS UP} {debug BLESS FAIL}};
+  hook {armor_down} {add} {$me} {cmd_cast_me {armor} {debug ARMOR UP} {debug ARMOR FAIL}};
+  hook {true_sight_down} {add} {$me} {cmd_cast_me {true sight} {debug TRUE SIGHT UP} {debug TRUE SIGHT FAIL}};
+  hook {detect_magic_down} {add} {$me} {cmd_cast_me {detect magic} {debug DETECT MAGIC UP} {debug DETECT MAGIC FAIL}};  
+  need_spell_add {true sight};
+  need_spell_add {detect magic};
+
+  #var {cauldron_count} {10};
+
+  set_robot {senex} {Senex};
+  assist_on {Senex};
+  leader_state_watch {Senex};
+  reset_weapon_state
+}
+
+#alias {reload} {
+  #read {mud/adapter.tt};
+  #read {soren.tt};
+  get_ready
+}
+
+#action {You can't see a damn thing, you're blinded!} {
+  tell group 'cast cure blind
+}
+
+#action {A pile of gold coins} {get all.coins}
+
+#alias {load_overnight_loop} {
+  zone_loop
+    {zone_tridac_kill}
+    {zone_antipal_kill}
+    {zone_blizz_kill}
+    {zone_tridac_kill}
+    {zone_x2_kill}
+    {zone_tzen}
+    {zone_tzen_walk_sell_magicite}
+}
+
+
+#nop --------------------------
+#nop adapter.tt
+#nop --------------------------
+
+#read {mud/monk.tt}
+
+#alias {cmd_sneak} {%1}
+#alias {cmd_unsneak} {%1}
+#alias {cmd_agg} {%1}
+#alias {cmd_unagg} {%1}
+
+#alias {cmd_deposit_self} {
+  cmd_score {cmd_deposit {%1} {%2}}
+}
+
+#alias {regen} {
+  rest;
+  get wrap case; rem leg-plates; wear wrap
+}
+
+#alias {unregen} {
+  stand;
+  rem wrap; put wrap case; wear leg-plates
+}
+
+#alias {invis_on} {wear wicker-plates}
+#alias {invis_off} {rem wicker-plates}
+
+#alias {set_default_imms} {
+  #var {imm} {{fire}{off} {energy}{off} {poison}{off} {electric}{off} {water}{off} {cold}{off} {acid}{off}}
+}
+set_default_imms
+
+#alias {safe_put} {
+  put %1 %2
+}
+
+#alias {imm_transition} {
+  #if {"$imm[%1]" != "%2"} {
+    #var {imm[%1]} {%2};
+    imm_%1_%2
+  } {
+    #show IMM ALREADY %1 --> %2    
+  }
+}
+
+#alias {imm_energy_on} {
+  get spectral-band case;
+  rem golden-ring; wear spectral-band;
+  safe_put golden-ring case
+}
+
+#alias {imm_energy_off} {
+  rem spectral-band;
+  get golden-ring case; wear golden-ring;
+  safe_put spectral-band case    
+}
+
+#alias {cmd_imm_energy_on} {
+  cmd_imm_transition {energy} {on} {You wear Spectral Band} {%1} {%2}
+}
+
+#alias {cmd_imm_energy_off} {
+  cmd_imm_transition {energy} {off} {You wear {the signet ring of Thalos|broons bane|the golden ring of the master}} {%1} {%2}
+}
+
+#alias {imm_water_on} {
+  get snakeskin case;
+  rem girdle; wear snakeskin;
+  safe_put girdle case
+}
+
+#alias {imm_water_off} {
+  get girdle case;
+  rem snakeskin; wear girdle;
+  safe_put snakeskin case
+}
+
+#alias {cmd_imm_water_on} {
+  cmd_imm_transition {water} {on} {You wear A snakeskin belt} {%1} {%2}
+}
+
+#alias {cmd_imm_water_off} {
+  cmd_imm_transition {water} {off} {You wear a small mithril girdle} {%1} {%2}
+}
+
+#alias {imm_poison_on} {
+  get ring-silver-amethyst case;
+  rem golden-ring; safe_put golden-ring case;
+  wear ring-silver-amethyst
+}
+
+#alias {imm_poison_off} {
+  rem ring-silver-amethyst; safe_put ring-silver-amethyst case;
+  get golden-ring case; wear golden-ring
+}
+
+#alias {cmd_imm_poison_on} {
+  cmd_imm_transition {poison} {on} {You wear A silver and amethyst ring} {%1} {%2}
+}
+
+#alias {cmd_imm_poison_off} {
+  cmd_imm_transition {poison} {off} {You wear the golden ring of the master} {%1} {%2}
+}
+
+#alias {imm_fire_on} {
+  get burning-wristband case;
+  rem flaming-bracelet; wear burning-wristband;
+  safe_put flaming-bracelet case
+}
+
+#alias {imm_fire_off} {
+  get flaming-bracelet case;
+  rem burning-wristband; wear flaming-bracelet;
+  safe_put burning-wristband case
+}
+
+#alias {cmd_imm_fire_on} {
+  cmd_imm_transition {fire} {on} {You wear A Burning Wristband} {%1} {%2}
+}
+
+#alias {cmd_imm_fire_off} {
+  cmd_imm_transition {fire} {off} {A Flaming Bracelet} {%1} {%2}
+}
+
+#var {mode_scrap} {}
+
+#alias {reset_weapon_state} {
+  #var {mode_scrap} {on};
+  #var {mode_dispell} {off};
+
+  #if {"$imm[energy]" == "on"} {imm_energy_off};
+  #if {"$imm[water]" == "on"} {imm_water_off};
+  #if {"$imm[fire]" == "on"} {imm_fire_off};
+  #if {"$imm[poison]" == "on"} {imm_poison_off};
+
+  set_default_imms
+}
+
+#alias {reset_weapon_trampoline} {
+  reset_weapon_state;
+  trampoline {reset_weapon_trampoline} {%1}
+}
+
+#alias {cmd_reset_weapon_state} {
+  cmd_dispell_off {reset_weapon_trampoline {%1}} {reset_weapon_trampoline {%2}}
+}
+
+#alias {cmd_scrap_off} {
+  #var {mode_scrap} {off};
+  trampoline {cmd_scrap_off} {%1}  
+}
+
+#alias {cmd_scrap_on} {
+  #var {mode_scrap} {on};
+  trampoline {cmd_scrap_on} {%1}
+}
+
+#alias {cmd_target_align} {
+  #if {"$target" == "felgormines" || "$target" == "tarvalon"} {
+    cmd_dispell_on {} {%2} {%3}
+  } {
+    debug TARGET-ALIGN: ignore;
+    trampoline {cmd_target_align} {%2}
+  }
+}

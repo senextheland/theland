@@ -4,6 +4,7 @@ hook {on_eq_repair} {create}
 hook {on_eq_bless_unrepairable} {create}
 
 #var {eq_needs_bless} {}
+#var {weapons_hit} {}
 
 #alias {eq_needs_bless} {
   #var {eq_needs_bless[%1]} {true}
@@ -12,6 +13,166 @@ hook {on_eq_bless_unrepairable} {create}
 #alias {on_eq_blessed} {
   #if {"$eq_item_title" != ""} {
     #unvar {eq_needs_bless[$eq_item_title]}
+  }
+}
+
+#alias {on_eq_hit} {
+  on_weapon_hit {%1}
+}
+
+#alias {on_weapon_hit} {
+  #local {weapon_name} {$weapon_map[%1]};
+  #if {"$weapon_name" != ""} {
+    #math {weapons_hit[$weapon_name]} {$weapons_hit[$weapon_name] + 1};
+    debug WEAPON-HIT!!! $weapon_name --> $weapons_hit[$weapon_name] hits;
+    #if {$weapons_hit[$weapon_name] >= 3} {
+      rescue_weapon {$weapon_name}
+    }
+  }
+}
+
+#alias {rescue_weapon} {
+  #switch {"%1"} {
+    #case {"achilles-spear"} {
+      #var {weapon_noscrap} {fremen-knife};
+      rem %1; reset_weapon_state; put %1 case
+    };
+    #case {"avenger"} {
+      #var {weapon_align_evil} {fremen-knife};
+      rem %1; reset_weapon_state; put %1 case
+    };
+    #case {"fury"} {
+      #var {weapon_align_good} {fremen-knife};
+      rem %1; reset_weapon_state; put %1 case
+    }    
+  }
+}
+
+#alias {on_mending_done} {
+  #var {weapons_hit} {};
+  log_event ---------------------MEND DONE------------------
+}
+
+#var {weapon_map} {
+  {The Holy Avenger}{avenger}
+  {Clangeddin's Fury}{fury}
+  {Achilles' Spear}{achilles-spear}
+  {a Fremen fighting knife}{fighting-knife}
+  {A Golden Tentacle}{golden-tentacle}
+  {The deceiver}{deceiver}
+  {A Rainbow Hued Dagger}{$nodrop_dagger}
+}  
+
+#list {eq_map} {create}
+  {A glowing breast plate}{ucardi-plate}
+  {a ring made of pure holiday spirit}{holiday-ring}
+  {A ring of giant's strength}{giant-strength}
+  {the lions mane}{mane}
+  {A glowing visor}{ucardi-visor}
+  {A pair of glowing leg plates}{ucardi-plates}
+  {Toq's second-hand leather boots}{despair-boots}
+  {A pair of glowing gauntlets}{ucardi-gauntlets}
+  {Armor Formed from Filthy Water}{despair-bracers}
+  {the shield of the lion}{shield}
+  {Mystic Ruby Waistband}{waistband}
+  {A golden key shaped into a wristband}{key-band}
+  {the light blue bracelet of the valley}{blue-bracelet}
+  {A Purple Shard}{shard}
+  {A glowing scale of the serpent}{serpent-scale}
+  {the One Ring}{one-ring}
+  {An embroidered fur cloak}{fur-cloak}
+  {The robe of the golden dragon}{dragon-robe}
+  {a Bene Gesserit hood}{hood}
+  {polyester slacks}{slacks}
+  {gorilla gloves}{gloves}
+  {A pair of Golden Armlets}{armlets}
+  {A Heavy Tower Shield}{hammer-gondolin-shield}
+  {a white robe}{white-robe}
+  {a cheetah skin}{cheetah-skin}
+  {A Flaming Bracelet}{flaming-bracelet}
+  {A wristband woven of moss}{mossy}
+  {An Inky Black Flame}{black-flame}
+  {the Skin of the Sky Silkworm}{silkworm}
+  {A hide of a Fruban villager}{ponasdar-hide}
+  {the lionskin suit}{lionskin-suit}
+  {a sturdy mithril shield}{sturdy-shield}
+  {A Warder's Cloak}{warder-cloak}
+  {broons bane}{broons}
+  {A Mithril Girdle with Dwarven Runes}{mithril-girdle}
+  {Some mithril plate mail}{mithril-plate}
+  {a ring made of pure holiday spirit}{holiday-ring}
+  {Some Wicker Boots}{wicker-boots}
+  {the Firestar}{firestar}
+  {A cloak with the Imperial Crest}{imperial-cloak}
+  {A halo}{halo}
+  {green scale armor}{green-scale-armor}
+  {a Carbondanium Shield}{carbondanium-shield}
+  {The bracelet of the minotaur}{minotaur}
+  {A wristband woven of moss}{mossy}
+  {The Elfstone}{elfstone}
+  {Some black calfskin gloves}{calfskin-gloves}
+  {a small mithril girdle}{mithril-girdle}
+  {Some green armor}{green-armor}
+  {A bejeweled war crown}{war-crown}
+  {An Ornate beer Stein}{stein}
+  {The Pelt of the Golden Fox}{fox-pelt}
+  {Gauntlets of Ogre Power}{ogre-gauntlets}
+  {Desert Boots}{desert-boots}
+  {A Black Quilted Doublet}{quilted-doublet}
+  {A feather ring}{feather-ring}
+  {A Band of Tangle Tree Bark}{tree-bark}
+  {an 'I'm a Newbie!' Hat}{hat}
+  {A blue jewel suspended from a light gold chain}{blue-jewel}
+  {The Royal Scepter of the UnderSea Kingdoms}{undersea-scepter}
+  {The Holy Grail(invisible)}{holy-grail}
+  {The Holy Grail}{holy-grail}
+  {A firefly abdomen}{abdomen}
+  {Silver Elven Armor}{tuor-armor}
+  {A swan winged helm}{tuor-swan-helm}
+  {A tarnished ring}{despair-hero}
+  {A bracelet made of stone}{stone-bracelet}
+  {the Skin of the Dark Green Spider}{green-spider-skin-valleyw}
+  {A Grasshopper's Skin}{grasshopper-skin-valleyw}
+  {the Hard Shell of the Shield Bug}{shield-bug}
+  {The Mystic Armband}{mystic-armband}
+  {the ring of the wind(invisible)}{ring-wind}
+  {A pair of red trousers with white fur cuffs}{red-trousers-santa}
+  {tshirt: "Paladins ARE Wussies!!"}{tshirt}
+  {the signet ring of Thalos}{thalos-signet}
+  {Demonic Gloves}{aethyr-gloves-demonic}
+  {A Rick Astley fan club ring}{ring-trollquest-klias}
+  {Buffalo Hide}{hide-buffalo-fruban}
+  {A Fallen God's Token of War}{despair-token}
+  {Thorned Shackles}{aethyr-shackles}
+  {the Sash of Lasting Warmth}{sash-warmth}
+  {A pair of Golden Greaves}{golden-greaves}
+  {a dwarven holy symbol}{holy-symbol}
+  {a Fremen coffee set}{coffee-set}
+  {A pair of adamantite horseshoes}{horseshoes}
+  {a pair of mithril gauntlets}{mithril-gauntlets}
+  {A snakeskin belt}{snakeskin-belt}
+  {A white dragon scale shirt}{dragon-scale-shirt}
+  {lionskin boots}{lionskin-boots}
+  {A pair of liquid metal bracers}{undersea-bracers}
+  {the golden ring of the master}{golden-ring}
+  {the crest of the golden dragon}{golden-crest}
+  {a black dragon's crest}{black-crest}
+  {a black mask}{black-mask}
+  {Wicker leg plates}{leg-plates}
+  {the Armlets of Arcane Sorcery}{armlets}
+  {a golden kimono}{golden-kimono}
+  {A rotted cloth amulet}{cloth-amulet}
+  {a warrior's stillsuit}{stillsuit}
+  {A pair brachiosaur gloves}{gloves}
+
+#function {eq_map_lookup} {
+  #local {eq_map_index} {};
+  #list {eq_map} {find} {%1} {eq_map_index};
+  #if {$eq_map_index != 0} {
+    #math {eq_map_index} {$eq_map_index + 1};
+    #var {result} {$eq_map[$eq_map_index]}
+  } {
+    #var {result} {}
   }
 }
 
@@ -26,90 +187,6 @@ hook {on_eq_bless_unrepairable} {create}
   #var {eq_item_name} {0};
   #var {current_eq_list_item} {0};
   
-  #list {eq_map} {create}
-    {A glowing breast plate}{ucardi-plate}
-    {a ring made of pure holiday spirit}{holiday-ring}
-    {A ring of giant's strength}{giant-strength}
-    {the lions mane}{mane}
-    {A glowing visor}{ucardi-visor}
-    {A pair of glowing leg plates}{ucardi-plates}
-    {Toq's second-hand leather boots}{despair-boots}
-    {A pair of glowing gauntlets}{ucardi-gauntlets}
-    {Armor Formed from Filthy Water}{despair-bracers}
-    {the shield of the lion}{shield}
-    {Mystic Ruby Waistband}{waistband}
-    {A golden key shaped into a wristband}{key-band}
-    {the light blue bracelet of the valley}{blue-bracelet}
-    {A Purple Shard}{shard}
-    {A glowing scale of the serpent}{serpent-scale}
-    {the One Ring}{one-ring}
-    {An embroidered fur cloak}{fur-cloak}
-    {The robe of the golden dragon}{dragon-robe}
-    {a Bene Gesserit hood}{hood}
-    {polyester slacks}{slacks}
-    {gorilla gloves}{gloves}
-    {A pair of Golden Armlets}{armlets}
-    {A Heavy Tower Shield}{hammer-gondolin-shield}
-    {a white robe}{white-robe}
-    {a cheetah skin}{cheetah-skin}
-    {A Flaming Bracelet}{flaming-bracelet}
-    {A wristband woven of moss}{mossy}
-    {An Inky Black Flame}{black-flame}
-    {the Skin of the Sky Silkworm}{silkworm}
-    {A hide of a Fruban villager}{ponasdar-hide}
-    {the lionskin suit}{lionskin-suit}
-    {a sturdy mithril shield}{sturdy-shield}
-    {A Warder's Cloak}{warder-cloak}
-    {broons bane}{broons}
-    {A Mithril Girdle with Dwarven Runes}{mithril-girdle}
-    {Some mithril plate mail}{mithril-plate}
-    {a ring made of pure holiday spirit}{holiday-ring}
-    {Some Wicker Boots}{wicker-boots}
-    {the Firestar}{firestar}
-    {A cloak with the Imperial Crest}{imperial-cloak}
-    {A halo}{halo}
-    {green scale armor}{green-scale-armor}
-    {a Carbondanium Shield}{carbondanium-shield}
-    {The bracelet of the minotaur}{minotaur}
-    {A wristband woven of moss}{mossy}
-    {The Elfstone}{elfstone}
-    {Some black calfskin gloves}{calfskin-gloves}
-    {a small mithril girdle}{mithril-girdle}
-    {Some green armor}{green-armor}
-    {A bejeweled war crown}{war-crown}
-    {An Ornate beer Stein}{stein}
-    {The Pelt of the Golden Fox}{fox-pelt}
-    {Gauntlets of Ogre Power}{ogre-gauntlets}
-    {Desert Boots}{desert-boots}
-    {A Black Quilted Doublet}{quilted-doublet}
-    {A feather ring}{feather-ring}
-    {A Band of Tangle Tree Bark}{tree-bark}
-    {an 'I'm a Newbie!' Hat}{hat}
-    {A blue jewel suspended from a light gold chain}{blue-jewel}
-    {The Royal Scepter of the UnderSea Kingdoms}{undersea-scepter}
-    {The Holy Grail(invisible)}{holy-grail}
-    {The Holy Grail}{holy-grail}
-    {A firefly abdomen}{abdomen}
-    {Silver Elven Armor}{tuor-armor}
-    {A swan winged helm}{tuor-swan-helm}
-    {A tarnished ring}{despair-hero}
-    {A bracelet made of stone}{stone-bracelet}
-    {the Skin of the Dark Green Spider}{green-spider-skin-valleyw}
-    {A Grasshopper's Skin}{grasshopper-skin-valleyw}
-    {the Hard Shell of the Shield Bug}{shield-bug}
-    {The Mystic Armband}{mystic-armband}
-    {the ring of the wind(invisible)}{ring-wind}
-    {A pair of red trousers with white fur cuffs}{red-trousers-santa}
-    {tshirt: "Paladins ARE Wussies!!"}{tshirt}
-    {the signet ring of Thalos}{thalos-signet}
-    {Demonic Gloves}{aethyr-gloves-demonic}
-    {A Rick Astley fan club ring}{ring-trollquest-klias}
-    {Buffalo Hide}{hide-buffalo-fruban}
-    {A Fallen God's Token of War}{despair-token}
-    {Thorned Shackles}{aethyr-shackles}
-    {the Sash of Lasting Warmth}{sash-warmth}
-    ;
-
   #alias {eq_repair_check} {
     repair_next_item
   };
@@ -150,9 +227,9 @@ hook {on_eq_bless_unrepairable} {create}
   };
 
   #action {[%%s%%d] <%%3> %%4} {
-    #regex {%%4} {It is in %%%2 condition.} {
-      #if {"&2" != "excellent"} {
-        #list {eq_list} {add} {%%2:%%3:&1}
+    #regex {%%4} {{\w+ condition.|falling apart.|repair.}} {
+      #if {"&1" != "excellent condition."} { 
+        #list {eq_list} {add} {%%2:%%3}
       }
     }
   };
@@ -183,6 +260,92 @@ hook {on_eq_bless_unrepairable} {create}
   #class {eq_repair} {close};
 
   eq
+}
+
+#alias {container_repair} {
+  #class {container_repair} {open};
+
+  #var {container} {%1};
+  #alias {on_repair_done} {#class {container_repair} {kill}; %2};
+  #alias {on_repair_fail} {#class {container_repair}; #class {container_repair} {kill}; %3};
+
+  #list {eq_list} {create};
+  #var {eq_item_index} {0};  
+  #var {eq_item_name} {0};
+  #var {current_eq_list_item} {0};
+
+  #action {(carried) :} {
+    hook {on_prompt} {once} {container_repair_check} {container_repair_check}
+  };
+
+  #action {[%%s%%d] %%3} {
+    #regex {%%3} {It is in %%%2 condition.} {
+      #if {"&2" != "excellent"} {
+        #regex {%%3} {%%%1..} {
+          #list {eq_list} {add} {&1}
+	} {
+	  debug CONTAINER-REPAIR -- cannot determine item title from "%%3"	  
+	}
+      }
+    }
+  };
+  
+  #alias {container_repair_check} {
+    repair_next_item
+  };
+
+  #alias {repair_next_item} {
+    #list {eq_list} {get} {1} {current_eq_list_item};
+    #if {"$current_eq_list_item" != "0"} {
+      #list {eq_list} {delete} {1};
+      #var {eq_item_name} {@eq_map_lookup{$current_eq_list_item}};
+      debug REPAIR-NEXT: "$current_eq_list_item" --> "$eq_item_name";
+      #if {"$eq_item_name" != ""} {
+        get $eq_item_name $container
+      } {
+        debug REPAIR-CONTAINER: repair_next_item cannot lookup "$current_eq_list_item";
+	trampoline {repair_next_item} {repair_next_item}
+      }
+    } {
+      on_repair_done
+    }
+  };
+
+  #action {You get %%1 from} {
+    #var {eq_item_title} {%%1};
+    #var {eq_item_name} {@eq_map_lookup{$eq_item_title}};
+    #if {"$eq_item_name" != ""} {
+      debug CONTAINER-REPAIR: attempt $eq_item_name;
+      repair_item
+    } {
+      debug CONTAINER-REPAIR: get-action cannot lookup "$eq_item_title";
+      trampoline {repair_next_item} {repair_next_item}
+    }    
+  };
+
+  #alias {repair_item} {
+    give $eq_item_name super
+  };
+
+  #action {The Super Repair Guy gives you} {
+    hook {on_eq_repair} {exec-each}
+      {on_eq_repair_continue}
+      {on_eq_repair_continue}      
+  };
+
+  #alias {on_eq_repair_continue} {
+    replace_repaired_item;
+    trampoline {on_eq_repair_continue} {repair_next_item}
+  };
+
+  #alias {replace_repaired_item} {
+    safe_put {$eq_item_name} {$container}
+  };
+
+  #class {container_repair} {save};
+  #class {container_repair} {close};
+
+  look in $container
 }
 
 #class {repair} {save}

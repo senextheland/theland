@@ -43,11 +43,42 @@ task_list {zone_steps} {create} {zone_finish} {zone_recover}
   zone_timeout_off
 }
 
+#alias {zone_test_mark_start} {
+  #format {zone_test_time_start} {%T} {};
+  #format {zone_test_exp_start} {$score_exp};
+  trampoline {zone_test_mark_start} {%1}
+}
+
+#alias {zone_test_mark_end} {
+  #format {zone_test_time_end} {%T} {};
+  #format {zone_test_exp_end} {$score_exp};
+
+  #math {zone_test_exp_delta} {$zone_test_exp_end - $zone_test_exp_start};
+  #math {zone_test_time_delta} {$zone_test_time_end - $zone_test_time_start};
+  #math {zone_test_exp_rate} {$zone_test_exp_delta / $zone_test_time_delta * 60}
+  tell group 'zone-test-end: $zone_test_name time=$zone_test_time_delta exp=$zone_test_exp_delta rate/min=$zone_test_exp_rate;
+
+  trampoline {zone_test_mark_end} {%1}
+}
+
 #alias {zone_test} {
   #var {zone_state} {testing};
+  #var {zone_test_name} {%1};
   task_list {zone_steps} {clear};
-  executor {global_tasks} {clear};
+  executor {global_tasks} {clear};  
+
+  zone_extend
+    {capture_score}
+    {zone_test_mark_start}
+    ;
+  
   %1;
+
+  zone_extend
+    {capture_score}
+    {zone_test_mark_end}
+    ;
+
   task_list {zone_steps} {nudge};
 }
 
@@ -71,16 +102,26 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
 #alias {zone_loop_stop_hook} {
   #if {"$zone_state" != "start" && "$zone_state" != "testing"} {
     debug ZONE-LOOP-STOP: hook zone_state=$zone_state    
-  } {
+  };
+  #elseif {"$zone_end_time_elapsed" == "true"} {
+    debug ZONE-CONTINUATION: end-time elapsed --> end;
+    zone_end
+  };
+  #else {
     %1
   }
 }
 
 #alias {zone_loop_safety_hook} {
-  #if {"$zone_safety" == "on"} {
+  #if {$mana < 1000 && "$zone_state" == "start" && "$zone_current" != "zone_interlude"} {
+    tell group 'ZONE-SAFETY-ALERT: mana is super low, aborting zone;
+    zone_end
+  };
+  #elseif {"$zone_safety" == "on"} {
     reset_zone_timeout;
     cmd_presence_check {$robot} {$robot_description} {%1} {zone_loop_safety_presence_fail {%1} {%2}}
-  } {
+  };
+  #else {
     %1
   }
 }
@@ -101,6 +142,7 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
   #if {"$tick_state" == "soon"} {
     tell group 'continue: tick soon, waiting...;
     cmd_group_spellup {#nop} {#nop};
+    cmd_group_optimistic_heal {#nop} {#nop};
     hook {on_tick} {once} {zone_loop_continue_when_hook} {%1}
   } {
     quick_spellup_continuation {%1}
@@ -129,6 +171,23 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
   }
 }
 
+#alias {set_zone_end_time} {
+  #var {zone_end_time} {%1};
+  #var {zone_end_time_elapsed} {false};
+  #delay {set_zone_end_time} {zone_end_time_elapsed} {$zone_end_time}  
+}
+
+#alias {cmd_set_zone_end_time_minutes} {
+  #math {zone_end_time_seconds} {%1 * 60};
+  set_zone_end_time {$zone_end_time_seconds};
+  trampoline {cmd_set_zone_end_time} {%2}
+}
+
+#alias {zone_end_time_elapsed} {
+  debug ZONE-TIME: elapsed;
+  #var {zone_end_time_elapsed} {true}
+}
+
 #alias {reset_zone_timeout} {
   debug_time {ZONE-TIMEOUT --> reset};
   #delay {reset_zone_timeout} {zone_timeout} {90}
@@ -136,7 +195,9 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
 
 #alias {zone_timeout_off} {
   debug_time {ZONE-TIMEOUT --> off};
-  #undelay {reset_zone_timeout}
+  #undelay {reset_zone_timeout};
+  #undelay {set_zone_end_time};
+  #var {zone_end_time_elapsed} {}
 }
 
 #alias {zone_timeout} {
@@ -162,7 +223,8 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
 hook {on_zone_end} {create}
 
 #alias {zone_recover} {
-  debug ZONE-RECOVER current=$zone_current: %0
+  debug ZONE-RECOVER current=$zone_current: %0;
+  zone_retry
 }
 
 #alias {zone_finish} {#show ZONE-FINISH: $zone_current}
@@ -178,16 +240,37 @@ hook {on_zone_end} {create}
     zone_fast_forward;
     zone_start {$zones[1]}
   } {
+    #if {"$zone_current" != ""} {
+      finished_zone_announcement
+    };
     zone_start {zone_interlude}
   };
 }
 
 #alias {zone_start} {#show ZONE-START: %1}
 
+#function {log_epoch_seconds} {
+  #format {result} {%T} {}
+}
+
+#alias {log_zone_start_exp} {
+  #line log {zone-stats.csv} {@log_epoch_seconds{},$zone_current,$score_exp};
+  trampoline {log_zone_start_exp} {%1}
+}
+
 #action {ZONE-START: %1} {
   #if {"$zone_state" == "start"} {
-    #var {zone_current} {%1};    
+    #var {zone_current} {%1};
+    task_list {zone_steps} {clear};
+
+    #if {"$zone_current" != "zone_interlude"} {
+      zone_extend
+        {capture_score}
+        {log_zone_start_exp}
+    };
+      
     $zone_current;
+    
     task_list {zone_steps} {nudge}
   } {
     debug ZONE-START: ignore state=$zone_state
@@ -204,6 +287,13 @@ hook {on_zone_end} {create}
   #list {zones} {get} {1} {result};
   #list {zones} {delete} {1};
   #list {zones} {add} {$result}
+}
+
+#alias {zone_end} {
+  executor {global_tasks} {clear};
+  task_list {zone_steps} {clear};
+  tell group 'zone-end: terminating zone NOW;
+  zone_finish
 }
 
 #alias {zone_retry} {
@@ -269,6 +359,8 @@ hook {on_zone_end} {create}
 #alias {def_zone_task1} {#alias {%1} {exec {zone_task} {%2 {%%1}} {%%2} {%%3}}}
 #alias {def_zone_task2} {#alias {%1} {exec {zone_task} {%2 {%%1} {%%2}} {%%3} {%%4}}}
 #alias {def_zone_task3} {#alias {%1} {exec {zone_task} {%2 {%%1} {%%2} {%%3}} {%%4} {%%5}}}
+
+#alias {def_zone_end_on_fail_task0} {#alias {%1} {exec {zone_task} {%2} {%%1} {zone_end}}}
 
 
 #nop --------------------------
@@ -337,6 +429,7 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
 
 #alias {zone_interlude_regen} {
   ext_recall_to_inn;
+  ext_walk_inn_to_town;
   ext_visit_town {$need_pawn};
   zone_extend
     {need_pawn {}}
@@ -344,15 +437,16 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
 
 #alias {zone_interlude_fairy} {
   ext_recall_and_repair;
+  ext_crossroads_spellup;
   zone_extend
     {capture_group_score}
     {sync_command ext_maybe_town_with_fairy}
 }
 
 #alias {ext_maybe_town_with_fairy} {
-  #if {@regen_needed{}} {
+  #if {@regen_needed{} || $score_alignment < 850} {
     ext_town_with_fairy {$need_pawn}
-  } {
+  } {        
     ext_visit_town {$need_pawn}
   };
   zone_extend
@@ -364,12 +458,12 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
     {group_recall}
     {zone_safety off}    
     {transition_zone_recovery_state}
-    {announce {next_zone_announcement} {2.0}}
     {quick_spellup}
     {mode_bash off}    
     {regen_some}
     {group_repair}
     {group_spellup}
+    {group_optimistic_heal}
     {zone_safety on}  
 }
 
@@ -378,13 +472,27 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
     {group_recall}
     {mode_bash off}
     {group_repair}
+    {reset_weapons}
+    {group_optimistic_heal}    
+}
+
+#alias {ext_crossroads_spellup} {
+  zone_extend
+    {walk_fast {$inn_crossroads_south} {Southern Path}}
     {group_spellup}
-    {reset_weapons}    
+    {announce {enjoy_outdoors_announcement} {5.0}}
+    {walk_fast {${crossroads_south_crossroads}${crossroads_mk}} {Market Square}}    
+    ;
+}
+
+#alias {ext_walk_inn_to_town} {
+  zone_extend
+    {walk_fast {$inn_mk} {Market Square}}    
 }
 
 #alias {ext_town_with_fairy} {
+  ext_bank;
   zone_extend
-    {walk_fast {$inn_mk} {Market Square}}
     {walk_fast {2w1n} {The Magic Shop}}
     {announce {buy_recall_announcement} {2.0}}
     {buy_recalls 4}
@@ -395,28 +503,25 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
   zone_extend;
     {need_pawn {}}
     ;
-    
-  ext_bank;
+
   zone_fairy_kill;
+
   ext_recall_and_repair;
-  zone_extend
-    {walk_fast {$inn_mk} {Market Square}}
-    {}
-    ;
+  ext_crossroads_spellup
 }
 
+#alias {finished_zone_announcement} {tell group 'finished-zone: $zone_current}
 #alias {next_zone_announcement} {tell group 'next-zone: $zones[2]}
 #alias {buy_recall_announcement} {tell group 'buy-recalls}
 #alias {buy_cauldron_announcement} {tell group 'buy-cauldrons}
+#alias {enjoy_outdoors_announcement} {tell group 'ahh... the great outdoors!}
 
 #alias {ext_visit_town} {
-  zone_extend
-    {walk_fast {$inn_mk} {Market Square}}
-    ;
-  
+  ext_bank;
   ext_buy_recalls;
   #if {"%1" != "" } {ext_greebo; ext_pawn {%1}};
-  ext_bank
+  zone_extend
+    {announce {next_zone_announcement} {2.0}}    
 }
 
 #alias {ext_buy_recalls} {
@@ -527,6 +632,12 @@ def_zone_task0 {quick_spellup} {cmd_quick_spellup}
 def_zone_task0 {reset_weapons} {cmd_group_reset_weapons}
 def_zone_task2 {give_coins} {cmd_give_coins}
 def_zone_task0 {group_regen_fairy} {cmd_group_regen_fairy}
+def_zone_task1 {group_target_align} {cmd_group_target_align}
+def_zone_task1 {set_zone_time_minutes} {cmd_set_zone_end_time_minutes}
+def_zone_task0 {group_optimistic_heal} {cmd_group_optimistic_heal}
+def_zone_task1 {portal_to} {cmd_portal}
+
+def_zone_end_on_fail_task0 {group_align_check} {cmd_group_align_check}
 
 #class {control} {save}
 #class {control} {close}

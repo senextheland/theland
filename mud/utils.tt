@@ -1,0 +1,16 @@
+#class {utils} {open}
+
+#alias {list_concat} {
+  #local {item} {};
+  #var {%1} {};
+  #foreach {%3} {item} {
+    #if {"$%1" == ""} {
+      #var {%1} {$item}
+    } {
+      #cat {%1} {%2$item}
+    }
+  }
+}
+
+#class {utils} {save}
+#class {utils} {close}

@@ -1,0 +1,8 @@
+#class {gim_commands} {open}
+
+#alias {bail} {tell group 'dothis: doretreat}
+#alias {rejoin} {tell group 'dothis: rejoin}
+#alias {portalbounce} {tell group 'dothis: portalbounce}
+
+#class {gim_commands} {save}
+#class {gim_commands} {close}

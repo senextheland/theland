@@ -4,7 +4,7 @@
 #alias {copy_cauldron_count} {#var {cauldron_count} {$count_container_found}}
 
 #alias {cmd_count_cauldrons} {
-  cmd_count_container {$cauldron_container} {The Black Cauldron..It has a soft glowing aura!}
+  cmd_count_container {$cauldron_container} {The Black Cauldron..It glows blue!..It has a soft glowing aura!}
     {copy_cauldron_count; %1}
     {copy_cauldron_count; %2}
 }

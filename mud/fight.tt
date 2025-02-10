@@ -10,7 +10,7 @@ hook {on_fight_start} {create}
 #var {currently_fighting} {}
 #var {currently_assisting} {}
   
-#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|Claws|crushes|decimates|demolishes|devastates|ethereally touches|gashes|grapples with|hits|hoofs|leaps upon|massacres|misses|mutilates|obliterates|pierces|pinches|pulverizes|punches|rocks|saws|smashes|stings|stuns|tangles|thrashes|vanquishes|whips}
+#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|Claws|crushes|decimates|demolishes|devastates|ethereally touches|gashes|grapples with|hits|hoofs|jabs|leaps upon|massacres|misses|mutilates|obliterates|pierces|pinches|pulverizes|punches|rocks|saws|smashes|stings|stuns|tangles|thrashes|uppercuts|vanquishes|whips}
 #var {you_fighting_words} {annihilate|atomize|bite|channel|claw|cleave|crushe|decimate|demolish|devastate|grapple with|gash|hit|leap upon|massacre|mutilate|obliterate|pierce|pinch|pulverize|punch|rock|thrash|sting|stun|vanquish|whip}
 #var {you_beat_words} {beat the ever-living shit out of}
 
@@ -40,11 +40,14 @@ hook {on_fight_start} {create}
   maybe_assist {%1} {$currently_fighting}
 }
 
-#action {%1 disappears.} {
-  #if {"$combat_status" != "idle"} {  
-    debug MOB TELEPORTED AWAY;
-    hook on_prompt {once} {after_mob_teleport} {
-      end_fight {$currently_fighting} {teleport}
+#action {%1 disappears.} {fight_mob_gone}
+#action {sends %1 flying from the room!} {fight_mob_gone}
+
+#alias {fight_mob_gone} {
+  #if {"$combat_status" != "idle"} {
+    debug MOB GONE!;  
+    hook on_prompt {once} {fight_mob_gone} {
+      end_fight {$currently_fighting} {mob-gone}
     }
   }
 }

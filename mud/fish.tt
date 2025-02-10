@@ -13,7 +13,7 @@
   #alias {fish_once_fail} {fish_once_end; %3};
 
   #alias {fish_once_end} {
-    debug FISH-ONCE-END!!!;
+    debug FISH-ONCE-END!!!;o
     hook {on_fight_start} {remove} {fish};
     put all.frozen-fish $fish_container;        
     #class {fish_once} {kill};
@@ -43,17 +43,24 @@
     fish_once_fail {no-dagger}
   };
 
-  #action {You don't have that!} {get_fish_and_throw}; 
+  #nop There is a race condition between throwing a fish from inventory and the recovery logic ;
+  #nop that blesses a fish and returns it to the container. So this action may trigger because ;
+  #nop a fish ready to throw was put away before it can be thrown.                             ;
+  #action {You don't have that!} {
+    trampoline {need_fish_to_throw} {get_fish_and_throw}
+  };
+  
   #action {You don't see anybody around meeting that description.} {fish_once_fail {no-mob}} {4}; 
 
   #alias {cmd_get_fish_out} {
     exec_task {cmd_get_fish_out}
       {debug GET-FISH: START; get frozen-fish $fish_container}
-      {%%1} {debug GET-FISH FAIL (%%%); %%2 %%%0} {
-      
-      #action {You get a frozen fish from} {debug GET-FISH: OK; task_cmd_get_fish_out_done};
-      #action {You do not see a fish in} {debug GET-FISH: NONE; task_cmd_get_fish_out_fail};
-      #alias {task_cmd_get_fish_out_end_hook} {debug GET-FISH: END}
+      {%%1}
+      {debug GET-FISH FAIL (%%%); %%2 %%%0}
+      {      
+        #action {You get a frozen fish from} {debug GET-FISH: OK; task_cmd_get_fish_out_done};
+        #action {You do not see a fish in} {debug GET-FISH: NONE; task_cmd_get_fish_out_fail};
+        #alias {task_cmd_get_fish_out_end_hook} {debug GET-FISH: END}
     }
   };
 

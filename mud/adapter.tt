@@ -35,6 +35,9 @@
 #alias {cmd_imm_electric_off} {%1}
 #alias {cmd_imm_water_on} {%2}
 #alias {cmd_imm_water_off} {%1}
+#alias {cmd_imm_acid_on} {%2}
+#alias {cmd_imm_acid_off} {%1}
+#alias {cmd_mode_bash} {%1}
 
 #alias {cmd_heal_me} {debug UNIMPLEMENTED: cmd_heal_me}
 #alias {cmd_remove_curse} {exec_cast {remove curse} {%1} {%2} {%3}}
@@ -71,6 +74,8 @@
 #alias {lifeprot} {exec {lifeprot} {cmd_life_protect_on} {debug LIFEPROT-ON: OK} {debug LIFEPROT-ON: FAIL}}
 #alias {nolifeprot} {exec {nolifeprot} {cmd_life_protect_off} {debug LIFEPROT-OFF: OK} {debug LIFEPROT-OFF: FAIL}}
 #alias {imm} {exec {imm} {cmd_imm_%1_%2} {debug IMM: %1 --> %2} {debug IMM FAIL: %1 is not %2}}
+#alias {kt} {kill_room $target}
+#alias {dt} {dagger_all $target}
 
 
 #nop ---------------------------------------------------------------------------------
@@ -89,6 +94,27 @@
     #action {Ok, you'll try to move silently for a while.} {task_cmd_unsneak_attempt};
     #action {You are no longer sneaky.} {task_cmd_unsneak_done}
   }
+}
+
+#alias {cmd_target_align} {
+  #if {"%1" == "good"} {
+    cmd_mob_align_good {%2} {%3}
+  } {
+    cmd_mob_align_evil {%2} {%3}
+  }
+}
+
+#alias {hold_picks} {get picks case; rem $item_held; grab picks}
+#alias {store_picks} {rem picks; safe_put picks case; grab $item_held}
+
+#alias {store_picks_continue} {
+  store_picks;
+  trampoline {store_picks_continue} {%1}
+}
+
+#alias {cmd_pick_lock} {
+  hold_picks;
+  cmd_pick {%1} {store_picks_continue {%2}} {store_picks_continue {%3}}
 }
 
 #class {adapter} {save}

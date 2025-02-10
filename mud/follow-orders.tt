@@ -1,0 +1,366 @@
+#class {follow_orders} {open}
+
+#nop An order or request comes into through something like a whisper, tell, or group tell. So there is always
+#nop the person that made the request and the "channel" the request was made through. Then there is the
+#nop content of the request, which is typically the action followed by zero or more arguments.
+
+#alias {_order_done} {
+  _order_respond {%1} {%2} {OK: %3}
+}
+
+#alias {_order_fail} {
+  #if {"%4" == ""} {
+    _order_respond {%1} {%2} {FAIL: %3}
+  } {
+    _order_respond {%1} {%2} {FAIL: %3 -- %4}
+  }
+}
+
+#alias {_order_respond} {
+  #if {"%2" == "group"} {
+    tell group '%3
+  };
+  #elseif {"%2" == "whisper"} {
+    whisper %1 %3
+  };
+  #else {
+    tell %1 %3
+  }  
+}
+
+
+#nop An order is for some side effect. A request is something to be done to the requestor. The arguments
+#nop are always:
+#nop
+#nop   %%1     -- requestor
+#nop   %%2     -- channel
+#nop   %%3 ... -- arguments
+#nop
+#nop Furthermore, there are variants of orders:
+#nop
+#nop   * task -- perform the action and then respond
+#nop   * reset_task -- reset command state, then perform the task, then respond
+#nop   * async -- begin a side effect, respond immediately
+#nop   * cue -- pure side effect from environment hint, no response
+#nop   * request -- perform an action on the requestor, then respond
+
+#var order_tasks {}
+
+#alias {def_order_task0} {
+  #local {order_name} {order_%1};
+  #replace {order_name} {{[ -]}} {_};
+  
+  #alias {$order_name} {
+    exec {order_%1} {%2} {_order_done {%%1} {%%2} {%1}} {_order_fail {%%1} {%%2} {%1}}
+  };
+  #var {order_tasks[0][%1]} {$order_name}
+}
+
+#alias {def_order_reset_task0} {
+  #local {order_name} {order_%1};
+  #replace {order_name} {{[ -]}} {_};  
+
+  #alias {$order_name} {
+    executor {global_tasks} {clear};   
+    exec {order_%1} {%2} {_order_done {%%1} {%%2} {%1}} {_order_fail {%%1} {%%2} {%1}}
+  };
+  #var {order_tasks[0][%1]} {$order_name}
+}
+
+#alias {def_order_async0} {
+  #local {order_name} {order_%1}; 
+  #replace {order_name} {{[ -]}} {_}; 
+
+  #alias {$order_name} {
+    %2 {#nop} {#nop}; _order_done {%%1} {%%2} {%1}
+  };
+  #var {order_tasks[0][%1]} {$order_name}
+}
+
+#alias {def_order_cue0} {
+  #local {order_name} {order_%1};
+  #replace {order_name} {{[ -]}} {_};  
+
+  #alias {$order_name} {
+    exec {order_%1} {%2} {debug ORDER CUE: %1 --> DONE} {debug ORDER CUE: %1 --> FAIL}
+  };
+  #var {order_tasks[0][%1]} {$order_name}
+}
+
+#alias {def_order_task1} {
+  #local {order_name} {order_%1};
+  #replace {order_name} {{[ -]}} {_};  
+
+  #alias {$order_name} {
+    exec {order_%1} {%2 {%%2}} {_order_done {%%1} {%%2} {%1: %%3}} {_order_fail {%%1} {%%2} {%1: %%3}}
+  };
+  #var {order_tasks[1][%1]} {$order_name}
+}
+
+#alias {def_order_task2} {
+  #local {order_name} {order_%1};
+  #replace {order_name} {{[ -]}} {_};  
+
+  #alias {$order_name} {
+    exec {order_%1} {%2 {%%2} {%%3}} {_order_done {%%1} {%%2} {%1: %%3 %%4}} {_order_fail {%%1} {%%2} {%1: %%3 %%4}}
+  };
+  #var {order_tasks[2][%1]} {$order_name}
+}
+
+#nop a request task implies that the first argument to the command is the requestor
+#alias {def_request_task0} {
+  #local {request_name} {request_%1};
+  #replace {request_name} {{[ -]}} {_};  
+  
+  #alias {$request_name} {
+    exec {request_%1} {%2 {%1}} {_order_done {%%1} {%%2} {%1}} {_order_fail {%%1} {%%2} {%1}}
+  };
+  #var {order_tasks[0][%1]} {$request_name}
+}
+
+#alias {def_order_passthrough1} {
+  #var {order_tasks[1][%1]} {%2}
+}
+
+
+#nop -----------------------------------------------
+#nop Orders that are actions to perform
+#nop -----------------------------------------------
+
+def_order_task0 {stand} {cmd_stand}
+def_order_task0 {sneak} {cmd_noop}
+def_order_task0 {unsneak} {cmd_noop}
+def_order_task0 {agg} {cmd_noop}
+def_order_task0 {unagg} {cmd_noop}
+def_order_task0 {dispell} {cmd_dispell_on}
+def_order_task0 {nodispell} {cmd_dispell_off}
+def_order_task0 {noscrap} {cmd_scrap_off}
+def_order_task0 {scrappy} {cmd_scrap_on}
+def_order_task0 {scrap} {cmd_scrap_on}
+def_order_task0 {repair-eq} {eq_repair}
+def_order_task0 {deposit} {cmd_deposit_self}
+def_order_async0 {spellup} {spellup}
+def_order_task0 {buy-cauldrons} {cmd_buy_missing_cauldrons}
+def_order_task0 {reset-weapons} {cmd_reset_weapon_state}
+def_order_reset_task0 {recall} {cmd_recall}
+def_order_task0 {wait-here} {cmd_wait_here}
+def_order_task0 {regen-fairy} {cmd_regen_fairy}
+def_order_task0 {align-check} {cmd_align_check}
+def_order_task0 {optimistic-heal} {cmd_heal_optimistic {500}}
+def_order_task1 {pawn} {cmd_pawn_and_count}
+def_order_task1 {target} {cmd_set_target}
+def_order_task1 {pick} {cmd_pick_lock}
+def_order_task2 {walk} {cmd_walk}
+def_order_task2 {run} {cmd_run}
+def_order_task1 {target-align} {cmd_target_align}
+
+def_order_cue0 {regen} {cmd_cue_regen}
+#alias {cmd_cue_regen} {
+  #switch {"%1"} {
+    #case {"start"} {debug CUE: regen --> start; regen; %2};
+    #case {"done"} {debug CUE: regen --> done; unregen; %2};
+    #default {
+      debug ACTION-QUEUE-REGEN: unrecognized command {%1};
+      %3
+    }
+  }
+}
+
+def_order_task2 {imm} {_order_imm}
+#alias {_order_imm} {cmd_imm_%1_%2 {%3} {%4}}
+
+def_order_task1 {drop-all} {_order_drop_all}
+#alias {_order_drop_all} {
+  #if {"%1" == "magicite" || "%1" == "basalt" || "%1" == "key"} {
+    cmd_drop_all {%1} {%2} {%3}
+  } {
+    trampoline {_order_drop_all} {%3}
+  }
+}
+
+
+#nop -----------------------------------------------
+#nop Autoloot
+#nop -----------------------------------------------
+
+def_order_task1 {autoloot} {_order_autoloot}
+#alias {_order_autoloot} {cmd_autoloot {@autoloot_type{%1}} {%2} {%3}}
+
+#function {autoloot_type} {
+  autoloot_junk;
+  #switch {"%1"} {
+    #case {"no-cursed"} {#var {result} {on}};
+    #case {"some-cursed"} {#var {result} {on}};
+    #case {"heavy"} {
+      #if {"$target" == "darkwiz" || "$target" == "undersea" || "$target" == "felgormines"} {
+        autoloot_junk {$target};
+        #var {result} {on}
+      } {
+        #var {result} {gold}
+      }
+    };    
+    #default {#var {result} {%1}}
+  }
+}
+
+#alias {cmd_autoloot_junk} {
+  debug AUTOLOOT-JUNK --> donate all.$autoloot_junk;
+  trampoline {autoloot_junk} {donate all.$autoloot_junk};
+  %1
+}
+
+#alias {autoloot_junk} {
+  #if {"%1" != ""} {
+    #var {autoloot_junk} {%1};
+    hook {on_rip} {add} {autoloot_junk} {cmd_autoloot_junk}
+  } {
+    hook {on_rip} {remove} {autoloot_junk}    
+  }
+}
+
+
+#nop -----------------------------------------------
+#nop Orders that are targeted at the requestor
+#nop -----------------------------------------------
+
+#var {order_allow_spells} {armor|bless|cure blind}
+#var {order_allow_imms} {fire|energy|poison|electric|water|cold|acid}
+
+def_request_passthrough1 {cast} {_order_exec_cast}
+#alias {_order_exec_cast} {
+  exec_cast {%3} {%1} {_order_done {%1} {%2} {cast %3}} {_order_fail {%1} {%2} {cast %3}}
+}
+
+def_request_task0 {layhands} {cmd_layhands}
+def_request_task0 {lay} {cmd_layhands}
+def_request_task0 {heal} {cmd_layhands}
+def_request_task0 {healme} {cmd_layhands}
+def_request_task0 {kbless} {cmd_bless}
+def_request_task0 {blessme} {cmd_bless}
+
+
+#nop -----------------------------------------------
+#nop Zone leader commands
+#nop ----------------------------------------------
+
+#function {is_leader} {
+  #math {result} {"$score_description" != "" && "$score_description" == "$group_leader"}
+}
+
+#alias {cmd_order_zone_retry} {
+  zone_retry;
+  trampoline {cmd_order_zone_retry} {%1}
+}
+
+#alias {cmd_order_zone_finish} {
+  zone_retry;
+  trampoline {cmd_order_zone_finish} {%1}
+}
+
+#alias {cmd_order_reset_all} {
+  zone_loop_stop;
+  load_test_loop;
+  zone_loop_start;
+  trampoline {cmd_order_reset_all} {%1}
+}
+
+#alias {leader_orders_on} {
+  def_reset_task0 {zone-retry} {cmd_order_zone_retry};
+  def_reset_task0 {zone-finish} {cmd_order_zone_finish};
+  def_reset_task0 {reset-all} {cmd_order_reset_all};
+  def_reset_task0 {gohome} {cmd_order_zone_retry}
+}
+
+
+#nop -----------------------------------------------
+#nop Experimental
+#nop ----------------------------------------------
+
+def_order_task1 {down} {cmd_down}
+#alias {cmd_down} {
+  debug ORDER: marking %1 --> down;
+  spell_state_down {%1};
+  trampoline {cmd_down} {%2}
+}
+
+
+#nop -----------------------------------------------
+#nop Auto-grouping & security
+#nop ----------------------------------------------
+
+#list {allow_orders} {create}
+  {Senex}
+  {Leon}
+  {Sid}
+  {Silk}
+  {Gim}
+  {Soren}
+  {Helper}
+  {Felice}
+  {Al}
+  {Wrex}
+  {Amon}
+  {Morrigan}
+  {Polgara}
+  {Shinobi}
+  {Valor}
+  {group}
+  {Kyojin}
+  {Macros}
+
+#alias {auto_group} {
+  #local {allow} {0};
+  #list {allow_orders} {find} {%1} {allow};
+  #if {"$allow" == "0"} {
+    tell %1 FAIL -- I don't have you allow-listed to auto-group.
+  } {    
+    group %1;
+    protect {%1}
+  }
+}
+
+#action {%1 starts following you.} {auto_group {%1}}
+
+#alias {follow_order} {
+  #local {allow} {0};
+  #list {allow_orders} {find} {%1} {allow};
+  debug FOLLOW ORDER {%1} {%3} allow=$allow;
+  
+  #if {"$allow" == "0"} {
+    _order_respond {%1} {%2} {FAIL: %3 -- not allowed}
+  } {
+    #switch {"%3"} {
+      #case {"$order_tasks[0][%3]" != ""} {$order_tasks[0][%3] {%1} {%2}};
+      #case {"$order_tasks[1][%3]" != ""} {$order_tasks[1][%3] {%1} {%2} {%4}};
+      #case {"$order_tasks[2][%3]" != ""} {$order_tasks[2][%3] {%1} {%2} {%4} {%5}};
+	
+      #default {_order_respond {%1} {%2} {FAIL: %3 -- unrecognized order}}
+    }
+  }
+}
+
+list_concat {order_all_task0} {|} {*order_tasks[0][]}
+list_concat {order_all_task1} {|} {*order_tasks[1][]}
+list_concat {order_all_task2} {|} {*order_tasks[2][]}
+
+#action {%1 tells you 'order: {$order_all_task0}'} {follow_order {%1} {tell} {%2}} {4}
+#action {%1 tells the group '{$order_all_task0}'} {follow_order {%1} {group} {%2}} {4}
+#action {%1 whispers to you, '{$order_all_task0}'} {follow_order {%1} {whisper} {%2}} {4}
+
+#action {%1 tells you 'order: {$order_all_task1} %3'} {follow_order {%1} {tell} {%2} {%3}} {4}
+#action {%1 tells the group 'order: {$order_all_task1} %3'} {follow_order {%1} {group} {%2} {%3}} {4}
+#action {%1 tells the group '{$order_all_task1}: %3'} {follow_order {%1} {group} {%2} {%3}} {4}
+#action {%1 whispers to you, '{$order_all_task1}: %3'} {follow_order {%1} {whisper} {%2} {%3}} {4}
+
+#action {%1 tells the group '{cast} %3'} {follow_order {%1} {group} {cast} {%3} {%1}}
+#action {%1 tells you '{cast} %3'} {follow_order {%1} {tell} {cast} {%3} {%1}}
+#action {%1 whispers to you, '{cast} %3'} {follow_order {%1} {tell} {cast} {%3} {%1}}
+
+#action {%1 tells the group '{$order_all_task2}: {%3} {%4}'} {follow_order {%1} {group} {%2} {%3} {%4}}
+#action {%1 tells the group '{$order_all_task2}: %3 -- "%4"'} {follow_order {%1} {group} {%2} {%3} {%4}}
+
+#action {%1 tells the group 'REGEN --> {start|done}} {follow_order {%1} {group} {regen} {%1}}
+#action {%1 tells the group 'FISH RECOVERED: scrappy'} {follow_order {%1} {group} {scrappy}} {4}
+ 
+#class {follow_orders} {save}
+#class {follow_orders} {close}

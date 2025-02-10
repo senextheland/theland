@@ -28,6 +28,27 @@ hook {on_move_ok} {create};
 #function {move_delta} {
   #math {result} {$movement + $move_low - $max_refresh}
 }
+
+#alias {cmd_heal_optimistic} {
+  #var {health_expect_heal_amount} {%1};
+  #math {health_optimistic_delta} {$max_hp - $health};
+  #math {health_optimistic_attempts} {$health_optimistic_delta / $health_expect_heal_amount};
+  #if {"$health_state" != "low" && $health_optimistic_attempts > 0} {
+    debug HEAL-OPTIMISTIC delta=$health_optimistic_delta attempt=$health_optimistic_attempts;
+    heal_optimistic_continuation {%2}
+  } {
+    trampoline {cmd_heal_optimistic} {%2}
+  }
+}
+
+#alias {heal_optimistic_continuation} {
+  #if {$health_optimistic_attempts > 0} {
+    #math {health_optimistic_attempts} {$health_optimistic_attempts - 1};
+    cmd_heal_me {heal_optimistic_continuation {%1}} {heal_optimistic_continuation {%1}}
+  } {
+    trampoline {heal_optimistic_continuation} {%1}
+  }
+}
   
 #alias {need_health} {
   #if {$health_low != 0 && @health_delta{} < 0} {

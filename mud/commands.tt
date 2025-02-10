@@ -23,7 +23,8 @@
 }
 
 #alias {cmd_pick} {
-  exec_task {cmd_pick} {pick %1} {%2} {%3} {
+  exec_task {cmd_pick} {pi %1} {%2} {%3} {
+    #var {task_cmd_pick[attempts]} {50};
     #action {The lock quickly yields to your skills.} {task_cmd_pick_done};
     #action {I see no %1 here.} {task_cmd_pick_fail};
     #action {Oh.. it wasn't locked at all.} {task_cmd_pick_done};
@@ -38,7 +39,8 @@
    #action {It's already open!} {task_cmd_open_door_done};
    #action {Heck.. it ain't even closed!} {task_cmd_open_door_done};
    #action {I see no %1 here.} {task_cmd_open_door_fail};
-   #action {The lock quickly yields to your skills.} {task_cmd_open_door_fail}
+   #action {The lock quickly yields to your skills.} {task_cmd_open_door_fail};
+   #action {That's not a container.} {task_cmd_open_door_fail}
  }
 }
 
@@ -93,6 +95,7 @@
   exec_task {cmd_recall} {look} {%1} {%2} {
     #action {Inn of the Flying Circus} {task_cmd_recall_done};
     #action {Exits:} {rec recall-scroll};
+    #action {Zifnab tells you 'No magic here - kid!'} {task_cmd_recall_fail};
     #action {You do not have that item.} {
       cmd_recall_fallback
         {task_cmd_recall_done}
@@ -145,6 +148,7 @@
 
 #alias {cmd_autoloot} {
   exec_task {cmd_autoloot} {autoloot %1} {%2} {%3} {
+    debug SETTING AUTOLOOT --> %1;
     #action {Autoloot what?!} {task_cmd_autoloot_fail};
     #action {Autoloot is now ON.} {#if {"%1" == "on"} {task_cmd_autoloot_done} {task_cmd_autoloot_fail}};
     #action {Autoloot is now OFF.} {#if {"%1" == "off"} {task_cmd_autoloot_done} {task_cmd_autoloot_fail}};
@@ -184,6 +188,8 @@
   #var {score_max_movement} {0};
   #var {score_gold_coins} {0};
   #var {score_alignment} {0};
+  #var {score_exp} {0};
+  #var {score_description} {};
 
   #var {max_mana} {0};
   #var {max_refresh} {0};   
@@ -203,11 +209,16 @@
       #var {score_alignment} {%%%1}
     };
 
-    #action {have %%%d gold coins.} {
-      #var {score_gold_coins} {%%%1}
+    #action {You have scored %%%+ exp, and have %%%+ gold coins.} {
+      #var {score_exp} {%%%1};    
+      #var {score_gold_coins} {%%%2}
     };
 
-    #action {You have been playing for} {%1; task_cmd_score_done}
+    #action {This ranks you as %%%S} {
+      #var {score_description} {%%%1}
+    };
+
+    #action {You have been playing for} {%1; task_cmd_score_done}    
   }
 }
 
@@ -215,6 +226,7 @@
   #class {group} {open};
 
   #var {group_stats} {};
+  #var {group_leader} {};
  
   #class {group} {save};
   #class {group} {close};
@@ -226,10 +238,29 @@
       }
     };
 
-    #action {%%%w%%%s[%%%d,%%%d,%%%d]} {
+    #action {Leader: %%%w%%%s[%%%+,%%%+,%%%+]} {
+      #var {group_leader} {%%%1};
+      #var {group_stats[%%%1]} {{hit}{%%%3}{mana}{%%%4}{move}{%%%5}}
+    } {4};
+
+    #action {%%%w%%%s[%%%+,%%%+,%%%+]} {
       #var {group_stats[%%%1]} {{hit}{%%%3}{mana}{%%%4}{move}{%%%5}}
     }
   }
+}
+
+#alias {cmd_align_check} {
+  #alias {assert_align} {
+    #if {$score_alignment > 500} {
+      debug CHECK-ALIGN: ok alignment=$score_alignment;
+      %1
+    } {
+      debug CHECK-ALIGN: too-low alignment=$score_alignment;
+      %2 {alignment=$score_alignment}
+    }    
+  };
+  
+  cmd_score {trampoline {cmd_align_check} {assert_align}}
 }
 
 #alias {cmd_group_score} {
@@ -277,6 +308,14 @@
     #action {Don't try to heal what ain't hurt!} {task_cmd_layhands_done};
     #action {You don't seem to be up to healing at the moment.} {task_cmd_layhands_fail};
     #nop TODO -- not enough mana
+  } {15}
+}
+
+#alias {cmd_bless} {
+  exec_task {cmd_bless} {bless %1} {%2} {%3} {
+    #action {You bless} {task_cmd_bless_done};
+    #action {You fail in the bestowal of your blessing} {task_cmd_bless_fail};
+    #action {WHO do you wish to bless?} {task_cmd_bless_fail}
   } {15}
 }
 
@@ -344,11 +383,15 @@
   }
 }
 
+#function {deposit_target_coins} {
+  #var {result} {600000}
+}
+
 #alias {cmd_deposit} {
   exec_task {cmd_deposit} {#show GIVE-DEPOSIT} {%1} {%2} {
     #var {deposit_coins} {0};
     #var {withdraw_coins} {0};
-    #var {target_coins} {600000};
+    #var {target_coins} {@deposit_target_coins{}};
     
     #action {GIVE-DEPOSIT} {
       #math {deposit_coins} {$score_gold_coins - $target_coins};
@@ -477,6 +520,38 @@
   } 
 }
 
+#var {count_inventory_found} {0}
+#alias {cmd_count_inventory} {
+  exec_task {cmd_count_inventory} {inventory} {%2} {%3} {  
+  
+    #action {You are carrying:} {
+      hook {on_prompt} {once} {cmd_count_inventory} {count_inventory_prompt}
+    };
+
+    #alias {count_inventory_prompt} {
+      debug INVENTORY-CHECK: MISSING {%1};
+      #var {count_inventory_found} {0};
+      task_cmd_count_inventory_fail
+    };
+    
+    #action {%1} {
+      debug INVENTORY-CHECK: FOUND {%1};
+      #var {count_inventory_found} {1};
+      task_cmd_count_inventory_done
+    } {6};
+
+    #action {%1[%%%1]} {
+      debug INVENTORY-CHECK: FOUND {%1};
+      #var {count_inventory_found} {%%%1};
+      task_cmd_count_inventory_done
+    };
+
+    #alias {task_cmd_count_inventory_end_hook} {
+      hook {on_prompt} {remove} {cmd_count_inventory}
+    }
+  } 
+}
+
 #alias {cmd_recite_from_on} {
   exec_task {cmd_recite_from_on} {get %1 %2} {%4} {%5} {
     #alias {do_recite} {recite %1 %3};    
@@ -488,6 +563,75 @@
       debug RECITE: no %3 --> fail;
       put %1 %2;
       task_cmd_recite_from_on_fail
+    }
+  }
+}
+
+#nop usage -- cmd_throw_dagger_from_container {fish} {$target} {golden-case} {frozen fish} {debug YAY} {debug BOO}
+#alias {cmd_throw_dagger_from_container} {
+  exec_task {cmd_throw_dagger_from_container} {throw %1 %2} {%5} {%6} {
+    #action {You don't have that!} {get %1};
+    #action {You do not see a %1 here.} {get %1 %3};
+    #action {You do not see or have} {task_cmd_throw_dagger_from_container_fail {no-container}};
+    #action {You do not see a %1 in} {task_cmd_throw_dagger_from_container_fail {no-dagger}};
+    #action {You get a %4} {throw %1 %2};
+    #action {You throw a %4} {task_cmd_throw_dagger_from_container_done};
+    #action {No way! You are fighting for your life!} {task_cmd_throw_dagger_from_container_fail {fighting}};
+    #action {You don't see anybody around} {task_cmd_throw_dagger_from_container_fail {no-mob}};
+  }
+}
+
+#alias {cmd_portal} {
+  exec_task {cmd_portal} {tell group 'dothis: %1} {%2} {%3} {
+    #action {a portal appears!} {task_cmd_portal_done}
+  }
+}
+
+#alias {cmd_attack} {
+  exec_task {cmd_attack} {attack %1} {%3} {%4} {
+    #action {attack name: %%%1(%%%2)} {
+      debug ATTACK %%%1 is %%%2;
+      #if {"%%%2" == "%2"} {task_cmd_attack_done} {task_cmd_attack_attempt}
+    }
+  }
+}
+
+#var {all_attack_forms} {}
+#alias {cmd_attack_forms} {
+  exec_task {cmd_attack_forms} {attacks} {%1} {%2} {
+    #action {Special Attack forms} {
+      #var {all_attack_forms} {};
+      hook {on_prompt} {once} {cmd_attack_forms} {
+	trampoline {cmd_attack_forms} {task_cmd_attack_forms_done}
+      }
+    };
+
+    #action {[%%%+] %%%+(%%%+)} {
+      #var all_attack_forms[%%%1] {%%%3}
+    };
+  }
+}
+
+#alias {cmd_aura} {
+  exec_task {cmd_aura} {aura} {%1} {%2} {
+    #action {Your eyes glow briefly and you adjust to the new auras.} {aura_up};
+    #action {You already have partial aura sight.} {aura_up};
+
+    #alias {aura_up} {
+      spell_state_up {detect magic};
+      task_cmd_aura_done
+    }
+  }
+}
+
+#alias {cmd_great_sight} {
+  exec_task {cmd_great_sight} {great} {%1} {%2} {
+    #action {You succede in enhancing your vision.} {great_sight_up};
+    #action {You already have partial great sight.} {great_sight_up};
+
+    #alias {great_sight_up} {
+      spell_state_up {true sight};
+      task_cmd_great_sight_done
     }
   }
 }

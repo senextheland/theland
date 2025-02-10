@@ -1,0 +1,48 @@
+#class {dad_jokes} {open}
+
+#list {dad_jokes} {create}
+  {did you hear about the red and blue ships that collided? All the sailors were marooned.}
+  {my neighbor gave me a new roof for free. He said it was on the house.}
+  {did you hear the one about the duck that walks into a bar and buys everyone a round? He tells the bartender, "Put it on my bill."}
+  {what has a spine but no bones? A book.}
+  {what do you call a wizard who's good with ceramics? Harry Pottery.}
+  {how do ghosts stay in shape? They exorcise.}
+  {do you need a haircut? I don't, I got them all cut!}
+  {what did the shovel say to the sand? "I really dig you!"}
+  {how did the pirate get his ship for so cheap? It was on sail.}
+  {why do dads take an extra pair of socks when they play golf? In case they get a hole in one.}
+  {what do you call a fish with no eyes? A fsh.}
+  {a puzzle for you: what comes once in a minute, twice in a moment but never in a thousand years? The letter M.}
+  {what did the T-Rex use to cut wood? A dino-saw.}
+  {where do fish keep their money? In a river bank.}
+  {why was the broom late for work? It over-swept.}
+  {why can't a leopard hide? Because he's always spotted.}
+  {I only know 25 letters of the alphabet. I don't know y.}
+  {how does the moon cut his hair? Eclipse it.}
+  {what do you call a factory that makes OK products? A satisfactory.}
+  {I can tolerate algebra, maybe even a little calculus, but geometry is where I draw the line.}
+  {I bought the world's worst thesaurus yesterday. Not only is it terrible, it's terrible.}
+  {what happens when a snowman throws a tantrum? He has a meltdown.}
+  {my extra winter weight is finally gone. Now, I have spring rolls.}
+  {when does a joke become a dad joke? When it becomes apparent.}
+  {$dad_joks[1]}
+  {I want to talk with you about my inferiority complex, but it's not a very good one.}
+  {did you hear about the man who walked into his house and was delighted when he discovered that someone had stolen all of his lamps?}
+  {am I the only one who realizes that blackboards are truly remarkable?}
+  {did you ever wonder if Soy milk is just regular milk introducing itself in Spanish?}
+  {did I tell you that the stationary store near me moved? I was so surprised!}
+  {I always knew communism was doomed from the beginning: it was all the red flags.}
+  {once I submitted ten puns to a pun contest hoping that one would win, but no pun in ten did.}
+  {I haven’t slept for ten days, because that would be too long.}
+  {I would tell you a joke about UDP, but you might not get it.}
+  {I made a new word up today! It's Plagiarism.}
+  {I once stumbled across the mass grave of a thousand snowmen, it turned out to be a field of carrots.}
+  {do you think think it's wrong that only one company makes the game Monopoly?}
+
+#alias {bs_random_dad_joke} {
+  #list {dad_jokes} {shuffle};
+  bs hey Puff, $dad_jokes[1]
+}
+
+#class {dad_jokes} {save}
+#class {dad_jokes} {close}

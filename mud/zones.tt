@@ -10,7 +10,10 @@
 #alias {pawn[]} {$pawn_mk}
 #var {mk_inn} {6e1s2e5s1w1s1u}
 #alias {[]inn} {$mk_inn}
-#var {inn_mk} {1d1n1e5n2w1n2w;open gate;4w}
+#var {inn_crossroads_south} {1d1n1e5n2w}
+#var {crossroads_south_crossroads} {1n}
+#var {crossroads_mk} {2w;open gate;4w}
+#var {inn_mk} {$inn_crossroads_south;$crossroads_south_crossroads;$crossroads_mk}
 #var {run_inn_mk} {run d;1n1e5n2w1n2w;open gate;4w}
 #alias {inn[]} {$inn_mk}
 #alias {run_inn[]} {$run_inn_mk}
@@ -54,7 +57,7 @@
 #alias {[]antipal} {$path_antipal}
 #var {path_tzen} {4e2n2e2n2e1n}
 #alias {[]tzen} {4e2n2e2n2en}; #nop pick and open tagiimec, n
-#var {path_narnia} {6e5s3e1n7e1s1n1w1e1n14e1u11n;open gate;10n}
+#var {path_narnia} {6e5s3e1n7e1s1n1w1e1n14e1u11n;open gate north;10n}
 #alias {[]narnia} {$path_narnia}
 #var {path_tridac} {s2e2s16w2sw2ses2wse2ses}
 #alias {[]tridac} {$path_tridac}
@@ -68,6 +71,10 @@
 #alias {[]bryad} {$path_bryad}
 #var {path_despair} {3w;open gate;2w2w2s1w2s1e3s}
 #alias {[]despair} {$path_despair}
+#var {path_felgor} {9en2e3nen5es3ewse}
+#alias {[]felgor} {$path_felgor}
+#var {path_troy} {6e2u3n4w1s3w2n1w3s}
+#alias {[]troy} {$path_troy}
 
 #class {zones} {save}
 #class {zones} {close}
@@ -78,6 +85,20 @@
     {regen_some}
     {zone_safety on}     
 }
+
+#var {safe_bag} {shoe-box}
+#var {loot_bag} {eye-cover}
+
+#nop -----------------------------------------
+#nop Drow
+#nop -----------------------------------------
+
+#alias {ext_drow_kill} {
+  zone_extend
+    {set_target {null}}
+    {group_autoloot {gold}}
+    {kill_walk_path {1w2n1e1w1s2w1n1s1w1n1w1e2s2w1n1s2e2s1w1e1n2e2s2n1e1n1e} {drow}}
+}  
 
 
 #nop -----------------------------------------
@@ -279,6 +300,13 @@
   ext_fairy_regen
 }
 
+#alias {ext_hyule_maybe_fix_align_from_fairy} {
+  #if {$score_alignment < 900} {
+    zone_extend
+      ext_hyrule_around_fairy_kill
+  }
+}
+
 #alias {zone_hyrule_walk} {
   ext_walk_to_hyrule;
   ext_hyrule_fairy;
@@ -324,6 +352,15 @@
     {dagger_walk_path {1n2e2w1s1e1s1e3s} {hyrule}}
     {kill_walk_path {1s1n2w1n2w1n2w} {hyrule}}
     {walk_fast {1n} {Before a magical pond}}
+}
+
+#alias {ext_hyrule_around_fairy_kill} {
+  zone_extend
+    {walk_fast {1s} {Within the green woods of Hyrule}}
+    {kill_walk_path {2e3s} {hyrule}}
+
+    {kill_walk_path {4e1n2w1n1w1s1e1n2w2s} {hyrule}}
+    {kill_walk_path {3w1n2e1n1w1s1w1n2w1n1s1w1s6e1s} {hyrule}}    
 }
 
 #alias {pawn_hyrule} {pawn_all {hyrule-spear;hyrule-ball;boulder}}
@@ -556,6 +593,19 @@
   ext_tzen_leave
 }
 
+#alias {zone_tzen_noregen} {
+  ext_walk_tzen;
+  ext_walk_tzen_palace;
+  ext_tzen_floor_two;
+  ext_tzen_floor_three;
+  ext_tzen_floor_four;
+  ext_tzen_floor_five;
+  ext_tzen_floor_six;
+  ext_tzen_floor_seven;
+  ext_tzen_floor_top;
+  ext_tzen_leave
+}
+
 #alias {zone_tzen_walk_sell_magicite} {
   ext_walk_tzen;
   ext_tzen_alchemist;
@@ -565,7 +615,8 @@
 
 #alias {ext_tzen_get_magicite} {
   zone_extend
-    {gather_all_into_bag {magicite} {xanth-bag}}
+    {sync_command {get eye-cover box}}
+    {gather_all_into_bag {magicite} {eye-cover}}
 }
 
 #alias {ext_tzen_safe_floors} {
@@ -601,7 +652,8 @@
     {walk_fast {1e1s} {The Alchemy}}
     {zone_safety off}
     {try_give_coins {500000} {$robot}}
-    {pawn_all_from_bag {magicite} {xanth-bag}}
+    {pawn_all_from_bag {magicite} {eye-cover}}
+    {sync_command {put eye-cover box}}
     {zone_safety on}
 }
 
@@ -628,35 +680,28 @@
     {walk_fast {1n1w2n1e1n} {The Opal Stairs}}
     {set_target feline}    
 }
-
 #alias {ext_tzen_floor_two} {
   zone_extend
-    {group_autoloot some-cursed}
+    {group_autoloot on}
     {mode_bash on}
     {walk_fast {1u} {You climb the beautiful staircase to the second floor.}}
-    {dagger_nearby {feline} {north} {Immediately}}
     {kill_walk_path {1n} {feline}}
-    {group_spellup}    
-    {dagger_walk_path {1n2e3n1w} {feline}}
-    {kill_walk_path {1w1e} {feline}}
-    {dagger_walk_path {1s1e2s2w1s} {feline}}
+    {group_spellup}
+    {kill_walk_path {1n2e3n2w1e1s1e2s2w1s} {feline}}
     {group_spellup}
     {kill_walk_path {1s} {feline}}
     {walk_fast {1d} {The Opal Stairs}}
-    {group_drop_all magicite}
+    {group_drop_all magicite}  
 }
 
 #alias {ext_tzen_floor_three} {
   zone_extend
-    {group_autoloot some-cursed}
+    {group_autoloot on}
     {mode_bash on}    
     {walk_fast {2u} {You arrive at the third floor of the palace}}
-    {dagger_nearby {feline} {north} {Immediately}}
     {kill_walk_path {1n} {feline}}
     {group_spellup}    
-    {dagger_walk_path {2n1w2n} {feline}}
-    {kill_walk_path {2e} {feline}}
-    {dagger_walk_path {2s1w2s} {feline}}
+    {kill_walk_path {2n1e2w2n2e2s1w2s} {feline}}
     {group_spellup}
     {kill_walk_path {1s} {feline}}    
     {walk_fast {2d} {The Opal Stairs}}
@@ -665,16 +710,13 @@
 
 #alias {ext_tzen_floor_four} {
   zone_extend
-    {group_autoloot some-cursed}
+    {group_autoloot on}
     {mode_bash on}    
     {walk_fast {3u} {You climb to the fourth floor.}}
     {group_imm poison on}
-    {dagger_nearby {feline} {north} {Immediately}}
     {kill_walk_path {1n} {feline}}
-    {group_spellup}   
-    {dagger_walk_path {3n1w1n1e} {feline}}
-    {kill_walk_path {1e1s1w} {feline}}
-    {dagger_walk_path {3s} {feline}}
+    {group_spellup} 
+    {kill_walk_path {3n1e2w1n2e1s1w3s} {feline}}
     {group_spellup}
     {kill_walk_path {1s} {feline}}
     {group_imm poison off}
@@ -684,15 +726,12 @@
 
 #alias {ext_tzen_floor_five} {
   zone_extend
-    {group_autoloot some-cursed}
+    {group_autoloot on}
     {mode_bash on}    
     {walk_fast {4u} {You arrive at the fifth floor of the palace}}
-    {dagger_nearby {feline} {north} {Immediately}}
     {kill_walk_path {1n} {feline}}
     {group_spellup}       
-    {dagger_walk_path {1n1w2n} {feline}}
-    {kill_walk_path {1w1n1e} {feline}}
-    {dagger_walk_path {2s1e2s} {feline}}
+    {kill_walk_path {1n1w1n1e1s1w3n1w1s1e2s1e1s} {feline}}
     {group_spellup}
     {kill_walk_path {1s} {feline}}    
     {walk_fast {4d} {The Opal Stairs}}
@@ -701,14 +740,12 @@
 
 #alias {ext_tzen_floor_six} {
   zone_extend
-    {group_autoloot some-cursed}
+    {group_autoloot on}
     {mode_bash on}    
     {walk_fast {5u} {You continue to climb the stairs and come to the sixth floor}}
-    {dagger_nearby {feline} {north} {Immediately}}
     {kill_walk_path {1n} {feline}}
     {group_spellup}
-    {dagger_walk_path {1n2w2n1w2n2e} {feline}}
-    {kill_walk_path {2e1s1w1n1e1s1w1s2w2s2e1s} {feline}}
+    {kill_walk_path {1n2w2n1w2n4e1s1w1n2s2w2s2e1s} {feline}}
     {group_spellup}
     {kill_walk_path {1s} {feline}}    
     {walk_fast {5d} {The Opal Stairs}}
@@ -717,15 +754,12 @@
 
 #alias {ext_tzen_floor_seven} {
   zone_extend
-    {group_autoloot some-cursed}
+    {group_autoloot on}
     {mode_bash on}    
     {walk_fast {6u} {you arrive at the seventh}}
-    {dagger_nearby {feline} {north} {Immediately}}
     {kill_walk_path {1n} {feline}}
     {group_spellup}
-    {dagger_walk_path {1n2u1e1u1w1e2u} {feline}}
-    {kill_walk_path {1e1w} {feline}}
-    {dagger_walk_path {3d1w2d1s} {feline}}
+    {kill_walk_path {1n2u1e1w1u1e2u1e1w3d1w2d1s} {feline}}
     {group_spellup}
     {kill_walk_path {1s} {feline}}    
     {walk_fast {6d} {The Opal Stairs}}
@@ -734,14 +768,12 @@
 
 #alias {ext_tzen_floor_top} {
   zone_extend
-    {group_autoloot some-cursed}
+    {group_autoloot on}
     {mode_bash on}    
     {walk_fast {7u} {You climb to the very top of the magnificent staircase.}}
-    {dagger_nearby {feline} {north} {Immediately}}
     {kill_walk_path {1n} {feline}}
     {group_spellup}
-    {dagger_walk_path {2n1w} {feline}}
-    {kill_walk_path {1n1s2e1n1s1w1u1d2s} {feline}}
+    {kill_walk_path {2n1w1n1s1e1u1d1e1n1s1w2s} {feline}}
     {group_spellup}
     {kill_walk_path {1s} {feline}}    
     {walk_fast {7d} {The Opal Stairs}}
@@ -753,8 +785,34 @@
 #nop Bryad
 #nop -----------------------------------------
 
-#alias {zone_bryad_walk} {zone_extend {walk_fast {$path_bryad} {The First Island of Bryad}}; zone_bryad}
-#alias {zone_bryad} {
+#alias {zone_bryad_walk} {
+  ext_bryad_walk;
+  ext_bryad_queen
+}
+
+#alias {zone_bryad_with_air_walk} {
+  ext_bryad_walk;
+  ext_bryad_queen;
+  ext_align_check;
+  ext_bryad_guardian_walk;
+  ext_bryad_air_enter;  
+  ext_bryad_air
+}
+
+#alias {zone_bryad_air} {
+  ext_align_check;
+  ext_bryad_walk;
+  ext_bryad_guardian_walk;
+  ext_bryad_air_enter;
+  ext_bryad_air
+}
+
+#alias {ext_bryad_walk} {
+  zone_extend
+    {walk_fast {$path_bryad} {The First Island of Bryad}}
+}
+
+#alias {ext_bryad_queen} {
   zone_extend
     {set_target bryad}
     {group_noscrap}
@@ -762,6 +820,39 @@
     {walk_fast {1e2s1w1s1w2s1e1n} {The Giant Tree}}
     {kill_walk_path {1e} {toucan}}
     {sync_command {get all corpse}}
+    {walk_fast {1w1s1w2n1e1n1e2n1w} {The First Island of Bryad}}
+}
+
+#alias {ext_bryad_guardian_walk} {
+  zone_extend
+    {walk_fast {1e2s2e1s1w2s1e} {A Bright Light}}
+    {teleport_room {A White Room}}
+}
+
+#alias {ext_bryad_air_enter} {
+  zone_extend
+    {set_target guard}
+    {group_imm fire on}
+    {group_imm energy on}
+    {group_target_align good}
+    {group_autoloot on}
+    {mode_bash on}
+    {group_scrappy}
+    {open_door {door south}}
+    {walk_fast {1s} {The Floating Island}}
+}
+
+#alias {ext_bryad_air} {
+  zone_extend
+    {kill_room {guard}}
+    {kill_walk_path {3n} {guard}}
+    {pick {gate north}}
+    {open_door {gate north}}
+    {kill_walk_path {2n1s2e3n5w1s} {guard}}
+    {dagger_all {guard}}
+    {kill_walk_path {1s2n} {guard}}
+    {group_imm energy off}
+    {group_imm fire off}
 }
 
 
@@ -777,7 +868,8 @@
 }
 
 #alias {zone_darkwiz_castle_quick} {
-  ext_darkwiz_castle_walk;
+  ext_darkwiz_forest_walk;
+  ext_darkwiz_forest_to_castle_kill;
   ext_darkwiz_castle_quick
 }
 
@@ -819,17 +911,19 @@
 #alias {ext_darkwiz_fall_to_castle} {
   zone_extend    
     {zone_safety off}
-    {announce {fall_to_ravine_announcement} {5.0}}
+    {announce {fall_to_ravine_announcement} {10.0}}
     {group_walk {1d1e} {The bottom of the ravine.}}
     {zone_safety on}
 
     {group_imm energy off}
     {group_imm water on}
+    {group_unagg}
     {walk_fast {3e2n5es4e} {The whirlpool!}}
     {zone_safety off}
     {wait_for_room {A sandy beach}}
     {zone_safety off}
     {group_imm water off}
+    {group_agg}
     {walk_fast {1e3n2e2n1w1n} {The end of the path.}}
 }
 
@@ -863,19 +957,24 @@
 
 #alias {ext_darkwiz_castle_quick} {
   ext_darkwiz_castle_entrance;
-  ext_darkwiz_castle_floor_one;
+  ext_darkwiz_castle_kill_floor_one;
   ext_darkwiz_tower_floor_one;
   zone_extend
-    {walk_fast {3e} {The Castle Entrance}}
+    {walk_fast {2e} {A narrow arched hallway}}
+    {unlock_door_with_key {load_darkwiz_keys} {door east} {store_darkwiz_keys}}
+    {open_door {door east}}
+    {kill_walk_path {1e} {darkwiz}}
     ;
   ext_darkwiz_castle_exit
 }
 
-#alias {load_darkwiz_keys} {get all.darkwiz-key xanth-bag}
-#alias {store_darkwiz_keys} {put all.darkwiz-key xanth-bag}
+#alias {load_darkwiz_keys} {get all.darkwiz-key $safe_bag}
+#alias {store_darkwiz_keys} {put all.darkwiz-key $safe_bag}
 
+#alias {darkwiz_castle_announcement} {tell group 'darkwiz-castle-gate}
 #alias {ext_darkwiz_castle_entrance} {
   zone_extend
+    {announce {darkwiz_castle_announcement} {10.0}}  
     {group_walk {1n1e} {The Great Gate}}
     {set_target {darkwiz}}
     {group_agg}
@@ -884,7 +983,7 @@
     {group_imm energy on}
     {group_autoloot heavy}
     {mode_bash on}
-    {unlock_door_with_key {get all.darkwiz-key;get all.darkwiz-key xanth} {gate north} {store_darkwiz_keys}}
+    {unlock_door_with_key {get all.darkwiz-key; load_darkwiz_keys} {gate north} {store_darkwiz_keys}}
     {open_door {gate north}}
     {kill_walk_path {1n} {darkwiz}}    
     {close_door {gate south}}
@@ -903,6 +1002,17 @@
     {dagger_walk_path {3e1n} {darkwiz}}
     {kill_walk_path {1s1w1s1n2w1s1e1s1e1s} {darkwiz}}
     {collect_lost_fish {3e1u1d3w1n1e3w4n3e1n1s1w1s1n2w1s1e1s1e1s} {darkwiz}}
+}
+
+#alias {ext_darkwiz_castle_kill_floor_one} {
+  zone_extend    
+    {kill_walk_path {3e1u1d3w1n1e3w} {darkwiz}}
+    {pick {door west}}
+    {open_door {door west}}
+    {kill_walk_path {1w1e4n} {darkwiz}}
+    {pick {door west}}
+    {open_door {door west}}
+    {kill_walk_path {3e1n1s1w1s1n2w1s1e1s1e1s} {darkwiz}}
 }
 
 #alias {ext_darkwiz_tower_floor_one} {
@@ -960,6 +1070,7 @@
 
 #alias {ext_darkwiz_castle_exit} {
   zone_extend
+    {confirm_room {The Castle Entrance}}
     {unlock_door_with_key {load_darkwiz_keys} {gate south} {store_darkwiz_keys}}
     {open_door {gate south}}
     {walk_fast {1s} {The Great Gate}}
@@ -987,6 +1098,216 @@
 
 
 #nop -----------------------------------------
+#nop Tar Valon
+#nop -----------------------------------------
+
+#alias {zone_tarvalon_portal_tower} {
+  ext_tarvalon_portal_tower;
+  ext_tarvalon_ajahs;
+  zone_extend
+    {walk_fast {1w1n} {Top of the Stairs}}
+    {kill_walk_path {1d1s1w3s1n1w1e1n1w1e1n1w3e1n1s1e1w3s1n1e2w1s} {tarvalon}}
+  ;
+  ext_tarvalon_exit
+}
+
+#alias {ext_tarvalon_enter} {
+  zone_extend
+    {set_target {tarvalon}}
+    {walk_fast {1n} {At the South Gate}}
+}
+
+#alias {ext_tarvalon_grounds} {
+  zone_extend  
+    {kill_walk_path {4e8n8w8s4e3n} {tarvalon}}
+}
+
+#alias {ext_tarvalon_enter_tower} {
+  zone_extend
+    {unlock_door_with_key {get tarvalon-tower-key xanth} {gate north} {put tarvalon-tower-key xanth}}
+    {open_door {gate north}}
+    {walk_fast {1n} {A Stone Archway}}
+    {wait_for_room {A Small Alcove}}    
+}
+
+#alias {ext_tarvalon_portal_tower} {
+  zone_extend
+    {portal_to portalpresto}
+    {confirm_room {Top of the Stairs}}
+    {set_target tarvalon}
+    {group_target_align good}
+    {group_autoloot gold}
+    {mode_bash on}
+}
+
+#alias {ext_tarvalon_down_to_second_start} {
+  zone_extend
+    {walk_fast {1d1s1e2s1w1s} {Top of the Stairs}}
+}  
+
+#alias {ext_tarvalon_exit} {
+  zone_extend
+    {mode_bash off}    
+}
+
+#alias {ext_tarvalon_first_floor} {
+  zone_extend
+    {kill_walk_path {3s3e6w6e4s} {tarvalon}}
+}
+
+#alias {ext_tarvalon_second_floor} {
+  zone_extend
+    {kill_walk_path {1n2e1w1s3n1e1w1n1s3w1e1s1w1e1s1w1e1s3n1e1n} {tarvalon}}
+}
+
+#alias {ext_tarvalon_third_floor} {
+  zone_extend
+    {walk_fast {1u1s1w} {northwest corner of the hallway}}
+}
+
+#alias {ext_ajah_prep} {
+  ext_align_check;
+  zone_extend
+    {group_optimistic_heal}
+}
+
+#alias {ext_tarvalon_ajahs} {
+  zone_extend
+    {walk_fast {1s1w} {northwest corner of the hallway}}
+    ;
+  ext_tarvalon_white;
+  ext_ajah_prep;
+  ext_tarvalon_blue;
+  ext_ajah_prep;  
+  ext_tarvalon_green;
+  ext_ajah_prep;  
+  ext_tarvalon_yellow;
+  ext_ajah_prep;  
+  ext_tarvalon_brown;
+  ext_ajah_prep;  
+  ext_tarvalon_grey;
+  ext_ajah_prep;
+  ext_tarvalon_red
+}
+
+#alias {ext_ajah_segment} {
+  zone_extend
+    {kill_walk_path {%1} {tarvalon}}
+    {open_door {%2}}
+    {kill_walk_path {%3} {tarvalon}}
+    ;
+
+  #if {"%4" != ""} {
+    zone_extend
+      {open_door {%4}}
+      {kill_walk_path {%5} {tarvalon}}
+  }
+}
+
+#alias {ext_ajah_north_segment} {ext_ajah_segment {1n} {west} {1w1e} {east} {1e1w}}
+#alias {ext_ajah_north_segment_no_east} {ext_ajah_segment {1n} {west} {1w1e}}
+#alias {ext_ajah_east_segment} {ext_ajah_segment {1e} {north} {1n1s} {south} {1s1n}}
+#alias {ext_ajah_south_segment} {ext_ajah_segment {1s} {east} {1e1w} {west} {1w1e}}
+#alias {ext_ajah_west_segment} {ext_ajah_segment {1w} {south} {1s1n} {north} {1n1s}}
+
+#alias {ext_tarvalon_white} {
+  zone_extend
+    {pick {white north}}
+    {open_door {white north}}
+    ;
+  ext_ajah_north_segment;
+  ext_ajah_north_segment;
+  ext_ajah_north_segment_no_east;
+  ext_ajah_north_segment;
+  zone_extend
+    {walk_fast {4s} {northwest corner of the hallway}}
+}
+
+#alias {ext_tarvalon_blue} {
+  zone_extend
+    {walk_fast {2s} {southwest corner of the hallway}}
+    {pick {blue west}}
+    {open_door {blue west}}
+    ;
+  ext_ajah_west_segment;
+  ext_ajah_west_segment;
+  ext_ajah_west_segment;
+  ext_ajah_west_segment;
+  zone_extend
+    {walk_fast {4e} {southwest corner of the hallway}}
+}
+
+#alias {ext_tarvalon_green} {
+  zone_extend
+    {group_imm fire on}
+    {pick {green south}}
+    {open_door {green south}}
+    ;
+  ext_ajah_south_segment;
+  ext_ajah_south_segment;
+  ext_ajah_south_segment;
+  ext_ajah_south_segment;
+  zone_extend
+    {walk_fast {4n} {southwest corner of the hallway}}
+    {group_imm fire off}
+}
+
+#alias {ext_tarvalon_yellow} {
+  zone_extend
+    {walk_fast {2e} {you see a yellow door to your south}}
+    {pick {yellow south}}
+    {open_door {yellow south}}
+    ;
+  ext_ajah_south_segment;
+  ext_ajah_south_segment;
+  ext_ajah_south_segment;
+  ext_ajah_south_segment;
+  zone_extend
+    {kill_walk_path {4n} {you see a yellow door to your south}}
+}
+
+#alias {ext_tarvalon_brown} {
+  zone_extend
+    {pick {brown east}}
+    {open_door {brown east}}
+    ;
+  ext_ajah_east_segment;
+  ext_ajah_east_segment;
+  ext_ajah_east_segment;
+  ext_ajah_east_segment;
+  zone_extend
+    {kill_walk_path {4w} {you see a yellow door to your south}}
+}
+
+#alias {ext_tarvalon_grey} {
+  zone_extend
+    {walk_fast {2n} {the northeast corner of the hallway}}
+    {pick {grey east}}
+    {open_door {grey east}}
+    ;
+  ext_ajah_east_segment;
+  ext_ajah_east_segment;
+  ext_ajah_east_segment;
+  ext_ajah_east_segment;     
+  zone_extend
+    {kill_walk_path {4w} {the northeast corner of the hallway}}
+}
+
+#alias {ext_tarvalon_red} {
+  zone_extend
+    {pick {red north}}
+    {open_door {red north}}
+    ;
+  ext_ajah_north_segment;
+  ext_ajah_north_segment;
+  ext_ajah_north_segment;
+  ext_ajah_north_segment;
+  zone_extend
+    {walk_fast {4s} {the northeast corner of the hallway}}
+}
+
+
+#nop -----------------------------------------
 #nop Narnia
 #nop -----------------------------------------
 
@@ -1006,6 +1327,14 @@
     {group_agg}
     {group_autoloot gold}
     {group_walk {1e1s} {A path through the woods}}
+}
+
+#alias {ext_narnia_to_hole} {
+  zone_extend
+    {kill_walk_path {5s4w1s1w1n} {narnia}}
+    {unlock_door_with_key {get wooden-key xanth} {hole} {put wooden-key xanth}}
+    {open_door {hole}}
+    {kill_walk_path {1d1n1e} {bear}}
 }
 
 #alias {pawn_narnia} {pawn_all {narnia;flour-potion}}
@@ -1040,8 +1369,8 @@
     {kill_walk_path {1s3w1n2w1s3w5s1e} {narnia}}
 }
 
-#alias hold_narnia_keys {get bag bag; get all.key bag}
-#alias store_narnia_keys {put all.key bag; put bag 2.bag}
+#alias hold_narnia_keys {get bag $safe_bag; get all.key bag}
+#alias store_narnia_keys {put all.key bag; put bag $safe_bag}
 
 #alias {ext_narnia_castle} {
   zone_extend
@@ -1115,6 +1444,16 @@
   ext_despair_south
 }
 
+#alias {zone_despair_south_west} {
+  ext_despair_walk;
+  ext_despair_south_west
+}
+
+#alias {zone_despair_south_east} {
+  ext_despair_walk;
+  ext_despair_south_east
+}
+
 #alias {ext_despair_maze} {
   ext_despair_to_nw;
   ext_despair_nw;
@@ -1123,7 +1462,8 @@
   ext_despair_kryten_to_nw;
   zone_extend
     {group_drop_all basalt}
-    {gather_all_into_bag {basalt} {xanth-bag}}
+    {sync_command get $loot_bag $safe_bag}
+    {gather_all_into_bag {basalt} {$loot_bag}}
     ;  
 
   ext_despair_nw_to_sw;
@@ -1133,7 +1473,8 @@
   ext_despair_cinder_to_sw;
   zone_extend
     {group_drop_all basalt}
-    {gather_all_into_bag {basalt} {xanth-bag}}
+    {sync_command get $loot_bag $safe_bag}    
+    {gather_all_into_bag {basalt} {$safe_bag}}
     ;
   
   ext_despair_sw_to_ne;
@@ -1143,7 +1484,8 @@
   ext_despair_shasta_to_ne;
   zone_extend
     {group_drop_all basalt}
-    {gather_all_into_bag {basalt} {xanth-bag}}
+    {sync_command get $loot_bag $safe_bag}    
+    {gather_all_into_bag {basalt} {$safe_bag}}
     ;  
 
   ext_despair_ne_to_se;
@@ -1153,46 +1495,76 @@
   ext_despair_sinon_to_center;
   zone_extend
     {group_drop_all basalt}
-    {gather_all_into_bag {basalt} {xanth-bag}}
+    {sync_command get $loot_bag $safe_bag}    
+    {gather_all_into_bag {basalt} {$safe_bag}}
     ;  
 }
+
+#var {despair_bosses} {off}
 
 #alias {ext_despair_north} {
   ext_despair_to_nw;
   ext_despair_nw;
   ext_despair_nw_to_kryten;
+  #if {"$despair_bosses" == "on"} { ext_despair_kryten };
   ext_despair_kryten_to_nw;
   zone_extend
     {group_drop_all basalt}
-    {gather_all_into_bag {basalt} {xanth-bag}}
+    {gather_all_into_bag {basalt} {junk}}
     ;
 
   ext_despair_nw_to_ne;
   ext_despair_ne;
   ext_despair_ne_to_shasta;
+  #if {"$despair_bosses" == "on"} { ext_despair_shasta };  
   ext_despair_shasta_to_ne;
   zone_extend
     {group_drop_all basalt}
-    {gather_all_into_bag {basalt} {xanth-bag}}      
+    {gather_all_into_bag {basalt} {junk}}      
+}
+
+#alias {ext_despair_south_west} {
+  ext_despair_to_sw;
+  ext_despair_sw;
+  ext_despair_sw_to_cinder;
+  #if {"$despair_bosses" == "on"} { ext_despair_cinder };   
+  ext_despair_cinder_to_sw;
+  zone_extend
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {junk}}
+    ;  
+}
+
+#alias {ext_despair_south_east} {
+  ext_despair_to_se;
+  ext_despair_se;
+  ext_despair_se_to_sinon;
+  #if {"$despair_bosses" == "on"} { ext_despair_sinon };     
+  ext_despair_sinon_to_center;
+  zone_extend
+    {group_drop_all basalt}
+    {gather_all_into_bag {basalt} {junk}}
 }
 
 #alias {ext_despair_south} {
   ext_despair_to_sw;
   ext_despair_sw;
   ext_despair_sw_to_cinder;
+  #if {"$despair_bosses" == "on"} { ext_despair_cinder };   
   ext_despair_cinder_to_sw;
   zone_extend
     {group_drop_all basalt}
-    {gather_all_into_bag {basalt} {xanth-bag}}
+    {gather_all_into_bag {basalt} {junk}}
     ;  
 
   ext_despair_sw_to_se;
   ext_despair_se;
   ext_despair_se_to_sinon;
+  #if {"$despair_bosses" == "on"} { ext_despair_sinon };     
   ext_despair_sinon_to_center;
   zone_extend
     {group_drop_all basalt}
-    {gather_all_into_bag {basalt} {xanth-bag}}      
+    {gather_all_into_bag {basalt} {junk}}      
 }
 
 #alias {zone_despair_nw_walk} {
@@ -1237,9 +1609,9 @@
 #alias {ext_despair_iggy} {
   zone_extend
     {zone_safety off}
-    {group_drop_all basalt}
-    {gather_all_into_bag {basalt} {xanth-bag}}
-    {pawn_all_from_bag {basalt} {xanth-bag}}
+    {group_drop_all basalt}    
+    {pawn_all_from_bag {basalt} {$loot_bag}}
+    {sync_command put $loot_bag $safe_bag}
     {zone_safety on}
 }
 
@@ -1423,6 +1795,20 @@
 }
 
 #nop -----------------------------------------
+#nop Troy
+#nop -----------------------------------------
+
+#alias {zone_achilles} {
+  zone_extend
+    {walk_fast {$path_troy} {The Beach}}
+    {set_target achilles}    
+    {group_noscrap}
+    {group_autoloot on}
+    {kill_room achilles}
+} 
+
+
+#nop -----------------------------------------
 #nop Red Castle
 #nop -----------------------------------------
 
@@ -1459,10 +1845,12 @@
     {group_noscrap}
     {group_imm energy on}
     {group_imm fire on}
+    {group_imm acid on}
     {mode_bash on}
     {group_walk_kill {1n1w} {Dragons Grotto} {dragon}}
     {group_walk {1e1s} {The Underground Depths}}
     {mode_bash off}
+    {group_imm acid off}
     {group_imm fire off}
     {group_imm energy off}
     {group_scrappy}
@@ -1508,6 +1896,14 @@
 
 #alias {zone_valley_guards} {ext_valley_walk; ext_valley_guards}
 
+#alias {zone_valley_silkworms} {
+  ext_valley_walk;
+  ext_valley_forest_enter;
+  ext_valley_forest_to_deep;
+  ext_valley_forest_deep_to_worms;
+  ext_valleyw_to_naus
+}
+
 #alias {ext_valley_walk} {zone_extend {walk_fast {$path_valley} {Welcome to the Valley of the Wind!!}}}
 
 #alias {ext_valley_guards} {
@@ -1532,6 +1928,74 @@
 }
 
 #alias {pawn_valley} {pawn_all {torumekian}}
+
+#alias {ext_valley_forest_enter} {
+  zone_extend
+    {walk_fast {5n1e2n} {Approaching the Polluted Forest}}
+    {set_target {valleyw}}
+    {group_autoloot {on}}
+    {group_imm {poison} {on}}
+    {walk_fast {1n} {Entering the Polluted Forest}}
+    {wait_for_room {Be Careful!}}
+    {kill_room {valleyw}}    
+}
+
+#alias {ext_valley_forest_to_deep} {
+  zone_extend
+    {kill_walk_path {2e4n} {valleyw}}
+    {teleport_room {Deep in the Polluted Forest}}
+    {kill_room {valleyw}}    
+}
+
+#alias {ext_valley_forest_deep_to_worms} {
+  zone_extend
+    {kill_walk_path {3n4e1n} {valleyw}}
+    {mode_bash on}
+    {dagger_all {silkworm}}
+    {dagger_walk_path {2e1n1s1w2n2e2n3w1e} {silkworm}}
+}
+
+#alias {ext_valleyw_to_naus} {
+  zone_extend
+    {kill_walk_path {2n1e} {valleyw}}
+    
+    {teleport_room {Exits: none!}}
+    {kill_room {valleyw}}    
+    {teleport_room {Exits: east, west}}    
+    {kill_walk_path {1e} {valleyw}}
+    
+    {teleport_room {Exits: none!}}
+    {kill_room {valleyw}}
+    {teleport_room {Exits: north, west}}    
+    {kill_walk_path {1n} {valleyw}}
+
+    {teleport_room {Exits: none!}}
+    {kill_room {valleyw}}
+    {teleport_room {Exits: north, south}}    
+    {kill_walk_path {1n} {valleyw}}
+
+    {teleport_room {Exits: none!}}
+    {kill_room {valleyw}}
+    {teleport_room {Exits: south, west}}    
+    {kill_walk_path {1w} {valleyw}}
+
+    {teleport_room {Exits: none!}}    
+    {kill_room {valleyw}}
+    {teleport_room {Exits: east, west}}    
+    {kill_walk_path {1w} {valleyw}}
+    
+    {teleport_room {Exits: east, south}}
+    {teleport_room {Exits: none!}}
+    {kill_room {valleyw}}
+
+    {group_imm {fire} {on}}
+    {kill_walk_path {1s} {valleyw}}
+    
+    {zone_safety off}
+    {group_walk {1e} {Blinded by Golden Light!}}
+    {group_teleport_room {You Slowly Open Your Eyes}}
+    {zone_safety on}    
+}
 
 
 #nop -----------------------------------------
@@ -1690,4 +2154,197 @@
     {group_imm cold off}    
     {group_scrappy}
     {mode_bash off}
+}
+
+
+#nop -----------------------------------------
+#nop Snork
+#nop -----------------------------------------
+
+#alias {zone_snork} {
+  ext_snork_walk;
+  ext_snork
+}
+
+#alias {ext_snork_walk} {
+  zone_extend
+    {walk_fast {s3ese3s} {The Ship Myridion}}
+    {wait_for_room {Sandy Beach}}  
+}
+
+#alias {ext_snork} {
+  zone_extend
+    {walk_fast {1w1n} {Strange Path}}
+    {sync_command {get dream-key}}
+    {walk_fast {1n} {The Magical Barrier}}
+    {unlock_door_with_key {} {sleep} {}}
+    {open_door {sleep}}
+    {walk_fast {1s} {Strange Path}}
+    {sync_command {drop all.dream-key}}
+    {walk_fast {1n} {The Magical Barrier}}
+    {set_target harpy}    
+    {kill_walk_path {1n1w4n} {harpy}}
+    {set_target {purple}}
+    {group_noscrap}
+    {group_autoloot on}
+    {group_imm energy on}
+    {walk_fast {1w2d} {YOUR WORST NIGHTMARE!}}
+    {kill_room {purple}}
+    {walk_fast {2u} {The Lair of Arachnos}}
+    {group_imm {energy} {off}}
+}
+
+
+#nop -----------------------------------------
+#nop Felgormines
+#nop -----------------------------------------
+
+#alias {ext_align_check} {
+  zone_extend
+    {group_align_check}
+}
+
+#alias {zone_felgor_walk} {
+  ext_align_check;
+  ext_felgor_walk;
+  ext_felgor_enter;
+  ext_felgor_entrance_hallway;
+  zone_extend
+    {group_imm fire off}
+    {mode_bash off}
+}
+
+#alias {zone_felgor_to_door_walk} {
+  ext_align_check;
+  ext_felgor_walk;
+  ext_felgor_enter;
+  ext_felgor_entrance_hallway;
+  ext_align_check;
+  ext_felgor_entrance_turn;
+  ext_felgor_choose_north;
+  ext_align_check;
+  ext_felgor_choose_south;
+  zone_extend
+    {group_imm fire off}
+    {mode_bash off}
+}
+
+#alias {zone_felgor_extended} {
+  ext_align_check;
+  ext_felgor_walk;
+  ext_felgor_enter;
+  ext_felgor_entrance_hallway;
+  ext_align_check;
+  ext_felgor_entrance_turn;
+  ext_felgor_choose_north;
+  ext_align_check;
+  ext_felgor_choose_south;
+  ext_align_check;
+  ext_felgor_past_door_to_ambassadors;
+  ext_align_check;
+  ext_felgor_past_ambassadors;
+  ext_align_check;
+  zone_extend
+    {group_imm fire off}
+    {mode_bash off}
+}
+
+#alias {zone_felgor15} {
+  zone_extend
+    {set_zone_time_minutes 16}
+    ;
+  zone_felgor_to_door_walk
+}
+
+#alias {zone_felgor35} {
+  zone_extend
+    {set_zone_time_minutes 36}
+    ;
+  zone_felgor_to_door_walk
+}
+
+#alias {ext_felgor_walk} {
+  zone_extend
+    {walk_fast {$path_felgor} {Path through the mountains}}
+}
+
+#alias {ext_felgor_enter} {
+  zone_extend
+    {set_target felgormines}
+    {group_target_align good}
+    {group_autoloot heavy}
+    {group_imm fire on}    
+    {mode_bash on}
+    {pick {stonedoor}}
+    {open_door {stonedoor}}
+    {group_run_kill {s} {A Sharp Turn in the Corridor} {felgormines}}
+    {kill_room {felgormines}}
+}
+
+#alias {ext_felgor_entrance_hallway} {
+  zone_extend
+    {kill_walk_path {1n} {felgormines}}
+    {confirm_room {A Dimly Lit Corridor}}
+    {dagger_walk_path {1n1w2n1w1e2n} {felgormines} {Immediately}}
+    {kill_walk_path {1e2s1e1w4s} {felgormines}}
+}
+
+#alias {ext_felgor_entrance_turn} {
+  zone_extend
+    {kill_walk_path {1e} {felgormines}}
+    {dagger_walk_path {1s1n2e1n2s1n3e} {felgormines}}
+}
+
+#alias {ext_felgor_choose_north} {
+  zone_extend
+    {dagger_walk_path {1n1e1w1n1w} {felgormines}}
+    {kill_walk_path {1e2s} {felgormines}}
+}
+
+#alias {ext_felgor_choose_south} {
+  zone_extend
+    {dagger_walk_path {1s3e1n1e2n1w2n2w1n} {felgormines}}
+    {kill_walk_path {1s4e} {felgormines}}
+    {dagger_walk_path {1s} {felgormines}}
+    {kill_walk_path {1n2w2s1e2s} {felgormines}}
+    {dagger_walk_path {1e2s} {felgormines}}    
+}
+
+#alias {ext_felgor_past_door_to_ambassadors} {
+  zone_extend
+    {kill_walk_path {1w} {felgormines}}
+    {dagger_all {rat;worker;miner;battlerager;warleader;battlerager;miner;worker;rat;elite}}
+    {kill_walk_path {4s} {felgormines}}
+    {dagger_all {rat;worker;miner;battlerager;warleader;battlerager;miner;worker;rat;elite}}    
+    {kill_walk_path {1e2w} {felgormines}}
+    {dagger_all {rat;worker;miner;battlerager;warleader;battlerager;miner;worker;rat;elite}}
+    {kill_walk_path {1s1w} {felgormines}}
+    {dagger_walk_path {3w1s1w1n1e1n1w1s1e3w1n2w1s1w} {felgormines} {Immediately}}
+}
+
+#alias {ext_felgor_past_ambassadors} {
+  zone_extend
+    {dagger_walk_path {1w3s} {felgormines} {Nearby}}
+    {kill_walk_path {2s1n}}
+    {dagger_walk_path {4w1s1n1w} {felgormines} {Nearby}}
+}
+
+#alias {ext_felgor_around_stone_door} {
+  zone_extend
+    {dagger_walk_path {1w4s1e2w} {felgormines} {Nearby}}
+    {dagger_walk_path {1s4w1s1w1n1e1n1w1s1e3w1n2w1s1w} {felgormines} {Immediately}}
+     {dagger_walk_path {1w3s} {felgormines} {Nearby}}
+     {kill_walk_path {2s1n}}
+       {could go south}
+     {dagger_walk_path {4w1s1n1w} {felgormines} {Immediately}}
+     {dagger_walk_path {1n1w3n1w1e1n1e1w1n} {felgormines} {Nearby}}
+     {dagger_walk_path {2w} {felgormines}}
+    {kill_walk_path {2s1e} {felgormines}}
+    {dagger_walk_path {4s1n2w1n2s1w2s2w1n1w1n} {felgormines}}
+    {dagger_walk_path {1w1n4w1s1n1w1n1w3n1w1e1n1e1w1n2w} {felgormines}}
+}
+
+#alias {zone_fix_align} {
+  zone_fairy_kill;
+  ext_hyrule_around_fairy_kill
 }

@@ -169,8 +169,10 @@
 #alias {dispell_once_off} {
   #if {"$mode_dispell" == "once"} {
     exec {dispell_once_rip} {cmd_dispell_off}
-      {debug DISPELL-ONCE off --> OK}
-      {debug DISPELL-ONCE off --> FAIL}    
+      {debug DISPELL-ONCE off --> OK; %1}
+      {debug DISPELL-ONCE off --> FAIL; %1}    
+  } {
+    trampoline {dispell_once_off} {%1}
   }
 }
 

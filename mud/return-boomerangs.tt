@@ -2,9 +2,15 @@
 
 #var {fish_owner} {}
 #var {kunai_owner} {}
+#var {boomerang_owner} {}
 
 #action {%1 throws a frozen fish!} {#var {fish_owner} {%1}}
+#action {%1 throws An Onyx Boomerang!} {#var {boomerang_owner} {%1}}
 #action {A long silver fish is here, immortalized in ice} {get all.frozen-fish}
+#action {A curved piece of volcanic glass is laying here, be careful those edges look sickeningly sharp} {
+  get all.boomerang
+}
+
 #action {You get a frozen fish} {
   #if {"$fish_owner" != ""} {
     exec {return_boomerangs} {cmd_give_all {frozen-fish} {$fish_owner}}
@@ -22,6 +28,16 @@
       {tell $kunai_owner I think I found your kunai, you're not here to give it back.}
   } {
     put kunai case
+  }
+}
+
+#action {You get An Onyx Boomerang} {
+  #if {"$boomerang_owner" != ""} {
+    exec {return_boomerangs} {cmd_give_all {boomerang} {$boomerang_owner}}
+      {tell $boomerang_owner I think I found your boomerang, just gave it back.}
+      {tell $boomerang_owner I think I found your boomerang, you're not here to give it back.}
+  } {
+    put boomerang case
   }
 }
 

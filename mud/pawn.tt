@@ -42,8 +42,14 @@
   };
 
   #alias {pawn_max_coins} {
-    drop all.magicite;
+    drop all.$pawn_from_item;
     #var {pawn_state} {max};
+    pawn_one
+  };
+
+  #alias {pawn_cant_sell} {
+    drop all.$pawn_from_item;
+    #var {pawn_state} {no-gold};
     pawn_one
   };
 
@@ -62,6 +68,7 @@
   #action {You do not see} {pawn_from_done} {3};
   #action {You can not possibly carry any more coins!  Visit the bank.} {pawn_too_many_coins};
   #action {That person can not possibly hold any more coins.} {pawn_max_coins};
+  #action {I've ran out of gold!} {pawn_cant_sell};
   
   #class {cmd_pawn_all_from_bag} {save};
   #class {cmd_pawn_all_from_bag} {close};
@@ -94,7 +101,11 @@
   };
 
   #alias {gather_put_items} {
-    put all.$gather_item $gather_bag;
+    #if {"$gather_bag" != "junk"} {
+      put all.$gather_item $gather_bag
+    } {
+      junk all.$gather_item
+    }
   };
 
   #alias {gather_debounced_on_put} {
@@ -105,7 +116,8 @@
   };
 
   #action {You get} {gather_debounced_on_get} {3};
-  #action {You put} {gather_debounced_on_put} {3};  
+  #action {You put} {gather_debounced_on_put} {3};
+  #action {You junk} {gather_debounced_on_put} {3};    
   #action {You do not see any more items by this name here.} {gather_all_into_bag_done};
   #action {You do not see a} {gather_all_into_bag_done};
 

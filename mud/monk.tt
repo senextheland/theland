@@ -1,0 +1,60 @@
+#class {monk} {open}
+
+#nop --------------------------------
+#nop Adapter
+#nop --------------------------------
+
+#alias {cmd_cast_me} {
+  #switch {"%1"} {
+    #case {"true sight"} {
+      cmd_great_sight {%2} {%3}
+    };
+    #case {"detect magic"} {
+      cmd_aura {%2} {%3}
+    };
+    #default {
+      cmd_ask_for_cast {%1} {%2} {%3}
+    }
+  }  
+}
+
+#alias {cmd_heal_me} {
+  cmd_ask_for_heal {%1} {%2}
+}
+
+#var {mode_dispell} {}
+
+#alias {cmd_dispell_off} {
+  #if {"$mode_dispell" != "off"} {
+    #var {mode_dispell} {off};
+    cmd_attack {9} {inactive} {%1} {%2}
+  } {
+    debug DISPELL OFF -- already off;
+    trampoline {cmd_dispell_off} {%1}
+  }
+}
+
+#alias {cmd_dispell_on} {
+  #if {"$mode_dispell" == "off"} {
+    #if {"%1" == ""} {#var {mode_dispell} {on}} {#var {mode_dispell} {%1}};
+    debug DISPELL ON mode=$mode_dispell arg=%1;
+    cmd_attack {9} {active} {%2} {%3}
+  } {
+    debug DISPELL ON -- already on;    
+    #var {mode_dispell} {on};
+    trampoline {cmd_dispell_on} {%2}
+  }
+}
+
+
+#nop -------------------------------------
+#nop Compat
+#nop -------------------------------------
+
+#alias {cmd_mode_bash} {
+  debug CMD-MODE-BASH: ignore %1;
+  trampoline {cmd_mode_bash} {%2}
+}
+
+#class {monk} {save}
+#class {monk} {close}
