@@ -1,5 +1,7 @@
 #class {robot} {open}
 
+hook {on_robot_not_here} {create}
+
 #alias set_robot {
   #class {robot} {open};
 
@@ -8,10 +10,32 @@
 
   #alias {tell_robot} {tell %1 %%0};
 
+  #alias {whisper_robot} {whisper %1 %%0};
+
   #class {robot} {save};
   #class {robot} {close};
 
   debug SET ROBOT to "%0"
+}
+
+#alias {cmd_whisper_ask_heal} {
+  cmd_whisper_order {healme} {
+    #action {You feel better!} {task_cmd_whisper_order_done};
+    #action {A strange cold fire seizes your heart} {task_cmd_whisper_order_done};
+    #action {lays hands on you.} {task_cmd_whisper_order_done}
+  } {%1} {%2}
+}
+
+#alias {cmd_whisper_order} {
+  exec_task {cmd_whisper_order} {whisper_robot %1} {%3} {%4} {
+    #action {FAIL: %1} {task_cmd_whisper_order_fail};
+    #action {OK: %1} {task_cmd_whisper_order_done};    
+    #action {No-one by that name here..} {
+      hook {on_robot_not_here} {fire};
+      task_cmd_whisper_order_fail
+    };
+    %2
+  }
 }
 
 #alias {cmd_issue_order} {

@@ -12,5 +12,23 @@
   }
 }
 
+#function {upper_case} {
+  #format {result} {%u} {%1}
+}
+
+#function {lower_case} {
+  #format {result} {%l} {%1}
+}
+
+#function {un_title_case} {
+  #local {text} {%1};
+  #replace {text} {{[A-Z]}%a} {@lower_case{&1}&2};
+  #var {result} {$text}
+}
+
+#function {starts_with} {
+  #regexp {%1} {^%2} {#var {result} {1}} {#var {result} {0}}
+}
+
 #class {utils} {save}
 #class {utils} {close}

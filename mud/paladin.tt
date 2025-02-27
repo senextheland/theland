@@ -1,0 +1,14 @@
+#class {paladin} {open}
+
+hook on_remove_para add {paladin_remove_para} {paladin_remove_para}
+#alias {paladin_remove_para} {
+  debug REMOVE PARA {%1}!!;
+  exec_cast {remove para} {%1}
+}
+
+#alias {cmd_heal_me} {
+  cmd_layhands {$me} {%1} {%2}
+}
+
+#class {paladin} {save}
+#class {paladin} {close}

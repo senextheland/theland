@@ -5,6 +5,9 @@ hook {on_eq_bless_unrepairable} {create}
 
 #var {eq_needs_bless} {}
 #var {weapons_hit} {}
+#var {eq_hit} {}
+#var {eq_danger} {false}
+#var {eq_life} {}
 
 #alias {eq_needs_bless} {
   #var {eq_needs_bless[%1]} {true}
@@ -17,7 +20,17 @@ hook {on_eq_bless_unrepairable} {create}
 }
 
 #alias {on_eq_hit} {
-  on_weapon_hit {%1}
+  on_weapon_hit {%1};
+
+  #local {eq_name} {@eq_map_lookup{%1}};
+  #if {"$eq_name" != ""} {
+    #math {eq_hit[$eq_name]} {$eq_hit[$eq_name] + 1};
+    debug EQ-HIT!!! $eq_name --> $eq_hit[$eq_name] hits;
+    #if {$eq_hit[$eq_name] >= 2} {
+      debug EQ-DANGER!!!;
+      #var {eq_danger} {true}
+    }
+  }
 }
 
 #alias {on_weapon_hit} {
@@ -25,7 +38,7 @@ hook {on_eq_bless_unrepairable} {create}
   #if {"$weapon_name" != ""} {
     #math {weapons_hit[$weapon_name]} {$weapons_hit[$weapon_name] + 1};
     debug WEAPON-HIT!!! $weapon_name --> $weapons_hit[$weapon_name] hits;
-    #if {$weapons_hit[$weapon_name] >= 3} {
+    #if {"$weapon_name" == "$weapon_nodrop" || $weapons_hit[$weapon_name] >= 3} {
       rescue_weapon {$weapon_name}
     }
   }
@@ -35,16 +48,25 @@ hook {on_eq_bless_unrepairable} {create}
   #switch {"%1"} {
     #case {"achilles-spear"} {
       #var {weapon_noscrap} {fremen-knife};
-      rem %1; reset_weapon_state; put %1 case
+      rem %1; choose_best_weapon; safe_put %1 case
     };
     #case {"avenger"} {
       #var {weapon_align_evil} {fremen-knife};
-      rem %1; reset_weapon_state; put %1 case
+      rem %1; choose_best_weapon; safe_put %1 case
     };
     #case {"fury"} {
       #var {weapon_align_good} {fremen-knife};
-      rem %1; reset_weapon_state; put %1 case
-    }    
+      rem %1; choose_best_weapon; safe_put %1 case
+    };
+    #case {"dirk-sword"} {
+      #var {weapon_align_evil} {avenger};
+      rem %1; choose_best_weapon; safe_put %1 case
+    };
+    #case {"$weapon_nodrop"} {
+      #var {weapon_align_good} {fury};
+      #var {weapon_align_evil} {avenger};
+      rem %1; choose_best_weapon
+    }
   }
 }
 
@@ -61,6 +83,9 @@ hook {on_eq_bless_unrepairable} {create}
   {A Golden Tentacle}{golden-tentacle}
   {The deceiver}{deceiver}
   {A Rainbow Hued Dagger}{$nodrop_dagger}
+  {Dirk's Beholder Slayer}{dirk-sword}
+  {Nausicaa's Dagger}{$nodrop_dagger}
+  {The sword of the wind}{$weapon_nodrop}
 }  
 
 #list {eq_map} {create}
@@ -164,10 +189,21 @@ hook {on_eq_bless_unrepairable} {create}
   {A rotted cloth amulet}{cloth-amulet}
   {a warrior's stillsuit}{stillsuit}
   {A pair brachiosaur gloves}{gloves}
+  {an alabaster ring}{alabaster-ring}  
 
 #function {eq_map_lookup} {
   #local {eq_map_index} {};
+    
   #list {eq_map} {find} {%1} {eq_map_index};
+
+  #nop When eq is hit, the name given can be capitalized. This is problematic when the normal name;
+  #nop of an item is lower-cased in the map. For example "a golden kimono" is reported as "A golden kimono".;
+  #nop Do a secondary lookup with the given name un-title-cased.;
+  #if {$eq_map_index == 0} {
+    #local {alt_name} {@un_title_case{%1}};
+    #list {eq_map} {find} {$alt_name} {eq_map_index}
+  };
+  
   #if {$eq_map_index != 0} {
     #math {eq_map_index} {$eq_map_index + 1};
     #var {result} {$eq_map[$eq_map_index]}
@@ -180,7 +216,7 @@ hook {on_eq_bless_unrepairable} {create}
   #class {eq_repair} {open};
 
   #alias {on_repair_done} {#class {eq_repair} {kill}; %1};
-  #alias {on_repair_fail} {#class {eq_repair}; #class {eq_repair} {kill}; %2};  
+  #alias {on_repair_fail} {#class {eq_repair} {kill}; %2};  
 
   #list {eq_list} {create};
   #var {eq_item_index} {0};  
@@ -198,14 +234,25 @@ hook {on_eq_bless_unrepairable} {create}
       #list {current_eq_list_item} {explode} {:};
       rem $current_eq_list_item[1]
     } {
+      debug RESETTING eq_hit;
+      #var {eq_hit} {}; #var {eq_danger} {false};    
       #if {"$eq_needs_bless" != ""} {
         debug EQ-BLESS-UNREPAIRABLE;
         hook {on_eq_bless_unrepairable} {exec-each}
-	  {on_repair_done}
-	  {on_repair_done}
+	  {repair_exit_life_check}
+	  {repair_exit_life_check}
       } {
-        on_repair_done
+        repair_exit_life_check
       }
+    }
+  };
+
+  #alias {repair_exit_life_check} {
+    #if {"$eq_life" == "" || "$eq_life_found" == "true"} {
+      on_repair_done
+    } {
+      tell group 'NO-LIFE-PROTECTION-FOUND --> eq_repair fail;
+      on_repair_fail
     }
   };
 
@@ -231,6 +278,9 @@ hook {on_eq_bless_unrepairable} {create}
       #if {"&1" != "excellent condition."} { 
         #list {eq_list} {add} {%%2:%%3}
       }
+    };
+    #if {"$eq_life" != ""} {
+      #regex {%%4} {$eq_life} {#var {eq_life_found} {true}}
     }
   };
 
@@ -259,6 +309,8 @@ hook {on_eq_bless_unrepairable} {create}
   #class {eq_repair} {save};
   #class {eq_repair} {close};
 
+  debug REPAIR: eq_hit=$eq_hit;
+  #var {eq_life_found} {false};
   eq
 }
 

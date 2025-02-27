@@ -43,6 +43,7 @@
 #alias {cmd_remove_curse} {exec_cast {remove curse} {%1} {%2} {%3}}
 #alias {cmd_cast_me} {exec_cast {%1} {$me} {%2} {%3}}
 #alias {cmd_recall_fallback} {exec_cast {word} {} {%1} {%2}}
+#alias {cmd_pawn_stuff} {%3}
 
 #alias {regen} {debug UNIMPLEMENTED: regen}
 #alias {unregen} {debug UNIMPLEMENTED: unregen}

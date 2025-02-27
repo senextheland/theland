@@ -10,7 +10,7 @@ hook {on_fight_start} {create}
 #var {currently_fighting} {}
 #var {currently_assisting} {}
   
-#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|Claws|crushes|decimates|demolishes|devastates|ethereally touches|gashes|grapples with|hits|hoofs|jabs|leaps upon|massacres|misses|mutilates|obliterates|pierces|pinches|pulverizes|punches|rocks|saws|smashes|stings|stuns|tangles|thrashes|uppercuts|vanquishes|whips}
+#var {fighting_words} {annihilates|atomizes|beats the ever-living shit out of|bites|cleaves|channels|claws|Claws|crushes|decimates|demolishes|devastates|ethereally touches|gashes|grapples with|hits|hoofs|jabs|lashes|leaps upon|massacres|misses|mutilates|obliterates|pierces|pinches|pulverizes|punches|rocks|saws|smashes|stings|stuns|tangles|thrashes|uppercuts|vanquishes|whips}
 #var {you_fighting_words} {annihilate|atomize|bite|channel|claw|cleave|crushe|decimate|demolish|devastate|grapple with|gash|hit|leap upon|massacre|mutilate|obliterate|pierce|pinch|pulverize|punch|rock|thrash|sting|stun|vanquish|whip}
 #var {you_beat_words} {beat the ever-living shit out of}
 
@@ -112,6 +112,19 @@ hook {on_fight_start} {create}
 #alias {fighting_timed_out} {
   debug FIGHT TIMED OUT (bug?);
   end_fight {$currently_fighting}
+}
+
+#alias {add_fight_hint} {
+  #action {%1 slowly fades into existence.} {fight_hint}
+}
+
+#alias {add_group_fight_hints} {
+  #class {fight} {open};
+  #foreach {*group_stats[]} {player} {  
+    add_fight_hint {$player}
+  };
+  #class {fight} {save};
+  #class {fight} {close}  
 }
 
 #class {fight} {save}

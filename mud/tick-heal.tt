@@ -1,0 +1,23 @@
+#class {tick_heal} {open}
+
+#var {tick_heal_target} {}; 
+
+#alias {tick_heal_on} {
+  tell group 'setting tick heal --> %1;
+  #var {tick_heal_target} {%1};
+  hook {on_tick} {add} {tick_heal} {tick_heal_fired}
+}
+
+#alias {tick_heal_off} {
+  tell group 'tick heal off;
+  hook {on_tick} {remove} {tick_heal}
+}
+
+#alias {tick_heal_fired} {
+  #if {"$tick_heal_target" != ""} {
+    lay $tick_heal_target
+  }
+}
+
+#class {tick_heal} {save}
+#class {tick_heal} {close}

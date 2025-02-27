@@ -190,6 +190,7 @@
   #var {score_alignment} {0};
   #var {score_exp} {0};
   #var {score_description} {};
+  #var {score_levels} {};
 
   #var {max_mana} {0};
   #var {max_refresh} {0};   
@@ -199,6 +200,8 @@
   #class {score} {close};
 
   exec_task {cmd_score} {score} {%2} {%3} {
+    #var {score_levels} {};
+    
     #action {You have %%%+(%%%+) hit, %%%+(%%%+) mana and %%%+(%%%+) movement points.} {  
       #var {health} {%%%1}; #var {score_max_hit} {%%%2}; #var {max_hp} {%%%2};
       #var {mana} {%%%3}; #var {score_max_mana} {%%%4}; #var {max_mana} {%%%4};
@@ -207,6 +210,10 @@
 
     #action {Your alignment (-1000 : +1000): %%%+.} {
       #var {score_alignment} {%%%1}
+    };
+
+    #action {Your levels:%%%s%%%S:%%%S} {
+      #var {score_levels[%%%2]} {%%%3}
     };
 
     #action {You have scored %%%+ exp, and have %%%+ gold coins.} {
@@ -478,7 +485,8 @@
 #alias {cmd_imm_transition} {
   exec_task {cmd_imm_%1_%2} {imm_transition {%1} {%2}} {%4} {%5} {
     #action {%3} {task_cmd_imm_%1_%2_done};
-    #action {IMM ALREADY %1 --> %2} {task_cmd_imm_%1_%2_done}
+    #action {IMM ALREADY %1 --> %2} {task_cmd_imm_%1_%2_done};
+    #action {ALREADY WEARING} {task_cmd_imm_%1_%2_done}    
   }
 }
 
@@ -508,9 +516,9 @@
       task_cmd_count_container_done
     } {6};
 
-    #action {%2[%%%1]} {
+    #action {%2%%%1[%%%2]} {
       debug CONTAINER-CHECK: FOUND {%2};
-      #var {count_container_found} {%%%1};
+      #var {count_container_found} {%%%2};
       task_cmd_count_container_done
     };
 
@@ -612,6 +620,39 @@
   }
 }
 
+#alias {cmd_set_all_attacks} {
+  cmd_attack_forms {continue_with_attacks {%1} {%2}} {%3}
+}
+
+#alias {continue_with_attacks} {
+  #local {want_attacks} {};
+  #local {want} {};
+  #foreach {%1} {want} {
+    #var {want_attacks[$want]} {active}
+  };
+
+  #local {change_attacks} {};
+  #local {have} {};
+  #foreach {*all_attack_forms[]} {have} {
+    #if {"$want_attacks[$have]" != "" && "$want_attacks[$have]" != "$all_attack_forms[$have]"} {
+      #var {change_attacks[$have]} {$want_attacks[$have]}
+    };
+    #elseif {"$all_attack_forms[$have]" == "active" && "$want_attacks[$have]" != "active"} {
+      #var {change_attacks[$have]} {inactive}
+    }
+  };
+
+  #if {"$change_attacks" != ""} {
+    debug OK! CHANGE THESE ATTACKS $change_attacks;
+    #local {change} {};
+    #foreach {*change_attacks[]} {change} {
+      attack $change
+    }
+  };
+
+  trampoline {continue_with_attacks} {%2}
+}
+
 #alias {cmd_aura} {
   exec_task {cmd_aura} {aura} {%1} {%2} {
     #action {Your eyes glow briefly and you adjust to the new auras.} {aura_up};
@@ -633,6 +674,19 @@
       spell_state_up {true sight};
       task_cmd_great_sight_done
     }
+  }
+}
+
+#alias {cmd_get_corpse} {
+  exec_task {cmd_get_corpse} {carve corpse} {%3} {%4} {
+    #action {You carve up a nice fat slice.} {carve corpse};
+    #action {There is no good meat left on it.} {get corpse};
+    #action {You get the corpse of %1} {safe_put corpse %2} {4};
+    #action {You get the corpse} {junk corpse; carve corpse} {5};
+    #action {You put the corpse} {task_cmd_get_corpse_done};
+    #action {It won't fit} {task_cmd_get_corpse_fail};
+    #action {You do not see a corpse here.} {task_cmd_get_corpse_fail};
+    #action {That's not here.} {task_cmd_get_corpse_fail}    
   }
 }
 

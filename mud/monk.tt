@@ -19,7 +19,7 @@
 }
 
 #alias {cmd_heal_me} {
-  cmd_ask_for_heal {%1} {%2}
+  cmd_whisper_ask_heal {%1} {%2}
 }
 
 #var {mode_dispell} {}

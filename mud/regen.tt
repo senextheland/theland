@@ -12,7 +12,10 @@
 }
 
 #function {regen_robot_needs_regen} {
-  #if {"$me" != "senex"} {
+  #if {"$robot" == "senex"} {
+    debug REGEN robot-needs-regen? mana=$group_stats[Senex][mana] move=$group_stats[Senex][move];
+    #math {result} {$group_stats[Senex][move] < 600 || $group_stats[Senex][mana] < 1500}    
+  }; #elseif {"$me" != "senex"} {
     #var {result} {0}
   }; #elseif {"$robot" == "silk"} {
     debug REGEN robot-needs-regen? $group_stats[Silk][move];

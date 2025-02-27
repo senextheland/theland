@@ -24,7 +24,7 @@ hook {on_remove_para} {create};
   #action {%1 dodges %%1's blow.} {maybe_assist {%1} {%%1}};
 
   #action {%%1 {$fighting_words} %1} {maybe_assist {%1} {%%1}};
-  #action {grabs %1 and breaks his spinal cord!} {hook {on_remove_para} {fire} {%1}};
+  #action {grabs %1 and breaks %%1 spinal cord!} {hook {on_remove_para} {fire} {%1}};
 
   #action {You flee head over heels.} {done_fighting};
   #action {not fighting anyone.} {done_fighting};

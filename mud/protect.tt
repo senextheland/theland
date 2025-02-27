@@ -2,6 +2,10 @@
 
 #var {protect_state} {idle}
 
+#function {can_protect} {
+  #math {result} {"$score_levels[Pa]" != ""}
+}
+
 #alias {try_rescue} {
   #if {"$protect_state" == "idle"} {
     #var protect_state;
@@ -35,7 +39,7 @@
 #alias {protect} {
   #class {protect} {open};
 
-  #action {%1 slowly fades into existence.} {fight_hint {%2}};
+  add_fight_hint {%1};
 
   #action {sees The %1, and attacks!} {try_rescue %2};
   #action {sees %1, and attacks!} {try_rescue %2};

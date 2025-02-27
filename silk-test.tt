@@ -27,6 +27,9 @@
   #read {mud/cauldron.tt};
   #read {mud/return-boomerangs.tt};
   #read {mud/scary-things.tt};
+  #read {mud/nodrop.tt};
+
+  #var {eq_life} {green scale armor};
 
   cmd_score {
     #read {mud/prompt.tt};
@@ -87,13 +90,15 @@ hook {on_rip} {add} {loot_fish}
 }
 
 #action {A pile of gold coins} {get all.coins}
+#action {shatters with a blinding flash of light!} {tell group 'YEEP! I LIFED!!!}
 
 #alias {stash_norent} {
   get fey case; put fey pouch;
   rem broons; safe_put broons pouch;
   rem doublet; rem green-scale; wear aethyr-armor;
   rem holiday; put holiday pouch;
-  give pouch senex
+  give pouch senex;
+  rem $nodrop_dagger; give $nodrop_dagger senex
 }
 
 #alias {unstash_norent} {
@@ -101,7 +106,8 @@ hook {on_rip} {add} {loot_fish}
   get broons pouch; wear broons;
   rem aethyr-armor; wear green-scale; wear doublet;
   get fey pouch; put fey case;
-  give aethyr-armor senex
+  give aethyr-armor senex;
+  grab $nodrop_dagger
 }
 
 #action {Senex gives you a kangaroo pouch.} {unstash_norent}
@@ -112,6 +118,8 @@ hook {on_rip} {add} {loot_fish}
 #nop --------------------------
 
 #read {mud/thief.tt}
+
+#alias {cmd_pawn_stuff} {cmd_pawn_and_count {%1} {%2} {%3}}
 
 #alias {cmd_cast_me} {cmd_ask_for_cast {%1} {%2} {%3}}
 #alias {cmd_sneak} {%1}
@@ -292,9 +300,8 @@ set_default_imms
   cmd_imm_transition {acid} {off} {You wear green scale armor} {%1} {%2}
 }
 
-#var {nodrop_ring} {wind-ring}
-#var {nodrop_dagger} {Nausicaa-dagger}
-#var {dispell_5hnd_weapon} {kijah-jasban-spear}
+#nop {dispell_5hnd_weapon} {kijah-jasban-spear}
+#var {dispell_5hnd_weapon} {deceiver}
 #var {dispell_weapon} {deceiver}
 #var {noscrap_weapon} {assassin-dagger}
 #var {noscrap_held} {strange-knife}
@@ -308,16 +315,8 @@ set_default_imms
 #var {mode_dispell} {}
 #var {mode_backstab} {}
 #var {mode_lifeprot} {}
-#var {mode_scary_eq} {on}
+#var {mode_scary_eq} {off}
 #var {mode_5hnd} {}
-
-#alias {safe_put} {
-  #if {"%1" != "$nodrop_dagger" && "%1" != "$nodrop_ring"} {
-    put %1 %2
-  } {
-    debug I WILL NOT PUT NODROP ITEM {%1} IN %2
-  }
-}
 
 #alias {reset_weapon_state} {
   #var {mode_broons} {on};
@@ -331,7 +330,9 @@ set_default_imms
   
   get $dispell_weapon case;
   rem $noscrap_weapon; safe_put $noscrap_weapon case;
-  rem $dispell_5hnd_weapon; safe_put $dispell_5hnd_weapon case;
+  #if {"$dispell_5hnd_weapon" != "$dispell_weapon"} {
+    rem $dispell_5hnd_weapon; safe_put $dispell_5hnd_weapon case
+  };
   wield $dispell_weapon; 
   rem $noscrap_held; safe_put $noscrap_held case;
   rem $nodrop_dagger; grab $nodrop_dagger; scary_eq_on;
@@ -346,8 +347,12 @@ set_default_imms
   set_default_imms  
 }
 
+#alias {reset_attacks_trampoline} {
+  cmd_set_all_attacks {1;3} {%1} {%1}
+}
+
 #alias {cmd_reset_weapon_state} {
-  exec_task {cmd_reset_weapon_state} {reset_weapon_state} {%1} {%2} {
+  exec_task {cmd_reset_weapon_state} {reset_weapon_state} {reset_attacks_trampoline {%1}} {%2} {
     #action {You grab Nausicaa's Dagger.} {task_cmd_reset_weapon_state_done};
     #action {You grab A Rainbow Hued Dagger.} {task_cmd_reset_weapon_state_done};
     #action {You are already wielding something.} {task_cmd_reset_weapon_state_fail}

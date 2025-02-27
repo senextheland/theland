@@ -88,6 +88,7 @@ task_list {zone_steps} {continue-hook-add} {50_zone_loop_continue_when_hook} {zo
 hook {on_fight_start} {add} {10_zone_loop_fight_start_hook} {zone_loop_fight_start_hook}
 hook {on_rip} {add} {10_zone_loop_rip_hook} {zone_loop_rip_hook}
 hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recover_fish_hook}
+hook {on_robot_not_here} {add} {10_zone_loop_safety_hook} {zone_robot_missing_hook}
 
 #alias {zone_continuation} {
   #if {"$zone_state" == "testing"} {
@@ -117,6 +118,10 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
     tell group 'ZONE-SAFETY-ALERT: mana is super low, aborting zone;
     zone_end
   };
+  #elseif {"$eq_danger" == "true" && "$zone_current" != "zone_interlude"} {
+    tell group 'EQ-DANGER --> need to repair;
+    zone_retry
+  };
   #elseif {"$zone_safety" == "on"} {
     reset_zone_timeout;
     cmd_presence_check {$robot} {$robot_description} {%1} {zone_loop_safety_presence_fail {%1} {%2}}
@@ -124,6 +129,11 @@ hook {before_walk_room} {add} {10_zone_loop_recover_fish_hook} {zone_loop_recove
   #else {
     %1
   }
+}
+
+#alias {zone_robot_missing_hook} {
+  debug ROBOT-MISSING --> FAIL PRESENCE;
+  zone_loop_safety_presence_fail {#nop} {#nop}
 }
 
 #alias {zone_loop_safety_presence_fail} {
@@ -231,12 +241,23 @@ hook {on_zone_end} {create}
 
 #alias {zone_interlude} {zone_interlude_fairy}
 
+#action {NO-LIFE-PROTECTION-FOUND} {
+  debug MISSING LIFE PROTECTION --> zone-loop-stop;
+  zone_loop_stop
+};
+
 #action {ZONE-FINISH} {
   task_list {zone_steps} {clear};
   hook {on_zone_finish} {fire};
   zone_timeout_off;
 
-  #if {"$zone_current" == "zone_interlude"} {    
+  #if {"$zone_current" == "zone_interlude"} {
+    #if {"$eq_danger" == "true"} {
+      debug ZONE-START-EQ-DANGER --> resetting eq_danger, possible bug?;
+      #var eq_danger;
+      #var eq_hit;
+      #var {eq_danger} {false}
+    };
     zone_fast_forward;
     zone_start {$zones[1]}
   } {
@@ -292,13 +313,14 @@ hook {on_zone_end} {create}
 #alias {zone_end} {
   executor {global_tasks} {clear};
   task_list {zone_steps} {clear};
-  tell group 'zone-end: terminating zone NOW;
+  tell group 'zone-end: terminating zone NOW --> next-zone;
   zone_finish
 }
 
 #alias {zone_retry} {
   executor {global_tasks} {clear};
   task_list {zone_steps} {clear};
+  tell group 'zone-retry: terminating zone NOW --> reattempt;
   cmd_check_fish
     {zone_retry_all_fishes}
     {zone_retry_fishes_missing}
@@ -362,6 +384,7 @@ hook {on_zone_end} {create}
 
 #alias {def_zone_end_on_fail_task0} {#alias {%1} {exec {zone_task} {%2} {%%1} {zone_end}}}
 
+#alias {def_zone_optimistic_task2} {#alias {%1} {exec {zone_task} {%2 {%%1} {%%2}} {%%3} {%%3}}}
 
 #nop --------------------------
 #nop General-purpose
@@ -440,11 +463,12 @@ def_zone_task0 {group_spellup} {cmd_group_spellup}
   ext_crossroads_spellup;
   zone_extend
     {capture_group_score}
+    {sync_command add_group_fight_hints}
     {sync_command ext_maybe_town_with_fairy}
 }
 
 #alias {ext_maybe_town_with_fairy} {
-  #if {@regen_needed{} || $score_alignment < 850} {
+  #if {@starts_with{$zones[2];zone_hyrule} == 0 && (@regen_needed{} || $score_alignment < 850)} {
     ext_town_with_fairy {$need_pawn}
   } {        
     ext_visit_town {$need_pawn}
@@ -636,6 +660,8 @@ def_zone_task1 {group_target_align} {cmd_group_target_align}
 def_zone_task1 {set_zone_time_minutes} {cmd_set_zone_end_time_minutes}
 def_zone_task0 {group_optimistic_heal} {cmd_group_optimistic_heal}
 def_zone_task1 {portal_to} {cmd_portal}
+
+def_zone_optimistic_task2 {get_corpse} {cmd_get_corpse}
 
 def_zone_end_on_fail_task0 {group_align_check} {cmd_group_align_check}
 

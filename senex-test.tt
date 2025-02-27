@@ -32,9 +32,12 @@
   #read {mud/control.tt};
   #read {mud/zones.tt};
   #read {mud/spellup.tt};
+  #read {mud/watch-leader.tt};  
   #read {mud/scary-things.tt};
   #read {mud/follow-orders.tt};
-  #read {mud/gim-commands.tt}
+  #read {mud/gim-commands.tt};
+  #read {mud/nodrop.tt};
+  #read {mud/paladin.tt};
 
   cmd_score {
     #read {mud/prompt.tt};
@@ -58,10 +61,13 @@
   hook {on_eq_repair} {add} {bless} {bless_eq_item};
   hook {on_eq_bless_unrepairable} {add} {bless} {bless_all_unrepairable};
 
-  #nop set_robot {silk} {Silk};
-  set_robot {soren} {Soren};
-  protect {$robot_description} {$robot};
   reset_weapon_state
+}
+
+#alias {reload} {
+  #read {mud/adapter.tt};
+  #read {senex-test.tt};
+  get_ready
 }
 
 #alias {cmd_deposit_self} {
@@ -83,12 +89,6 @@
 
 #alias {unstash_silk} {
   put aethyr-armor xanth
-}
-
-#alias {reload} {
-  #read {mud/adapter.tt};
-  #read {senex-test.tt};
-  get_ready
 }
 
 #alias {bless_eq_item} {
@@ -128,6 +128,14 @@
   zone_loop_start
 }
 
+#alias {load_despair_loop} {
+  zone_loop
+    {zone_despair_south_west}
+    {zone_despair_south_east}
+    {zone_despair_north_west}
+    {zone_despair_north_east}        
+}
+
 #alias {load_overnight_loop} {
   zone_loop
     {zone_tridac_kill}
@@ -137,7 +145,7 @@
     {zone_tridac_kill}
     {zone_x2_kill}
     {zone_darkwiz_castle_quick} 
-    {zone_tzen_all}
+    {zone_tzen}
     {zone_tzen_walk_sell_magicite}
 }
 
@@ -213,11 +221,10 @@
 #nop adapter.tt
 #nop --------------------------
 
-#alias {cmd_heal_me} {
-  cmd_layhands {$me} {%1} {%2}
-}
+#alias {cmd_pawn_stuff} {cmd_pawn {%1} {%2} {%3}}
+#alias {cmd_buy_missing_cauldrons} {%1}
 
-#var regen_bag {shoe-box}
+#var regen_bag {}
 #alias {regen} {
   rest;
   #if {"$regen_bag" != ""} {
@@ -250,7 +257,7 @@
 }
 set_default_imms
 
-#var {imm_bag} {case}
+#var {imm_bag} {shoe-box}
 
 #alias {imm_energy_on} {
   get mithril-gauntlets $imm_bag;
@@ -330,10 +337,8 @@ set_default_imms
   cmd_imm_transition {electric} {off} {You grab {A Purple Shard|a dwarven holy symbol}.} {%1} {%2}
 }
 
-#var {nodrop_ring} {wind-ring}
-#var {weapon_nodrop} {wind-sword}
 #var {weapon_noscrap} {achilles-spear}
-#var {weapon_align_evil} {avenger}
+#var {weapon_align_evil} {dirk-sword}
 #var {weapon_align_good} {fury}
 #var {weapon_life_protect} {claw}
 #var {current_weapon} {}
@@ -341,14 +346,6 @@ set_default_imms
 #var {mode_align} {}
 #var {mode_scrap} {}
 #var {mode_life_protect} {}
-
-#alias {safe_put} {
-  #if {"%1" != "$weapon_nodrop" && "%1" != "$nodrop_ring"} {
-    put %1 %2
-  } {
-    debug I WILL NOT PUT NODROP ITEM {%1} IN %2
-  }
-}
 
 #alias {reset_weapon_state} {
   #var {mode_align} {evil};
@@ -387,6 +384,25 @@ set_default_imms
   #if {"$imm[electric]" == "on"} {imm_electric_off};
 
   set_default_imms
+}
+
+#alias {use_wind} {
+  #var {weapon_align_evil} {$weapon_nodrop};
+  #var {weapon_align_good} {$weapon_nodrop};
+  #var {current_weapon} {$weapon_align_evil};
+  rem dirk-sword; rem avenger; wield $weapon_nodrop; safe_put dirk-sword case; safe_put avenger case;
+}
+
+#alias {use_avenger} {
+  #var {weapon_align_evil} {avenger};
+  #var {current_weapon} {$weapon_align_evil};  
+  get avenger case; rem dirk; wield avenger; safe_put dirk case
+}
+
+#alias {use_dirk} {
+  #var {weapon_align_evil} {dirk-sword};
+  #var {current_weapon} {$weapon_align_evil};
+  get dirk-sword case; rem avenger; wield dirk-sword; safe_put avenger case
 }
 
 #alias {cmd_reset_weapon_state} {
@@ -428,8 +444,13 @@ set_default_imms
 #var {item_held} {symbol}
 #var {item_waist} {waistband}
 #var {item_legs} {plates}
+#var {item_body} {buffalo-hide}
 
 #alias {cmd_scrap_off} {
+  #if {"$mode_scrap" != "off"} {
+    rem flame; get scepter box; grab scepter; safe_put flame box
+  };
+  
   #var {mode_scrap} {off};
   exec_task {cmd_scrap_off} {choose_best_weapon} {%1} {%2} {
     #action {ALREADY WIELDING} {task_cmd_scrap_off_done};
@@ -441,10 +462,15 @@ set_default_imms
 }
 
 #alias {cmd_scrap_on} {
+  #if {"$mode_scrap" != "on"} {
+    rem scepter; get flame box; grab flame; safe_put scepter box
+  };
+
   #var {mode_scrap} {on};
   exec_task {cmd_scrap_on} {choose_best_weapon} {%1} {%2} {
     #action {ALREADY WIELDING} {task_cmd_scrap_on_done};  
     #action {You wield The Holy Avenger.} {task_cmd_scrap_on_done};
+    #action {You wield Dirk's Beholder Slayer.} {task_cmd_scrap_on_done};
     #action {You wield A glowing trident.} {task_cmd_scrap_on_done};
     #action {You wield Clangeddin's Fury.} {task_cmd_scrap_on_done};
     #action {a Fremen fighting knife} {task_cmd_scrap_on_done};    
@@ -482,6 +508,7 @@ set_default_imms
     #action {ALREADY WIELDING} {task_cmd_mob_align_evil_done};
     #action {You wield the sword of the wind.} {task_cmd_mob_align_evil_done};
     #action {You wield The Holy Avenger.} {task_cmd_mob_align_evil_done};
+    #action {You wield Dirk's Beholder Slayer.} {task_cmd_mob_align_evil_done};    
     #action {You wield Achilles' Spear.} {task_cmd_mob_align_evil_done};;
     #action {a Fremen fighting knife} {task_cmd_mob_align_evil_done};    
     #action {You wield Clangeddin's Fury.} {task_cmd_mob_align_evil_done};
@@ -498,6 +525,7 @@ set_default_imms
     #action {ALREADY WIELDING} {task_cmd_mob_align_good_done};
     #action {You wield the sword of the wind.} {task_cmd_mob_align_good_done};    
     #action {You wield The Holy Avenger.} {task_cmd_mob_align_good_done};
+    #action {You wield Dirk's Beholder Slayer.} {task_cmd_mob_align_good_done};    
     #action {You wield Achilles' Spear.} {task_cmd_mob_align_good_done};
     #action {a Fremen fighting knife} {task_cmd_mob_align_good_done};        
     #action {You wield Clangeddin's Fury.} {task_cmd_mob_align_good_done};
@@ -509,11 +537,11 @@ set_default_imms
 }
 
 #alias {sneak} {
-  get pelt case; rem $item_waist; wear pelt; safe_put $item_waist case
+  get pelt box; rem $item_waist; wear pelt; safe_put $item_waist box
 }
 
 #alias {unsneak} {
-  get $item_waist case; rem pelt; safe_put pelt case; wear $item_waist
+  get $item_waist box; rem pelt; safe_put pelt box; wear $item_waist
 }
 
 #alias {cmd_sneak} {

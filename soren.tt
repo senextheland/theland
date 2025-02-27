@@ -19,16 +19,33 @@
   #read {mud/robot.tt};  
   #read {mud/fight.tt};
   #read {mud/assist.tt};
-  #read {mud/dispell-once.tt};
   #read {mud/zones.tt};
   #read {mud/spellup.tt};
   #read {mud/watch-leader.tt};
+  #read {mud/walk.tt};
   #read {mud/pawn.tt};
   #read {mud/regen.tt};
+  #read {mud/recover.tt};
+  #read {mud/kill.tt};
+  #read {mud/fish-test.tt};
+  #read {mud/dagger.tt}; 
+  #read {mud/leader.tt};
+  #read {mud/control.tt};
+  #read {mud/zones.tt};
+  #read {mud/spellup.tt};  
   #read {mud/cauldron.tt};
   #read {mud/return-boomerangs.tt};
   #read {mud/scary-things.tt};
   #read {mud/follow-orders.tt};
+  #read {mud/gim-commands.tt};
+  #read {mud/nodrop.tt};
+
+  #nop {eq_life} {an alabaster ring};
+
+  #var {safe_bag} {xanth-bag};
+  #var {loot_bag} {xanth-bag};
+  #var {corpse_bag} {xanth-bag};
+  #var {basalt_bag} {junk};
 
   cmd_score {
     #read {mud/prompt.tt};
@@ -59,8 +76,6 @@
   #var {cauldron_count} {10};
 
   set_robot {senex} {Senex};
-  assist_on {Senex};
-  leader_state_watch {Senex};
   reset_weapon_state
 }
 
@@ -76,13 +91,65 @@
 
 #action {A pile of gold coins} {get all.coins}
 
-#alias {load_overnight_loop} {
+#alias {load_basic_loop} {
   zone_loop
     {zone_tridac_kill}
     {zone_antipal_kill}
     {zone_blizz_kill}
+    {zone_despair_south_west}
     {zone_tridac_kill}
     {zone_x2_kill}
+    {zone_tzen}
+    {zone_tzen_walk_sell_magicite}
+}
+
+#alias {load_mid1_loop} {
+  zone_loop
+    {zone_despair_south_west}
+    {zone_antipal_kill}
+    {zone_tridac_kill}
+    {zone_hyrule_loop}    
+    {zone_x2_kill}
+    {zone_darkwiz_castle_quick}
+    {zone_despair_south_west}
+    {zone_antipal_kill}
+    {zone_tridac_kill}
+    {zone_hyrule_loop}        
+    {zone_tzen}
+    {zone_tzen_walk_sell_magicite}
+}
+
+#alias {load_mid2_loop} {
+  zone_loop
+    {zone_despair_south_west}
+    {zone_despair_south_east}
+    {zone_tridac_kill}
+    {zone_hyrule_loop}    
+    {zone_x2_kill}
+    {zone_darkwiz_castle_quick}
+    {zone_despair_south_west}
+    {zone_despair_south_east}
+    {zone_tridac_kill}
+    {zone_hyrule_loop}        
+    {zone_tzen}
+    {zone_tzen_walk_sell_magicite}
+    {zone_antipal_kill}
+}
+
+#alias {load_hard_loop} {
+  zone_loop
+    {zone_despair_south_west}
+    {zone_despair_south_east}
+    {zone_despair_north_west}
+    {zone_despair_north_east}        
+    {zone_tridac_kill}
+    {zone_x2_kill}
+    {zone_darkwiz_castle_quick}
+    {zone_despair_south_west}
+    {zone_despair_south_east}
+    {zone_despair_north_west}
+    {zone_despair_north_east}        
+    {zone_tridac_kill}    
     {zone_tzen}
     {zone_tzen_walk_sell_magicite}
 }
@@ -93,6 +160,8 @@
 #nop --------------------------
 
 #read {mud/monk.tt}
+
+#alias {cmd_pawn_stuff} {cmd_pawn_and_count {%1} {%2} {%3}}
 
 #alias {cmd_sneak} {%1}
 #alias {cmd_unsneak} {%1}
@@ -105,12 +174,14 @@
 
 #alias {regen} {
   rest;
-  get wrap case; rem leg-plates; wear wrap
+  get wrap case; rem leg-plates; wear wrap;
+  get flash-stone case; rem firestar; grab flash-stone
 }
 
 #alias {unregen} {
   stand;
-  rem wrap; put wrap case; wear leg-plates
+  rem wrap; safe_put wrap case; wear leg-plates;
+  rem flash-stone; grab firestar; safe_put flash-stone case;
 }
 
 #alias {invis_on} {wear wicker-plates}
@@ -121,10 +192,6 @@
 }
 set_default_imms
 
-#alias {safe_put} {
-  put %1 %2
-}
-
 #alias {imm_transition} {
   #if {"$imm[%1]" != "%2"} {
     #var {imm[%1]} {%2};
@@ -134,13 +201,16 @@ set_default_imms
   }
 }
 
-#alias {imm_energy_on} {
+#alias {imm_energy_on} {choose_best_ring}
+#alias {imm_energy_off} {choose_best_ring}
+
+#nop {imm_energy_on} {
   get spectral-band case;
   rem golden-ring; wear spectral-band;
   safe_put golden-ring case
 }
 
-#alias {imm_energy_off} {
+#nop {imm_energy_off} {
   rem spectral-band;
   get golden-ring case; wear golden-ring;
   safe_put spectral-band case    
@@ -151,7 +221,7 @@ set_default_imms
 }
 
 #alias {cmd_imm_energy_off} {
-  cmd_imm_transition {energy} {off} {You wear {the signet ring of Thalos|broons bane|the golden ring of the master}} {%1} {%2}
+  cmd_imm_transition {energy} {off} {You wear {the signet ring of Thalos|broons bane|the golden ring of the master|an alabaster ring}} {%1} {%2}
 }
 
 #alias {imm_water_on} {
@@ -174,13 +244,16 @@ set_default_imms
   cmd_imm_transition {water} {off} {You wear a small mithril girdle} {%1} {%2}
 }
 
-#alias {imm_poison_on} {
+#alias {imm_poison_on} {choose_best_ring}
+#alias {imm_poison_off} {choose_best_ring}
+
+#nop {imm_poison_on} {
   get ring-silver-amethyst case;
   rem golden-ring; safe_put golden-ring case;
   wear ring-silver-amethyst
 }
 
-#alias {imm_poison_off} {
+#nop {imm_poison_off} {
   rem ring-silver-amethyst; safe_put ring-silver-amethyst case;
   get golden-ring case; wear golden-ring
 }
@@ -190,7 +263,7 @@ set_default_imms
 }
 
 #alias {cmd_imm_poison_off} {
-  cmd_imm_transition {poison} {off} {You wear the golden ring of the master} {%1} {%2}
+  cmd_imm_transition {poison} {off} {You wear {the golden ring of the master|an alabaster ring}} {%1} {%2}
 }
 
 #alias {imm_fire_on} {
@@ -214,6 +287,7 @@ set_default_imms
 }
 
 #var {mode_scrap} {}
+#var {mode_life_protect} {}
 
 #alias {reset_weapon_state} {
   #var {mode_scrap} {on};
@@ -223,8 +297,8 @@ set_default_imms
   #if {"$imm[water]" == "on"} {imm_water_off};
   #if {"$imm[fire]" == "on"} {imm_fire_off};
   #if {"$imm[poison]" == "on"} {imm_poison_off};
-
-  set_default_imms
+  
+  set_default_imms 
 }
 
 #alias {reset_weapon_trampoline} {
@@ -233,7 +307,9 @@ set_default_imms
 }
 
 #alias {cmd_reset_weapon_state} {
-  cmd_dispell_off {reset_weapon_trampoline {%1}} {reset_weapon_trampoline {%2}}
+  cmd_set_all_attacks {2;8;11}
+    {reset_weapon_trampoline {%1}}
+    {reset_weapon_trampoline {%2}}
 }
 
 #alias {cmd_scrap_off} {
@@ -252,5 +328,67 @@ set_default_imms
   } {
     debug TARGET-ALIGN: ignore;
     trampoline {cmd_target_align} {%2}
+  }
+}
+
+#var {current_ring1} {}
+
+#alias {choose_best_ring} {  
+  #local {next_ring1} {};
+  #local {last_ring1} {};
+
+  #var {eq_life} {};
+
+  #if {"$imm[energy]" == "on"} {
+    #var {next_ring1} {spectral-band}
+  };
+  #elseif {"$imm[poison]" == "on"} {
+    #var {next_ring1} {ring-silver-amethyst}
+  };
+  #elseif {"$mode_life_protect" == "on"} {
+    #var {next_ring1} {alabaster-ring};
+    #var {eq_life} {an alabaster ring}
+  };
+  #else {
+    #var {next_ring1} {golden-ring}
+  };
+
+  debug CHOOSE-BEST-RING: current=$current_ring1 next=$next_ring1;
+  #if {"$current_ring1" == "$next_ring1"} {
+    #show ALREADY WEARING RING1
+  } {
+    #if {"$current_ring1" == ""} {
+      #var {last_ring1} {spectral-band;alabaster-ring;golden-ring;ring-silver-amethyst}
+    } {
+      #var {last_ring1} {$current_ring1}
+    };
+
+    debug CHOOSE-BEST-RING: last=$last_ring1;
+    #local {ring1} {};
+    #foreach {$last_ring1} {ring1} {rem $ring1};
+    get $next_ring1 case;
+    wear $next_ring1;
+    #foreach {$last_ring1} {ring1} {safe_put $ring1 case};
+    #var {current_ring1} {$next_ring1}  
+  }
+}
+
+#alias {cmd_life_protect_on} {
+  #var {mode_life_protect} {on};
+  exec_task {cmd_life_protect_on} {choose_best_ring} {%1} {%2} {
+    #action {ALREADY WEARING RING1} {task_cmd_life_protect_on_done};
+    #action {You wear an alabaster ring on your} {task_cmd_life_protect_on_done};
+    #action {You do not seem to have the} {task_cmd_life_protect_on_fail};
+    #action {You are already wearing something on your fingers.} {task_cmd_life_protect_on_fail}
+  }
+};
+
+#alias {cmd_life_protect_off} {
+  #var {mode_life_protect} {off};
+  exec_task {cmd_life_protect_off} {choose_best_ring} {%1} {%2} {
+    #action {ALREADY WEARING RING1} {task_cmd_life_protect_off_done};
+    #action {You wear} {task_cmd_life_protect_off_done};
+    #action {You do not seem to have the} {task_cmd_life_protect_off_fail};
+    #action {You are already wearing something on your fingers.} {task_cmd_life_protect_off_fail}
   }
 }

@@ -27,7 +27,11 @@
       #list {fire_queue} {add} $%1[];
       #list {fire_queue} {simplify};
       #foreach {$fire_queue} {result} {
-        $result
+        #if {"%3" != ""} {
+	  $result {%3}
+	} {
+          $result
+	}
       }
     };
 

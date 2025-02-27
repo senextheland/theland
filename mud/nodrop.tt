@@ -1,0 +1,16 @@
+#class {nodrop} {open}
+
+#var {nodrop_ring} {wind-ring}
+#var {weapon_nodrop} {wind-sword}
+#var {nodrop_dagger} {Nausicaa-dagger}
+
+#alias {safe_put} {
+  #if {"%1" != "$weapon_nodrop" && "%1" != "$nodrop_ring" && "%1" != "$nodrop_dagger"} {
+    put %1 %2
+  } {
+    debug I WILL NOT PUT NODROP ITEM {%1} IN %2
+  }
+}
+
+#class {nodrop} {save}
+#class {nodrop} {close}
