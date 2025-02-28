@@ -1,0 +1,48 @@
+#class {health} {open}
+
+#var {heal_threshold} {2500}
+#var {health_state} {}
+
+#action {HEALTH-DOWN} {maybe_heal}
+#alias {maybe_heal} {
+  #if {$health < $heal_threshold} {
+    #if {"$health_state" != "ask"} {
+      ask_for_heal
+    }
+  }
+}
+
+#alias {ask_for_heal} {
+  #var {health_state} {ask};
+  begin_heal_timeout;
+  whisper senex healme
+}
+
+#action {OK: healme} {event_heal}
+#action {A strange cold fire seizes your heart} {event_heal}
+#action {lays hands on you.} {event_heal}
+#alias {event_heal} {
+  clear_heal_timeout;
+  #var {health_state} {}
+}
+
+#action {FAIL: healme} {event_heal_fail}
+#alias {event_heal_fail} {
+  clear_heal_timeout;
+  #var {health_state} {}
+}
+
+#alias {begin_heal_timeout} {
+  #delay {heal_timeout} {event_heal_timeout} {20}
+}
+
+#alias {clear_heal_timeout} {
+  #undelay {heal_timeout}
+}
+
+#alias {event_heal_timeout} {
+  #var {health_state} {}
+}
+
+#class {health} {save}
+#class {health} {close}

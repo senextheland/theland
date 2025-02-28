@@ -1,0 +1,14 @@
+#session $me theland.notroot.com 5000
+#split 0 0
+#config {speedwalk} {on}
+
+#read {tiny/kernel.tt}
+#read {tiny/stats.tt}
+#read {tiny/health.tt}
+
+#class {start} {open}
+
+#ticker {fidget} {emote blinks.} {120}
+
+#class {start} {save}
+#class {start} {close}

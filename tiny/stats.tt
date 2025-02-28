@@ -1,0 +1,111 @@
+#class {stats} {open}
+
+#nop --------------------------------
+#nop Prompt
+#nop --------------------------------
+
+#nop The prompt is kinda special since it can be used as a helper for
+#nop other scripts.
+
+#var {health} {0}
+#var {mana} {0}
+#var {move} {0}
+
+#action {H:%+ M:%+ V:%+ >} {update_stats {%1} {%2} {%3}}
+#alias {update_stats} {
+  #var {new_health} {%1};
+  #var {new_mana} {%2};
+  #var {new_move} {%3};
+
+  #if {$new_health > $health} {
+    #var {health} {$new_health};
+    trigger_health_up
+  }; #elseif {$new_health < $health} {
+    #var {health} {$new_health};  
+    trigger_health_down
+  };
+
+  #if {$new_mana > $mana} {
+    #var {mana} {$new_mana};
+    trigger_mana_up
+  }; #elseif {$new_mana < $mana} {
+    #var {mana} {$new_mana};  
+    trigger_mana_down
+  };
+
+  #if {$new_move > $move} {
+    #var {move} {$new_move};
+    trigger_move_up
+  }; #elseif {$new_move < $move} {
+    #var {move} {$new_move};  
+    trigger_move_down
+  };
+
+  trigger_prompt
+}
+
+#alias {trigger_health_up} {#show HEALTH-UP}
+#alias {trigger_health_down} {#show HEALTH-DOWN}
+#alias {trigger_mana_up} {#show MANA-UP}
+#alias {trigger_mana_down} {#nop}
+#alias {trigger_move_up} {#show MOVE-UP}
+#alias {trigger_move_down} {#nop}
+
+#alias {trigger_prompt} {
+  #if {"$on_next_prompt" != ""} {
+    #local {was_on_prompt} {$on_next_prompt};
+    #var {on_next_prompt} {};
+    #show ON-PROMPT: $was_on_prompt
+  }
+}
+
+#action {ON-PROMPT: %1} {event_prompt %1}
+#alias {event_prompt} {
+  #local {run_this} {%1}
+  $run_this
+}
+
+#nop This holds the one-off action that should fire at the next prompt.
+#var {on_next_prompt} {}
+
+#nop this sets the one-off action unless there is already one set (an error).
+#alias {set_on_next_prompt} {
+  #if {"$on_next_prompt" != ""} {
+    debug YEEP! SCRIPT ERROR: set_on_next_prompt already set to {$on_next_prompt}
+  } {
+    #var {on_next_prompt} {%1}        
+  }
+}
+
+
+#nop --------------------------------
+#nop Score
+#nop --------------------------------
+
+#var {max_health} {}
+#var {max_mana} {}
+#var {max_move} {}
+#var {alignment} {}
+#var {gold} {}
+#var {my_name} {}
+
+#action {You have %+(%+) hit, %+(%+) mana and %+(%+) movement points.} {
+  #var {max_health} {%2};
+  #var {max_mana} {%4};
+  #var {max_move} {%6}  
+}
+
+#action {Your alignment (-1000 : +1000): %+.} {
+  #var {alignment} {%1}
+}
+
+#action {You have scored %+ exp, and have %+ gold coins.} {
+  #var {gold} {%1}
+}
+
+#action {This ranks you as %S} {
+  #var {my_name} {%1}
+}
+
+#class {stats} {save}
+#class {stats} {close}

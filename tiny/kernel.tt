@@ -1,0 +1,125 @@
+#class {kernel} {open}
+
+#nop --------------------------------
+#nop Utilities
+#nop --------------------------------
+
+#nop `debug` is like `#show` except that the displayed text won't trigger any actions.
+#alias {debug} {
+  #line ignore #show %0
+}
+
+
+#nop --------------------------------
+#nop State
+#nop --------------------------------
+
+#nop `my_state` represents what the user is doing right now. In this simplified example,
+#nop it starts as "raw" and ends as "cooked" when the zone completes successfully.
+#var {my_state} {raw}
+
+#nop `trigger_begin_state` displays an event that can be actioned on to set the state and
+#nop action based on the new state.
+#alias {trigger_begin_state} {
+  #local {to_state} {%1};
+  #show BEGIN-STATE: $to_state
+}
+
+#nop Changing state happens through an action to avoid blowing up the call stack.
+#action {BEGIN-STATE: %1} {event_begin_state %1}
+#alias {event_begin_state} {
+  set_state {%1};
+  do_state_action
+}
+
+#alias {set_state} {
+  #local {to_state} {%1};
+  #var {my_state} {$to_state}
+}
+
+#alias {do_state_action} {
+  #switch {"$my_state"} {
+    #case {"raw"} {trigger_begin_state {kill}};
+    #case {"kill"} {kill_target};
+    #case {"walk"} {take_a_step};
+    #case {"cooked"} {debug zone cooked! what we do now, fam?};
+    #default {debug DO-STATE-ACTION: unrecognized state=$my_state}
+  }
+}
+
+#nop --------------------------------
+#nop Walking around
+#nop --------------------------------
+
+#nop this is a walk path for bryad desert.
+#var {target} {bryad}
+#path {unzip} {1n1e1n2e1s1w3e2w1n2w1s2w1s1w2n2w2n2s2e2s1e1n1e1s}
+
+#alias {take_a_step} {
+  #if {"$my_state" == "walk"} {
+    #path {walk}; #path {show}
+  } {
+    debug TAKE-A-STEP: unexpected state=$my_state
+  }
+}
+
+#nop use the "Exits:" keyword to recognize a room. Note that this can trigger from the "look" command,
+#nop so it's not perfect.
+#action {Exits:} {event_entered_room}
+#alias {event_entered_room} {
+  #if {"$my_state" == "walk"} {
+    trigger_begin_state {kill}
+  } {
+    debug EVENT-ENTERED-ROOM: unexpected state=$my_state
+  }
+}
+
+#event {END OF PATH} {event_end_path}
+#alias {event_end_path} {
+  #if {"$my_state" == "walk"} {
+    trigger_begin_state {cooked}
+  } {
+    debug EVENT-END-PATH: unexpected state=$my_state
+  }
+}
+
+
+#nop --------------------------------
+#nop Killing stuff
+#nop --------------------------------
+
+#alias {kill_target} {
+  kill $target
+}
+
+#action {is dead! R.I.P.} {event_rip}
+#alias {event_rip} {
+  #if {"$my_state" == "kill"} {
+    trigger_begin_state {kill}
+  } {
+    debug EVENT-RIP: unexpected state=$my_state
+  }
+}
+
+#action {They aren't here.} {event_not_here}
+#alias {event_not_here} {
+  #if {"$my_state" == "kill"} {
+    trigger_begin_state {walk}
+  } {
+    debug EVENT-NOT-HERE: unexpected state=$my_state
+  }
+}
+
+#action {No way! You are fighting for your life!} {event_fighting}
+#alias {event_fighting} {  
+  #if {"$my_state" == "walk"} {
+    debug EVENT-FIGHTING: tried to walk --> revert step;
+    #path {move} {-1};
+    set_state {kill}
+  } {
+    debug EVENT-FIGHTING unexpected state=$my_state
+  }
+}
+
+#class {kernel} {save}
+#class {kernel} {close}
